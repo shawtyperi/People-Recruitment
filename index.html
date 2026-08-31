@@ -63,6 +63,13 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
@@ -74,7 +81,7 @@
     const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1-B8OanU7ZJoluFfpZPH45gCo2FhXOOrIZUpjzKDcUlM/edit?gid=0#gid=0";
     const GOOGLE_SHEET_DIRECTORY_CSV_URL = "https://docs.google.com/spreadsheets/d/1-B8OanU7ZJoluFfpZPH45gCo2FhXOOrIZUpjzKDcUlM/gviz/tq?tqx=out:csv&gid=814265894";
 
-    /* CSV Parser Helper for Google Sheet Direct Export */
+    /* Utility function to parse CSV lines reliably handling quotes */
     function parseCSVText(text) {
       const lines = [];
       let row = [];
@@ -353,8 +360,9 @@
         equipment: { laptop: false, simCard: false, email: false, netsuite: false },
         stage: "interview",
         cancellationReason: "",
-        candidateName: "นาย สมศักดิ์ มีสุข",
-        resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view?usp=sharing"
+        slots: [
+          { slotId: "REQ-2026-001-1", slotIndex: 1, candidateName: "นาย สมศักดิ์ มีสุข", resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view?usp=sharing", stage: "interview", cancellationReason: "" }
+        ]
       },
       {
         id: "REQ-2026-002",
@@ -390,8 +398,10 @@
         equipment: { laptop: true, simCard: false, email: true, netsuite: true },
         stage: "sourcing",
         cancellationReason: "",
-        candidateName: "นาย วรวิทย์ พัฒนาพร",
-        resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink002/view?usp=sharing"
+        slots: [
+          { slotId: "REQ-2026-002-1", slotIndex: 1, candidateName: "นาย วรวิทย์ พัฒนาพร", resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink002/view?usp=sharing", stage: "sourcing", cancellationReason: "" },
+          { slotId: "REQ-2026-002-2", slotIndex: 2, candidateName: "", resumeUrl: "", stage: "sourcing", cancellationReason: "" }
+        ]
       },
       {
         id: "REQ-2026-003",
@@ -427,8 +437,11 @@
         equipment: { laptop: true, simCard: true, email: true, netsuite: true },
         stage: "received",
         cancellationReason: "",
-        candidateName: "",
-        resumeUrl: ""
+        slots: [
+          { slotId: "REQ-2026-003-1", slotIndex: 1, candidateName: "", resumeUrl: "", stage: "received", cancellationReason: "" },
+          { slotId: "REQ-2026-003-2", slotIndex: 2, candidateName: "", resumeUrl: "", stage: "received", cancellationReason: "" },
+          { slotId: "REQ-2026-003-3", slotIndex: 3, candidateName: "", resumeUrl: "", stage: "received", cancellationReason: "" }
+        ]
       }
     ];
 
@@ -486,12 +499,12 @@
 
     function App() {
       const [requests, setRequests] = useState(() => {
-        const saved = localStorage.getItem("hr_headcount_requests_v11");
+        const saved = localStorage.getItem("hr_headcount_requests_v12");
         return saved ? JSON.parse(saved) : INITIAL_RECRUITMENT_DATA;
       });
 
       const [personnelList, setPersonnelList] = useState(() => {
-        const saved = localStorage.getItem("hr_personnel_list_v11");
+        const saved = localStorage.getItem("hr_personnel_list_v12");
         return saved ? JSON.parse(saved) : INITIAL_PERSONNEL_LIST;
       });
 
@@ -557,7 +570,7 @@
 
             if (loadedList.length > 0) {
               setPersonnelList(loadedList);
-              localStorage.setItem("hr_personnel_list_v11", JSON.stringify(loadedList));
+              localStorage.setItem("hr_personnel_list_v12", JSON.stringify(loadedList));
               if (showToast) triggerToast(`ซิงค์รายชื่อผู้ขอ (คอลัมน์ C:C) และฝ่ายงาน (คอลัมน์ D:D) สำเร็จ! (${loadedList.length} รายชื่อ)`);
             }
           }
@@ -601,9 +614,9 @@
       const [selectedYearFilter, setSelectedYearFilter] = useState("ALL");
 
       const [showRequestModal, setShowRequestModal] = useState(false);
-      const [selectedDetailRequest, setSelectedDetailRequest] = useState(null);
+      const [selectedDetailSlot, setSelectedDetailSlot] = useState(null);
       const [selectedDepartmentDetail, setSelectedDepartmentDetail] = useState(null);
-      const [cancelModalItem, setCancelModalItem] = useState(null);
+      const [cancelModalSlot, setCancelModalSlot] = useState(null);
       const [cancelReasonInput, setCancelReasonInput] = useState("");
       const [toastMessage, setToastMessage] = useState("");
 
@@ -611,7 +624,7 @@
       const [isEditingCandidate, setIsEditingCandidate] = useState(false);
       const [candidateNameInput, setCandidateNameInput] = useState("");
       const [resumeUrlInput, setResumeUrlInput] = useState("");
-      const [draggedRequestId, setDraggedRequestId] = useState(null);
+      const [draggedSlotId, setDraggedSlotId] = useState(null);
 
       const initialForm = {
         requesterName: "",
@@ -648,7 +661,7 @@
       const [formStep, setFormStep] = useState(1);
 
       useEffect(() => {
-        localStorage.setItem("hr_personnel_list_v11", JSON.stringify(personnelList));
+        localStorage.setItem("hr_personnel_list_v12", JSON.stringify(personnelList));
       }, [personnelList]);
 
       useEffect(() => {
@@ -662,7 +675,7 @@
       }, [darkMode]);
 
       useEffect(() => {
-        localStorage.setItem("hr_headcount_requests_v11", JSON.stringify(requests));
+        localStorage.setItem("hr_headcount_requests_v12", JSON.stringify(requests));
       }, [requests]);
 
       useEffect(() => {
@@ -680,6 +693,64 @@
         setToastMessage(msg);
         setTimeout(() => setToastMessage(""), 3500);
       };
+
+      /* Flatten requisitions into individual slot objects based on headcount */
+      const allPositionSlots = useMemo(() => {
+        const result = [];
+        requests.forEach(r => {
+          const headcount = Math.max(1, Number(r.headcountRequired) || 1);
+          
+          let slots = r.slots;
+          if (!slots || slots.length !== headcount) {
+            slots = Array.from({ length: headcount }, (_, i) => ({
+              slotId: `${r.id}-${i + 1}`,
+              slotIndex: i + 1,
+              candidateName: i === 0 ? (r.candidateName || "") : "",
+              resumeUrl: i === 0 ? (r.resumeUrl || "") : "",
+              stage: r.stage || "received",
+              cancellationReason: r.cancellationReason || ""
+            }));
+          }
+
+          slots.forEach((slot, idx) => {
+            result.push({
+              ...r,
+              slotId: slot.slotId || `${r.id}-${idx + 1}`,
+              slotIndex: slot.slotIndex || (idx + 1),
+              totalSlots: headcount,
+              candidateName: slot.candidateName || "",
+              resumeUrl: slot.resumeUrl || "",
+              stage: slot.stage || r.stage || "received",
+              cancellationReason: slot.cancellationReason || "",
+              parentRequestId: r.id
+            });
+          });
+        });
+        return result;
+      }, [requests]);
+
+      const filteredPositionSlots = useMemo(() => {
+        return allPositionSlots.filter(s => {
+          const query = searchQuery.toLowerCase();
+          const matchQuery = (s.jobTitle || "").toLowerCase().includes(query) ||
+                             (s.slotId || "").toLowerCase().includes(query) ||
+                             (s.parentRequestId || "").toLowerCase().includes(query) ||
+                             (s.department || "").toLowerCase().includes(query) ||
+                             (s.requesterName || "").toLowerCase().includes(query) ||
+                             (s.candidateName || "").toLowerCase().includes(query);
+
+          if (!matchQuery) return false;
+
+          const reqDate = new Date(s.requestDate);
+          const monthStr = String(reqDate.getMonth() + 1).padStart(2, '0');
+          const yearStr = String(reqDate.getFullYear());
+
+          const matchMonth = selectedMonthFilter === "ALL" || monthStr === selectedMonthFilter;
+          const matchYear = selectedYearFilter === "ALL" || yearStr === selectedYearFilter;
+
+          return matchMonth && matchYear;
+        });
+      }, [allPositionSlots, searchQuery, selectedMonthFilter, selectedYearFilter]);
 
       const handleAddPerson = (e) => {
         e.preventDefault();
@@ -730,93 +801,70 @@
         document.body.removeChild(textArea);
       };
 
-      const filteredRequests = useMemo(() => {
-        return requests.filter(r => {
-          const query = searchQuery.toLowerCase();
-          const matchQuery = (r.jobTitle || "").toLowerCase().includes(query) ||
-                             (r.id || "").toLowerCase().includes(query) ||
-                             (r.department || "").toLowerCase().includes(query) ||
-                             (r.requesterName || "").toLowerCase().includes(query);
-
-          if (!matchQuery) return false;
-
-          const reqDate = new Date(r.requestDate);
-          const monthStr = String(reqDate.getMonth() + 1).padStart(2, '0');
-          const yearStr = String(reqDate.getFullYear());
-
-          const matchMonth = selectedMonthFilter === "ALL" || monthStr === selectedMonthFilter;
-          const matchYear = selectedYearFilter === "ALL" || yearStr === selectedYearFilter;
-
-          return matchMonth && matchYear;
-        });
-      }, [requests, searchQuery, selectedMonthFilter, selectedYearFilter]);
-
       const departmentStats = useMemo(() => {
         const statsMap = {};
         DEPARTMENTS.forEach(dept => {
           statsMap[dept] = { total: 0, open: 0, filled: 0, cancelled: 0 };
         });
 
-        filteredRequests.forEach(r => {
-          const dept = r.department;
+        filteredPositionSlots.forEach(s => {
+          const dept = s.department;
           if (!statsMap[dept]) {
             statsMap[dept] = { total: 0, open: 0, filled: 0, cancelled: 0 };
           }
-          const hc = Number(r.headcountRequired) || 1;
-          statsMap[dept].total += hc;
-          if (r.stage === "onboarded") {
-            statsMap[dept].filled += hc;
-          } else if (r.stage === "cancelled") {
-            statsMap[dept].cancelled += hc;
+          statsMap[dept].total += 1;
+          if (s.stage === "onboarded") {
+            statsMap[dept].filled += 1;
+          } else if (s.stage === "cancelled") {
+            statsMap[dept].cancelled += 1;
           } else {
-            statsMap[dept].open += hc;
+            statsMap[dept].open += 1;
           }
         });
 
         return Object.entries(statsMap)
           .map(([department, counts]) => ({ department, ...counts }))
           .sort((a, b) => b.total - a.total);
-      }, [filteredRequests]);
+      }, [filteredPositionSlots]);
 
       const kpis = useMemo(() => {
-        const totalReq = filteredRequests.reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
-        const openReq = filteredRequests.filter(r => r.stage !== "onboarded" && r.stage !== "cancelled").reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
-        const filledReq = filteredRequests.filter(r => r.stage === "onboarded").reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
-        const cancelledReq = filteredRequests.filter(r => r.stage === "cancelled").reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
+        const totalReq = filteredPositionSlots.length;
+        const openReq = filteredPositionSlots.filter(s => s.stage !== "onboarded" && s.stage !== "cancelled").length;
+        const filledReq = filteredPositionSlots.filter(s => s.stage === "onboarded").length;
+        const cancelledReq = filteredPositionSlots.filter(s => s.stage === "cancelled").length;
         return { totalReq, openReq, filledReq, cancelledReq };
-      }, [filteredRequests]);
+      }, [filteredPositionSlots]);
 
       const activeKpiItems = useMemo(() => {
         if (!activeKpiModalType) return [];
-        if (activeKpiModalType === "total") return filteredRequests;
-        if (activeKpiModalType === "open") return filteredRequests.filter(r => r.stage !== "onboarded" && r.stage !== "cancelled");
-        if (activeKpiModalType === "filled") return filteredRequests.filter(r => r.stage === "onboarded");
-        if (activeKpiModalType === "cancelled") return filteredRequests.filter(r => r.stage === "cancelled");
+        if (activeKpiModalType === "total") return filteredPositionSlots;
+        if (activeKpiModalType === "open") return filteredPositionSlots.filter(s => s.stage !== "onboarded" && s.stage !== "cancelled");
+        if (activeKpiModalType === "filled") return filteredPositionSlots.filter(s => s.stage === "onboarded");
+        if (activeKpiModalType === "cancelled") return filteredPositionSlots.filter(s => s.stage === "cancelled");
         return [];
-      }, [filteredRequests, activeKpiModalType]);
+      }, [filteredPositionSlots, activeKpiModalType]);
 
       const activeKpiTitle = useMemo(() => {
-        if (activeKpiModalType === "total") return "Total Headcount Requisitions";
-        if (activeKpiModalType === "open") return "Open Pipeline Positions";
-        if (activeKpiModalType === "filled") return "Onboarded / Filled Positions";
-        if (activeKpiModalType === "cancelled") return "Cancelled / On Hold Requests";
+        if (activeKpiModalType === "total") return "Total Position Slots";
+        if (activeKpiModalType === "open") return "Open Position Slots";
+        if (activeKpiModalType === "filled") return "Onboarded / Filled Slots";
+        if (activeKpiModalType === "cancelled") return "Cancelled / On Hold Slots";
         return "";
       }, [activeKpiModalType]);
 
       const departmentModalRequests = useMemo(() => {
         if (!selectedDepartmentDetail) return [];
-        return filteredRequests.filter(r => r.department === selectedDepartmentDetail);
-      }, [filteredRequests, selectedDepartmentDetail]);
+        return filteredPositionSlots.filter(s => s.department === selectedDepartmentDetail);
+      }, [filteredPositionSlots, selectedDepartmentDetail]);
 
       const departmentModalStats = useMemo(() => {
         if (!selectedDepartmentDetail) return { total: 0, open: 0, filled: 0, cancelled: 0 };
         let total = 0, open = 0, filled = 0, cancelled = 0;
-        departmentModalRequests.forEach(r => {
-          const hc = Number(r.headcountRequired) || 1;
-          total += hc;
-          if (r.stage === "onboarded") filled += hc;
-          else if (r.stage === "cancelled") cancelled += hc;
-          else open += hc;
+        departmentModalRequests.forEach(s => {
+          total += 1;
+          if (s.stage === "onboarded") filled += 1;
+          else if (s.stage === "cancelled") cancelled += 1;
+          else open += 1;
         });
         return { total, open, filled, cancelled };
       }, [departmentModalRequests, selectedDepartmentDetail]);
@@ -842,9 +890,21 @@
         const timeStr = now.toTimeString().split(' ')[0];
 
         const newId = `REQ-${now.getFullYear()}-${String(requests.length + 1).padStart(3, '0')}`;
+        const headcount = Math.max(1, Number(formInput.headcountRequired) || 1);
+
+        const newSlots = Array.from({ length: headcount }, (_, i) => ({
+          slotId: `${newId}-${i + 1}`,
+          slotIndex: i + 1,
+          candidateName: "",
+          resumeUrl: "",
+          stage: "received",
+          cancellationReason: ""
+        }));
+
         const newReq = {
           ...formInput,
           id: newId,
+          headcountRequired: headcount,
           requestDate: dateStr,
           lastUpdated: `${dateStr} ${timeStr}`,
           approvalStatusL1: formInput.approvalStatusL1 || "Approved",
@@ -853,7 +913,8 @@
           stage: "received",
           cancellationReason: "",
           candidateName: "",
-          resumeUrl: ""
+          resumeUrl: "",
+          slots: newSlots
         };
 
         setRequests([newReq, ...requests]);
@@ -878,41 +939,91 @@
         }
       };
 
-      const handleSaveCandidateInfo = (id) => {
+      const handleSaveCandidateInfoForSlot = (targetSlotId) => {
         setRequests(prev => prev.map(r => {
-          if (r.id === id) {
+          const headcount = Math.max(1, Number(r.headcountRequired) || 1);
+          let slots = r.slots && r.slots.length === headcount ? [...r.slots] : Array.from({ length: headcount }, (_, i) => ({
+            slotId: `${r.id}-${i + 1}`,
+            slotIndex: i + 1,
+            candidateName: i === 0 ? (r.candidateName || "") : "",
+            resumeUrl: i === 0 ? (r.resumeUrl || "") : "",
+            stage: r.stage || "received",
+            cancellationReason: ""
+          }));
+
+          let slotUpdated = false;
+          slots = slots.map(s => {
+            if (s.slotId === targetSlotId) {
+              slotUpdated = true;
+              return { ...s, candidateName: candidateNameInput, resumeUrl: resumeUrlInput };
+            }
+            return s;
+          });
+
+          if (slotUpdated) {
             return {
               ...r,
-              candidateName: candidateNameInput,
-              resumeUrl: resumeUrlInput,
+              candidateName: slots[0]?.candidateName || "",
+              resumeUrl: slots[0]?.resumeUrl || "",
+              slots,
               lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
             };
           }
           return r;
         }));
-        setSelectedDetailRequest(prev => prev ? { ...prev, candidateName: candidateNameInput, resumeUrl: resumeUrlInput } : null);
+
+        setSelectedDetailSlot(prev => prev && prev.slotId === targetSlotId ? {
+          ...prev,
+          candidateName: candidateNameInput,
+          resumeUrl: resumeUrlInput
+        } : prev);
+
         setIsEditingCandidate(false);
-        triggerToast("Saved Candidate CV/Resume link successfully!");
+        triggerToast("Saved Candidate CV/Resume link for this position slot!");
       };
 
-      const updateStageDirectly = (id, targetStage, reason = "") => {
+      const updateSlotStageDirectly = (targetSlotId, targetStage, reason = "") => {
         setRequests(prev => prev.map(r => {
-          if (r.id === id) {
+          const headcount = Math.max(1, Number(r.headcountRequired) || 1);
+          let slots = r.slots && r.slots.length === headcount ? [...r.slots] : Array.from({ length: headcount }, (_, i) => ({
+            slotId: `${r.id}-${i + 1}`,
+            slotIndex: i + 1,
+            candidateName: i === 0 ? (r.candidateName || "") : "",
+            resumeUrl: i === 0 ? (r.resumeUrl || "") : "",
+            stage: r.stage || "received",
+            cancellationReason: ""
+          }));
+
+          let slotUpdated = false;
+          slots = slots.map(s => {
+            if (s.slotId === targetSlotId) {
+              slotUpdated = true;
+              return { ...s, stage: targetStage, cancellationReason: reason || s.cancellationReason };
+            }
+            return s;
+          });
+
+          if (slotUpdated) {
+            const allOnboarded = slots.every(s => s.stage === "onboarded");
+            const allCancelled = slots.every(s => s.stage === "cancelled");
+            const summaryStage = allOnboarded ? "onboarded" : (allCancelled ? "cancelled" : slots[0].stage);
+
             return {
               ...r,
-              stage: targetStage,
-              cancellationReason: reason || r.cancellationReason,
+              stage: summaryStage,
+              slots,
               lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
             };
           }
           return r;
         }));
-        triggerToast(`Updated stage to ${targetStage}`);
+
+        triggerToast(`Updated position slot stage to ${targetStage}`);
       };
 
-      const handleDragStart = (e, id) => {
-        setDraggedRequestId(id);
-        e.dataTransfer.setData("text/plain", id);
+      const handleDragStart = (e, slotId) => {
+        setDraggedSlotId(slotId);
+        e.dataTransfer.setData("text/plain", slotId);
       };
 
       const handleDragOver = (e) => {
@@ -921,73 +1032,61 @@
 
       const handleDrop = (e, targetStage) => {
         e.preventDefault();
-        const id = draggedRequestId || e.dataTransfer.getData("text/plain");
-        if (!id) return;
+        const slotId = draggedSlotId || e.dataTransfer.getData("text/plain");
+        if (!slotId) return;
 
         if (targetStage === "cancelled") {
-          setCancelModalItem({ id, targetStage });
+          setCancelModalSlot({ slotId, targetStage });
           setCancelReasonInput("");
         } else {
-          updateStageDirectly(id, targetStage);
+          updateSlotStageDirectly(slotId, targetStage);
         }
-        setDraggedRequestId(null);
+        setDraggedSlotId(null);
       };
 
       const exportToCSV = () => {
         const headers = [
-          "Request ID", "Date", "Days Elapsed", "SLA Status (30 Days)", "Requester", "Requester Title", "Requester Email",
-          "Approver L1", "Approver Email", "Forward To", "Forward Email", "Forward People Dept", "People Email", "Buddy",
-          "Status L1", "Status L2", "Doc Status",
-          "Job Title", "Department", "Headcount", "Position Type", "Candidate Name", "CV / Resume Drive Link",
-          "Job Summary", "Details For People", "Approver Note 1", "Gender", "Age", "Education", "Major", "Experience", "Required Skills", "Target Date",
-          "Laptop", "Sim Card", "Email Account", "Netsuite ERP", "Stage", "Cancel Reason", "Last Updated"
+          "Slot ID", "Request ID", "Slot Index", "Total Slots", "Date", "Days Elapsed", "SLA Status (30 Days)",
+          "Requester", "Requester Title", "Requester Email", "Department", "Job Title", "Position Type",
+          "Slot Stage", "Candidate Name", "CV / Resume Drive Link", "Approver L1", "Approver Email",
+          "Forward To", "Forward Email", "Forward People", "Buddy", "Target Date", "Laptop", "Sim Card",
+          "Email Account", "NetSuite ERP", "Cancel Reason", "Last Updated"
         ];
 
-        const rows = requests.map(r => {
-          const sla = getSLAInfo(r.requestDate, r.stage);
+        const rows = filteredPositionSlots.map(s => {
+          const sla = getSLAInfo(s.requestDate, s.stage);
           const slaLabel = sla.isCompleted ? "Closed" : (sla.isOverdue ? `Overdue (${sla.daysElapsed}d)` : `Within SLA (${sla.daysElapsed}d)`);
 
           return [
-            r.id,
-            r.requestDate,
+            s.slotId,
+            s.id,
+            s.slotIndex,
+            s.totalSlots,
+            s.requestDate,
             sla.daysElapsed,
             slaLabel,
-            `"${r.requesterName || ''}"`,
-            `"${r.requesterPosition || ''}"`,
-            r.requesterEmail || '',
-            `"${r.approverName || ''}"`,
-            r.approverEmail || '',
-            `"${r.forwardTo || ''}"`,
-            r.forwardEmail || '',
-            `"${r.forwardToPeopleDept || ''}"`,
-            r.peopleEmail || '',
-            `"${r.buddy || ''}"`,
-            r.approvalStatusL1 || 'Approved',
-            r.approvalStatusL2 || 'Pending',
-            r.docStatus || 'Pending',
-            `"${r.jobTitle || ''}"`,
-            `"${r.department || ''}"`,
-            r.headcountRequired || 1,
-            `"${r.positionType || ''}"`,
-            `"${r.candidateName || ''}"`,
-            `"${r.resumeUrl || ''}"`,
-            `"${(r.jobDescription || '').replace(/"/g, '""')}"`,
-            `"${(r.detailsForPeople || '').replace(/"/g, '""')}"`,
-            `"${(r.approverNote1 || '').replace(/"/g, '""')}"`,
-            r.gender || 'Any',
-            `"${r.age || ''}"`,
-            `"${r.education || ''}"`,
-            `"${r.major || ''}"`,
-            `"${r.experience || ''}"`,
-            `"${(r.requiredSkills || '').replace(/"/g, '""')}"`,
-            r.targetDate || '',
-            r.equipment?.laptop ? "Yes" : "No",
-            r.equipment?.simCard ? "Yes" : "No",
-            r.equipment?.email ? "Yes" : "No",
-            r.equipment?.netsuite ? "Yes" : "No",
-            r.stage,
-            `"${(r.cancellationReason || '').replace(/"/g, '""')}"`,
-            r.lastUpdated
+            `"${s.requesterName || ''}"`,
+            `"${s.requesterPosition || ''}"`,
+            s.requesterEmail || '',
+            `"${s.department || ''}"`,
+            `"${s.jobTitle || ''}"`,
+            `"${s.positionType || ''}"`,
+            s.stage,
+            `"${s.candidateName || ''}"`,
+            `"${s.resumeUrl || ''}"`,
+            `"${s.approverName || ''}"`,
+            s.approverEmail || '',
+            `"${s.forwardTo || ''}"`,
+            s.forwardEmail || '',
+            `"${s.forwardToPeopleDept || ''}"`,
+            `"${s.buddy || ''}"`,
+            s.targetDate || '',
+            s.equipment?.laptop ? "Yes" : "No",
+            s.equipment?.simCard ? "Yes" : "No",
+            s.equipment?.email ? "Yes" : "No",
+            s.equipment?.netsuite ? "Yes" : "No",
+            `"${(s.cancellationReason || '').replace(/"/g, '""')}"`,
+            s.lastUpdated
           ];
         });
 
@@ -996,7 +1095,7 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `HR_Headcount_Export_${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `HR_Headcount_Slots_Export_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1005,12 +1104,10 @@
       return (
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
           
-          {}
           <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 glass-effect">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16 sm:h-20">
                 
-                {/* Logo & Title Banner */}
                 <div className="flex items-center space-x-3">
                   <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center text-white shadow-md shadow-sky-400/30 shrink-0">
                     <Icon name="users" className="w-5 h-5 text-white" />
@@ -1026,7 +1123,6 @@
                   </div>
                 </div>
 
-                {/* Header Action Controls */}
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <button 
                     onClick={() => setDarkMode(!darkMode)}
@@ -1099,17 +1195,15 @@
             </div>
           </header>
 
-          {}
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             
-            {/* Clickable KPI Summary Cards Overview */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div 
                 onClick={() => setActiveKpiModalType("total")}
                 className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-brand-400 hover:shadow-md transition group"
               >
                 <div>
-                  <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider group-hover:text-brand-600 transition">Total Headcount</p>
+                  <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider group-hover:text-brand-600 transition">Total Positions</p>
                   <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{kpis.totalReq}</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center group-hover:scale-110 transition">
@@ -1157,12 +1251,10 @@
               </div>
             </div>
 
-            {/* PUBLIC VIEW SECTIONS */}
+            {/* PUBLIC VIEW SECTION */}
             {currentView === "public" && (
               <div className="space-y-8">
                 
-                {}
-                {/* SECTION 1: RECRUITMENT STAGE TRACKER (PUBLIC VIEW WITH FULL RICH CARDS) */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
                     <div>
@@ -1173,7 +1265,7 @@
                         Recruitment Stage Tracker
                       </h2>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Current progress of open positions across recruitment stages. Click any position card to view details.
+                        Current progress of open position slots. Requisitions with multiple headcounts are split into individual slot cards.
                       </p>
                     </div>
 
@@ -1183,7 +1275,7 @@
                       </div>
                       <input
                         type="text"
-                        placeholder="Search positions..."
+                        placeholder="Search title, ID, candidate..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -1191,10 +1283,9 @@
                     </div>
                   </div>
 
-                  {/* Kanban Horizontal Scroll Columns */}
                   <div className="flex gap-4 overflow-x-auto pb-4 snap-x min-w-full">
                     {STAGES.map(stage => {
-                      const stageItems = filteredRequests.filter(r => r.stage === stage.id);
+                      const stageItems = filteredPositionSlots.filter(s => s.stage === stage.id);
                       return (
                         <div 
                           key={stage.id} 
@@ -1217,9 +1308,9 @@
                                 const sla = getSLAInfo(item.requestDate, item.stage);
                                 return (
                                   <div
-                                    key={item.id}
+                                    key={item.slotId}
                                     onClick={() => {
-                                      setSelectedDetailRequest(item);
+                                      setSelectedDetailSlot(item);
                                       setIsEditingCandidate(false);
                                       setCandidateNameInput(item.candidateName || "");
                                       setResumeUrlInput(item.resumeUrl || "");
@@ -1228,16 +1319,19 @@
                                   >
                                     <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                                       <span className="font-bold text-slate-500">{item.id}</span>
-                                      <span className="text-brand-600 dark:text-brand-400 font-bold">{item.headcountRequired} Headcount</span>
+                                      <span className="text-brand-600 dark:text-brand-400 font-bold bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded-md">
+                                        Slot #{item.slotIndex}/{item.totalSlots}
+                                      </span>
                                     </div>
+
                                     <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition line-clamp-2">
                                       {item.jobTitle}
                                     </h4>
+
                                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
                                       {item.department}
                                     </p>
 
-                                    {/* SLA Lead Time Badge Counter */}
                                     <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md">
                                       {sla.isCompleted ? (
                                         <span className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -1269,8 +1363,6 @@
                   </div>
                 </div>
 
-                {}
-                {/* SECTION 2: COMPACT DEPARTMENT HEADCOUNT DEMAND GRID */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
                     <div>
@@ -1345,12 +1437,10 @@
               </div>
             )}
 
-            {/* ADMIN PORTAL SECTIONS */}
+            {/* ADMIN PORTAL SECTION */}
             {currentView === "admin" && (
               <div className="space-y-8">
                 
-                {}
-                {/* ADMIN INTERACTIVE DRAG-AND-DROP KANBAN */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
                     <div>
@@ -1358,10 +1448,10 @@
                         <span className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400">
                           <Icon name="grid" className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                         </span>
-                        Interactive Kanban Pipeline (Drag & Drop to Change Stage)
+                        Interactive Kanban Pipeline (Drag & Drop Individual Slots)
                       </h2>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Drag cards between columns to update recruitment stages instantly.
+                        Drag position slot cards individually to update recruitment stages per candidate position.
                       </p>
                     </div>
 
@@ -1381,7 +1471,7 @@
 
                   <div className="flex gap-4 overflow-x-auto pb-4 snap-x min-w-full">
                     {STAGES.map(stage => {
-                      const stageItems = filteredRequests.filter(r => r.stage === stage.id);
+                      const stageItems = filteredPositionSlots.filter(s => s.stage === stage.id);
                       return (
                         <div 
                           key={stage.id} 
@@ -1406,14 +1496,16 @@
                                 const sla = getSLAInfo(item.requestDate, item.stage);
                                 return (
                                   <div
-                                    key={item.id}
+                                    key={item.slotId}
                                     draggable
-                                    onDragStart={(e) => handleDragStart(e, item.id)}
+                                    onDragStart={(e) => handleDragStart(e, item.slotId)}
                                     className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-500 transition cursor-grab active:cursor-grabbing group"
                                   >
                                     <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
                                       <span className="font-bold">{item.id}</span>
-                                      <span className="text-brand-600 dark:text-brand-400 font-bold">{item.headcountRequired} Headcount</span>
+                                      <span className="text-brand-600 dark:text-brand-400 font-bold bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded-md">
+                                        Slot #{item.slotIndex}/{item.totalSlots}
+                                      </span>
                                     </div>
                                     <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition line-clamp-2">
                                       {item.jobTitle}
@@ -1422,9 +1514,13 @@
                                       {item.department}
                                     </p>
 
-                                    {item.candidateName && (
+                                    {item.candidateName ? (
                                       <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md truncate max-w-full">
                                         <span>👤 {item.candidateName}</span>
+                                      </div>
+                                    ) : (
+                                      <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-slate-400 italic bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                                        <span>👤 Unassigned</span>
                                       </div>
                                     )}
 
@@ -1442,7 +1538,7 @@
                                       <span>Target: {item.targetDate}</span>
                                       <button 
                                         onClick={() => {
-                                          setSelectedDetailRequest(item);
+                                          setSelectedDetailSlot(item);
                                           setIsEditingCandidate(false);
                                           setCandidateNameInput(item.candidateName || "");
                                           setResumeUrlInput(item.resumeUrl || "");
@@ -1463,60 +1559,67 @@
                   </div>
                 </div>
 
-                {}
-                {/* ADMIN MASTER DATA TABLE */}
+                {/* Master Data Table for Position Slots */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-4">
-                    <div>
-                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-5">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <span className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
                           <Icon name="shieldCheck" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         </span>
-                        Admin Master Data Table & Google Sheets Sync
-                      </h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-                        <span>Manage statuses, SLA lead time tracking, and auto-sync data to Google Sheets.</span>
+                        <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
+                          Manpower Request
+                        </h2>
                         {googleScriptUrl ? (
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
-                            ● Live Sync Active
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-100/80 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 text-[10px] font-bold inline-flex items-center gap-1.5 border border-emerald-200/60 dark:border-emerald-800/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Live Sync Active
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-bold">
-                            ○ Sync Script Not Set
+                          <span className="px-2.5 py-1 rounded-full bg-amber-100/80 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 text-[10px] font-bold inline-flex items-center gap-1.5 border border-amber-200/60 dark:border-amber-800/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            Sync Script Not Set
                           </span>
                         )}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 pl-0 sm:pl-11">
+                        ตารางสรุปคำขอกำลังคน รายละเอียดตำแหน่งงาน ติดตามสถานะรายอัตรา และการซิงค์ข้อมูลอัตโนมัติ
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end shrink-0">
                       <button
                         onClick={() => setShowPersonnelModal(true)}
-                        className="px-3.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-semibold text-xs hover:bg-purple-100 flex items-center gap-1.5 transition"
+                        className="px-3.5 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/80 font-semibold text-xs hover:bg-purple-100 dark:hover:bg-purple-900/60 flex items-center gap-1.5 transition shadow-2xs active:scale-95"
                       >
-                        <Icon name="users" className="w-3.5 h-3.5 text-purple-600" />
-                        จัดการรายชื่อบุคลากร (Personnel)
+                        <Icon name="users" className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        <span>จัดการรายชื่อบุคลากร</span>
                       </button>
+                      
                       <button
                         onClick={() => setShowSheetsModal(true)}
-                        className="px-3.5 py-1.5 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold text-xs hover:bg-brand-100 flex items-center gap-1.5 transition"
+                        className="px-3.5 py-2 rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/80 font-semibold text-xs hover:bg-sky-100 dark:hover:bg-sky-900/60 flex items-center gap-1.5 transition shadow-2xs active:scale-95"
                       >
-                        <Icon name="refresh" className="w-3.5 h-3.5 text-brand-600" />
-                        Configure Live Sheets Sync
+                        <Icon name="refresh" className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                        <span>ตั้งค่า Sheets Sync</span>
                       </button>
+
                       <a 
                         href={GOOGLE_SHEET_URL}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+                        className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition shadow-2xs active:scale-95"
                       >
-                        Open Google Sheet <Icon name="externalLink" className="w-3.5 h-3.5" />
+                        <span>Open Sheet</span>
+                        <Icon name="externalLink" className="w-3.5 h-3.5 text-slate-500" />
                       </a>
+
                       <button
                         onClick={exportToCSV}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 flex items-center gap-1.5 transition"
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition active:scale-95"
                       >
                         <Icon name="download" className="w-3.5 h-3.5 text-white" />
-                        Export CSV
+                        <span>Export CSV</span>
                       </button>
                     </div>
                   </div>
@@ -1525,39 +1628,41 @@
                     <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
                       <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                          <th className="px-4 py-3">ID / Date</th>
-                          <th className="px-4 py-3">Job Title</th>
+                          <th className="px-4 py-3">Slot ID / Req Date</th>
+                          <th className="px-4 py-3">Job Title & Slot</th>
                           <th className="px-4 py-3">Requester & Dept</th>
                           <th className="px-4 py-3">Candidate & CV</th>
                           <th className="px-4 py-3">Lead Time (SLA: 30d)</th>
-                          <th className="px-4 py-3">Stage</th>
+                          <th className="px-4 py-3">Slot Stage</th>
                           <th className="px-4 py-3 text-center">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {filteredRequests.map(r => {
-                          const sla = getSLAInfo(r.requestDate, r.stage);
+                        {filteredPositionSlots.map(s => {
+                          const sla = getSLAInfo(s.requestDate, s.stage);
                           return (
-                            <tr key={r.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                            <tr key={s.slotId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                               <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
-                                {r.id}
-                                <div className="text-[10px] text-slate-400">{r.requestDate}</div>
+                                <span className="text-brand-600 font-bold">{s.slotId}</span>
+                                <div className="text-[10px] text-slate-400">{s.requestDate}</div>
                               </td>
                               <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">
-                                {r.jobTitle}
-                                <div className="text-[10px] font-normal text-slate-400">{r.positionType}</div>
+                                {s.jobTitle}
+                                <div className="text-[10px] font-normal text-slate-400">
+                                  Position #{s.slotIndex} of {s.totalSlots} ({s.positionType})
+                                </div>
                               </td>
                               <td className="px-4 py-3">
-                                <div>{r.requesterName}</div>
-                                <div className="text-[10px] text-slate-400">{r.department}</div>
+                                <div>{s.requesterName}</div>
+                                <div className="text-[10px] text-slate-400">{s.department}</div>
                               </td>
                               <td className="px-4 py-3">
-                                {r.candidateName ? (
+                                {s.candidateName ? (
                                   <div>
-                                    <span className="font-semibold text-slate-900 dark:text-white">{r.candidateName}</span>
-                                    {r.resumeUrl && (
+                                    <span className="font-semibold text-slate-900 dark:text-white">{s.candidateName}</span>
+                                    {s.resumeUrl && (
                                       <a
-                                        href={r.resumeUrl}
+                                        href={s.resumeUrl}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="block text-[10px] text-emerald-600 hover:underline"
@@ -1581,33 +1686,33 @@
                               </td>
                               <td className="px-4 py-3">
                                 <select
-                                  value={r.stage}
+                                  value={s.stage}
                                   onChange={(e) => {
                                     const targetStage = e.target.value;
                                     if (targetStage === "cancelled") {
-                                      setCancelModalItem({ id: r.id, targetStage });
+                                      setCancelModalSlot({ slotId: s.slotId, targetStage });
                                       setCancelReasonInput("");
                                     } else {
-                                      updateStageDirectly(r.id, targetStage);
+                                      updateSlotStageDirectly(s.slotId, targetStage);
                                     }
                                   }}
                                   className="text-xs p-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                                 >
-                                  {STAGES.map(s => (
-                                    <option key={s.id} value={s.id}>{s.label}</option>
+                                  {STAGES.map(stg => (
+                                    <option key={stg.id} value={stg.id}>{stg.label}</option>
                                   ))}
                                 </select>
                               </td>
                               <td className="px-4 py-3 text-center whitespace-nowrap">
                                 <button
                                   onClick={() => {
-                                    setSelectedDetailRequest(r);
+                                    setSelectedDetailSlot(s);
                                     setIsEditingCandidate(false);
-                                    setCandidateNameInput(r.candidateName || "");
-                                    setResumeUrlInput(r.resumeUrl || "");
+                                    setCandidateNameInput(s.candidateName || "");
+                                    setResumeUrlInput(s.resumeUrl || "");
                                   }}
                                   className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-slate-600 dark:text-slate-300 transition"
-                                  title="View Specifications & CV"
+                                  title="View Specifications & Candidate CV"
                                 >
                                   <Icon name="eye" className="w-4 h-4" />
                                 </button>
@@ -1625,13 +1730,11 @@
 
           </main>
 
-          {/* Footer */}
           <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-400">
             HR Recruitment & Headcount Tracking Dashboard &bull; Enterprise Operations SLA Lead Time Engine
           </footer>
 
-          {}
-          {/* DEPARTMENT DETAIL BREAKDOWN MODAL */}
+          {/* Department Position Breakdown Modal */}
           {selectedDepartmentDetail && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -1652,7 +1755,7 @@
 
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 my-4 text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
                   <div>
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Total Requested</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Total Positions</p>
                     <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">{departmentModalStats.total}</p>
                   </div>
                   <div>
@@ -1677,10 +1780,10 @@
                       const sla = getSLAInfo(item.requestDate, item.stage);
                       return (
                         <div 
-                          key={item.id}
+                          key={item.slotId}
                           onClick={() => {
                             setSelectedDepartmentDetail(null);
-                            setSelectedDetailRequest(item);
+                            setSelectedDetailSlot(item);
                             setIsEditingCandidate(false);
                             setCandidateNameInput(item.candidateName || "");
                             setResumeUrlInput(item.resumeUrl || "");
@@ -1691,9 +1794,9 @@
                             <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1">
                               <span className="font-bold text-slate-600 dark:text-slate-300">{item.id}</span>
                               <span>&bull;</span>
-                              <span>Requested: {item.requestDate}</span>
+                              <span className="text-brand-600 font-bold">Slot #{item.slotIndex}/{item.totalSlots}</span>
                               <span>&bull;</span>
-                              <span className="text-brand-600 dark:text-brand-400 font-bold">{item.headcountRequired} Headcount</span>
+                              <span>Requested: {item.requestDate}</span>
                             </div>
                             <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition">
                               {item.jobTitle}
@@ -1736,8 +1839,7 @@
             </div>
           )}
 
-          {}
-          {/* KPI BREAKDOWN MODAL */}
+          {/* KPI Modal */}
           {activeKpiModalType && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -1757,16 +1859,16 @@
 
                 <div className="py-4 space-y-3 max-h-[60vh] overflow-y-auto">
                   {activeKpiItems.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-slate-400 italic">No positions found in this category.</div>
+                    <div className="py-8 text-center text-xs text-slate-400 italic">No position slots found in this category.</div>
                   ) : (
                     activeKpiItems.map(item => {
                       const sla = getSLAInfo(item.requestDate, item.stage);
                       return (
                         <div 
-                          key={item.id}
+                          key={item.slotId}
                           onClick={() => {
                             setActiveKpiModalType(null);
-                            setSelectedDetailRequest(item);
+                            setSelectedDetailSlot(item);
                             setIsEditingCandidate(false);
                             setCandidateNameInput(item.candidateName || "");
                             setResumeUrlInput(item.resumeUrl || "");
@@ -1777,13 +1879,15 @@
                             <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1">
                               <span className="font-bold text-slate-600 dark:text-slate-300">{item.id}</span>
                               <span>&bull;</span>
+                              <span className="text-brand-600 font-bold">Slot #{item.slotIndex}/{item.totalSlots}</span>
+                              <span>&bull;</span>
                               <span>Requested: {item.requestDate}</span>
                             </div>
                             <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                               {item.jobTitle}
                             </h4>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {item.department} &bull; <strong className="text-brand-600">{item.headcountRequired} Headcount</strong>
+                              {item.department} &bull; <strong className="text-brand-600">Position Slot #{item.slotIndex}</strong>
                             </p>
 
                             {isAdminAuthenticated && item.candidateName && (
@@ -1826,13 +1930,11 @@
             </div>
           )}
 
-          {}
-          {/* MANPOWER REQUISITION REQUEST FORM MODAL */}
+          {/* Manpower Requisition Request Form Modal */}
           {showRequestModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
               <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden my-auto max-h-[92vh] flex flex-col">
                 
-                {/* Modal Header Banner */}
                 <div className="px-6 py-5 bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-brand-500/25 shrink-0">
@@ -1867,7 +1969,6 @@
                   </div>
                 </div>
 
-                {/* Stepper Header Pills */}
                 <div className="px-6 py-3 bg-slate-100/60 dark:bg-slate-900/90 border-b border-slate-200/60 dark:border-slate-800 shrink-0">
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <button
@@ -1917,14 +2018,11 @@
                   </div>
                 </div>
 
-                {/* Form Content Area */}
                 <form onSubmit={handleFormSubmit} className="p-6 space-y-5 overflow-y-auto flex-1 text-xs">
                   
-                  {/* STEP 1: ผู้ขอ & ผู้อนุมัติ */}
                   {formStep === 1 && (
                     <div className="space-y-4 animate-fadeIn">
                       
-                      {/* Auto Info Banner */}
                       <div className="p-3 rounded-2xl bg-gradient-to-r from-brand-50/80 to-sky-50/50 dark:from-brand-950/40 dark:to-sky-950/20 border border-brand-200/70 dark:border-brand-900/60 flex items-center justify-between text-[11px]">
                         <div className="flex items-center gap-2 text-brand-900 dark:text-brand-200 font-medium">
                           <Icon name="clock" className="w-4 h-4 text-brand-600 shrink-0" />
@@ -1933,7 +2031,6 @@
                         <span className="text-slate-400 text-[10px] hidden sm:inline">ระบบจะอัปเดตวันเวลาแก้ไขให้อัตโนมัติเมื่อกดบันทึก</span>
                       </div>
 
-                      {/* Requester Group Card */}
                       <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
                           <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
@@ -2020,7 +2117,6 @@
                         </div>
                       </div>
 
-                      {/* Approver & Forwarding Group Card */}
                       <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
                           <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
@@ -2120,7 +2216,6 @@
                     </div>
                   )}
 
-                  {/* STEP 2: ตำแหน่งงาน & สถานะ */}
                   {formStep === 2 && (
                     <div className="space-y-4 animate-fadeIn">
                       
@@ -2305,7 +2400,6 @@
                     </div>
                   )}
 
-                  {/* STEP 3: คุณสมบัติ & IT Assets */}
                   {formStep === 3 && (
                     <div className="space-y-4 animate-fadeIn">
                       
@@ -2391,7 +2485,6 @@
                         </div>
                       </div>
 
-                      {/* IT Assets Checklist Card */}
                       <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
                           <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
@@ -2438,7 +2531,6 @@
 
                 </form>
 
-                {/* Modal Footer Action Bar */}
                 <div className="px-6 py-4 bg-slate-50/90 dark:bg-slate-800/80 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
                   {formStep > 1 ? (
                     <button
@@ -2473,30 +2565,33 @@
             </div>
           )}
 
-          {}
-          {/* DETAIL MODAL (PUBLIC VS ADMIN PRIVACY RESTRICTIONS) */}
-          {selectedDetailRequest && (
+          {/* Position Slot Detail Inspection Modal */}
+          {selectedDetailSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
                 <div className="flex items-start justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
                   <div>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300">
-                      {selectedDetailRequest.id}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300">
+                        {selectedDetailSlot.id}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300">
+                        Position Slot #{selectedDetailSlot.slotIndex} of {selectedDetailSlot.totalSlots}
+                      </span>
+                    </div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1">
-                      {selectedDetailRequest.jobTitle}
+                      {selectedDetailSlot.jobTitle}
                     </h3>
-                    <p className="text-xs text-slate-500">{selectedDetailRequest.department}</p>
+                    <p className="text-xs text-slate-500">{selectedDetailSlot.department}</p>
                   </div>
-                  <button onClick={() => setSelectedDetailRequest(null)} className="p-2 text-slate-400 hover:text-slate-600">
+                  <button onClick={() => setSelectedDetailSlot(null)} className="p-2 text-slate-400 hover:text-slate-600">
                     <Icon name="x" className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto text-xs">
-                  {/* SLA Tracker Bar */}
                   {(() => {
-                    const sla = getSLAInfo(selectedDetailRequest.requestDate, selectedDetailRequest.stage);
+                    const sla = getSLAInfo(selectedDetailSlot.requestDate, selectedDetailSlot.stage);
                     return (
                       <div className={`p-3 rounded-xl flex items-center justify-between text-xs font-semibold ${
                         sla.isCompleted 
@@ -2507,7 +2602,7 @@
                       }`}>
                         <div className="flex items-center gap-2">
                           <Icon name="clock" className="w-4 h-4" />
-                          <span>วันที่ขอ: {selectedDetailRequest.requestDate} ({sla.daysElapsed} days elapsed)</span>
+                          <span>วันที่ขอ: {selectedDetailSlot.requestDate} ({sla.daysElapsed} days elapsed)</span>
                         </div>
                         <div>
                           {sla.isCompleted ? (
@@ -2522,59 +2617,57 @@
                     );
                   })()}
 
-                  {/* Basic Public Info Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                     <div>
-                      <p className="text-[10px] text-slate-400">อัตราที่ต้องการ</p>
-                      <p className="font-bold text-brand-600">{selectedDetailRequest.headcountRequired} คน</p>
+                      <p className="text-[10px] text-slate-400">ตำแหน่งงานลำดับที่</p>
+                      <p className="font-bold text-brand-600">Slot #{selectedDetailSlot.slotIndex} / {selectedDetailSlot.totalSlots}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-400">ต้องการภายในวันที่</p>
-                      <p className="font-bold text-slate-800 dark:text-slate-200">{selectedDetailRequest.targetDate}</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">{selectedDetailSlot.targetDate}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-400">รายละเอียดตำแหน่ง</p>
-                      <p className="font-bold text-emerald-600">{selectedDetailRequest.positionType}</p>
+                      <p className="font-bold text-emerald-600">{selectedDetailSlot.positionType}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-slate-400">สถานะปัจจุบัน</p>
-                      <p className="font-bold text-amber-600">{selectedDetailRequest.stage}</p>
+                      <p className="font-bold text-amber-600">{selectedDetailSlot.stage}</p>
                     </div>
                   </div>
 
                   <div>
                     <h4 className="font-bold text-slate-900 dark:text-white mb-1">ลักษณะงานโดยย่อ</h4>
                     <p className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {selectedDetailRequest.jobDescription || 'ไม่มีข้อมูลลักษณะงานโดยย่อ'}
+                      {selectedDetailSlot.jobDescription || 'ไม่มีข้อมูลลักษณะงานโดยย่อ'}
                     </p>
                   </div>
 
-                  {/* ADMIN ONLY SENSITIVE INTERNAL DETAILS */}
+                  {/* Candidate and Admin Confidential Details Section */}
                   {isAdminAuthenticated ? (
                     <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800 animate-fadeIn">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1">
                           <Icon name="shieldCheck" className="w-3.5 h-3.5" />
-                          Admin Confidential Data
+                          Admin Confidential Candidate Data for Slot #{selectedDetailSlot.slotIndex}
                         </span>
                         <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold">
                           Admin Mode
                         </span>
                       </div>
 
-                      {/* CANDIDATE & CV SECTION */}
                       <div className="p-4 rounded-2xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-900 space-y-3">
                         <div className="flex items-center justify-between">
                           <h4 className="font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5 text-xs">
                             <Icon name="users" className="w-4 h-4 text-brand-600" />
-                            Candidate Info & CV / Resume (Google Drive Link)
+                            Candidate Info & CV / Resume (Slot #{selectedDetailSlot.slotIndex} of {selectedDetailSlot.totalSlots})
                           </h4>
                           {!isEditingCandidate && (
                             <button
                               onClick={() => setIsEditingCandidate(true)}
                               className="px-2.5 py-1 rounded-lg bg-brand-600 text-white font-semibold text-[11px] hover:bg-brand-700 transition"
                             >
-                              Edit CV / Candidate Link
+                              Edit Slot #{selectedDetailSlot.slotIndex} Candidate CV
                             </button>
                           )}
                         </div>
@@ -2582,7 +2675,7 @@
                         {isEditingCandidate ? (
                           <div className="space-y-3 pt-2">
                             <div>
-                              <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Candidate Full Name</label>
+                              <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Candidate Full Name (Slot #{selectedDetailSlot.slotIndex})</label>
                               <input
                                 type="text"
                                 placeholder="e.g. นาย สมศักดิ์ มีสุข"
@@ -2609,10 +2702,10 @@
                                 Cancel
                               </button>
                               <button
-                                onClick={() => handleSaveCandidateInfo(selectedDetailRequest.id)}
+                                onClick={() => handleSaveCandidateInfoForSlot(selectedDetailSlot.slotId)}
                                 className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
                               >
-                                Save Candidate CV Link
+                                Save Slot CV Link
                               </button>
                             </div>
                           </div>
@@ -2620,14 +2713,14 @@
                           <div className="text-xs space-y-2">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                               <div>
-                                <span className="text-[11px] text-slate-500">Candidate Name: </span>
+                                <span className="text-[11px] text-slate-500">Candidate Name (Slot #{selectedDetailSlot.slotIndex}): </span>
                                 <span className="font-bold text-slate-900 dark:text-white">
-                                  {selectedDetailRequest.candidateName || "No candidate assigned yet"}
+                                  {selectedDetailSlot.candidateName || "No candidate assigned yet for this slot"}
                                 </span>
                               </div>
-                              {selectedDetailRequest.resumeUrl ? (
+                              {selectedDetailSlot.resumeUrl ? (
                                 <a
-                                  href={selectedDetailRequest.resumeUrl}
+                                  href={selectedDetailSlot.resumeUrl}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700 shadow-xs transition shrink-0"
@@ -2645,29 +2738,29 @@
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                           <p className="font-bold text-slate-900 dark:text-white mb-1">ข้อมูลผู้ขอ (Requester)</p>
-                          <p>{selectedDetailRequest.requesterName} ({selectedDetailRequest.requesterPosition})</p>
-                          <p className="text-brand-600">{selectedDetailRequest.requesterEmail}</p>
+                          <p>{selectedDetailSlot.requesterName} ({selectedDetailSlot.requesterPosition})</p>
+                          <p className="text-brand-600">{selectedDetailSlot.requesterEmail}</p>
                         </div>
                         <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                           <p className="font-bold text-slate-900 dark:text-white mb-1">ข้อมูลผู้อนุมัติ (Approver)</p>
-                          <p>{selectedDetailRequest.approverName}</p>
-                          <p className="text-brand-600">{selectedDetailRequest.approverEmail}</p>
+                          <p>{selectedDetailSlot.approverName}</p>
+                          <p className="text-brand-600">{selectedDetailSlot.approverEmail}</p>
                         </div>
                       </div>
 
                       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-1">
-                        <p><strong>ระดับการศึกษา:</strong> {selectedDetailRequest.education || '-'}</p>
-                        <p><strong>ประสบการณ์ทำงาน:</strong> {selectedDetailRequest.experience || '-'}</p>
-                        <p><strong>ส่งต่อให้กับ:</strong> {selectedDetailRequest.forwardTo || '-'} ({selectedDetailRequest.forwardEmail || '-'})</p>
-                        <p><strong>ส่งต่อให้ People:</strong> {selectedDetailRequest.forwardToPeopleDept || '-'} ({selectedDetailRequest.peopleEmail || '-'})</p>
-                        <p><strong>Buddy (พี่เลี้ยง):</strong> {selectedDetailRequest.buddy || '-'}</p>
-                        <p><strong>วันที่แก้ไขล่าสุด:</strong> {selectedDetailRequest.lastUpdated || '-'}</p>
+                        <p><strong>ระดับการศึกษา:</strong> {selectedDetailSlot.education || '-'}</p>
+                        <p><strong>ประสบการณ์ทำงาน:</strong> {selectedDetailSlot.experience || '-'}</p>
+                        <p><strong>ส่งต่อให้กับ:</strong> {selectedDetailSlot.forwardTo || '-'} ({selectedDetailSlot.forwardEmail || '-'})</p>
+                        <p><strong>ส่งต่อให้ People:</strong> {selectedDetailSlot.forwardToPeopleDept || '-'} ({selectedDetailSlot.peopleEmail || '-'})</p>
+                        <p><strong>Buddy (พี่เลี้ยง):</strong> {selectedDetailSlot.buddy || '-'}</p>
+                        <p><strong>วันที่แก้ไขล่าสุด:</strong> {selectedDetailSlot.lastUpdated || '-'}</p>
                       </div>
 
-                      {selectedDetailRequest.cancellationReason && (
+                      {selectedDetailSlot.cancellationReason && (
                         <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300">
                           <p className="font-bold">Cancellation / Rejection Reason:</p>
-                          <p className="mt-1">{selectedDetailRequest.cancellationReason}</p>
+                          <p className="mt-1">{selectedDetailSlot.cancellationReason}</p>
                         </div>
                       )}
                     </div>
@@ -2686,7 +2779,7 @@
 
                 <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
                   <button
-                    onClick={() => setSelectedDetailRequest(null)}
+                    onClick={() => setSelectedDetailSlot(null)}
                     className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                   >
                     Close
@@ -2696,8 +2789,7 @@
             </div>
           )}
 
-          {}
-          {/* PERSONNEL MANAGEMENT MODAL */}
+          {/* Manage Personnel Modal */}
           {showPersonnelModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -2713,7 +2805,6 @@
 
                 <div className="py-4 space-y-4 text-xs max-h-[60vh] overflow-y-auto pr-1">
                   
-                  {/* Add New Personnel Form */}
                   <form onSubmit={handleAddPerson} className="p-3.5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 space-y-3">
                     <h4 className="font-bold text-purple-900 dark:text-purple-300 text-xs">➕ เพิ่มรายชื่อบุคลากรใหม่</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2757,7 +2848,6 @@
                     </div>
                   </form>
 
-                  {/* Personnel Directory List */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">
@@ -2864,16 +2954,15 @@
             </div>
           )}
 
-          {}
-          {/* CANCELLATION REASON MODAL */}
-          {cancelModalItem && (
+          {/* Cancellation Reason Modal */}
+          {cancelModalSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
                 <h3 className="text-base font-bold text-rose-600 dark:text-rose-400 mb-2">
                   Cancellation / Rejection Reason
                 </h3>
                 <p className="text-xs text-slate-500 mb-4">
-                  Please specify why position ID <strong>{cancelModalItem.id}</strong> is being cancelled or rejected.
+                  Please specify why slot <strong>{cancelModalSlot.slotId}</strong> is being cancelled or rejected.
                 </p>
 
                 <textarea
@@ -2887,15 +2976,15 @@
 
                 <div className="flex gap-2 justify-end">
                   <button
-                    onClick={() => setCancelModalItem(null)}
+                    onClick={() => setCancelModalSlot(null)}
                     className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => {
-                      updateStageDirectly(cancelModalItem.id, cancelModalItem.targetStage, cancelReasonInput || "Cancelled by admin");
-                      setCancelModalItem(null);
+                      updateSlotStageDirectly(cancelModalSlot.slotId, cancelModalSlot.targetStage, cancelReasonInput || "Cancelled by admin");
+                      setCancelModalSlot(null);
                     }}
                     className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700"
                   >
@@ -2906,7 +2995,7 @@
             </div>
           )}
 
-          {/* GOOGLE SHEETS SYNC SETUP MODAL */}
+          {/* Google Sheets Sync Setup Modal */}
           {showSheetsModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
@@ -2958,8 +3047,7 @@
             </div>
           )}
 
-          {}
-          {/* ADMIN LOGIN AUTHENTICATION MODAL */}
+          {/* Admin Authentication Login Modal */}
           {showLoginModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
@@ -3000,7 +3088,7 @@
             </div>
           )}
 
-          {/* TOAST NOTIFICATION POPUP */}
+          {/* Toast Notification */}
           {toastMessage && (
             <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl text-xs font-semibold flex items-center gap-2 animate-bounce">
               <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
