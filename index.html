@@ -69,11 +69,170 @@
   <div id="root" class="h-full flex flex-col"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
+    const { useState, useEffect, useMemo, useRef } = React;
 
     const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1-B8OanU7ZJoluFfpZPH45gCo2FhXOOrIZUpjzKDcUlM/edit?gid=0#gid=0";
+    const GOOGLE_SHEET_DIRECTORY_CSV_URL = "https://docs.google.com/spreadsheets/d/1-B8OanU7ZJoluFfpZPH45gCo2FhXOOrIZUpjzKDcUlM/gviz/tq?tqx=out:csv&gid=814265894";
+
+    /* CSV Parser Helper for Google Sheet Direct Export */
+    function parseCSVText(text) {
+      const lines = [];
+      let row = [];
+      let inQuotes = false;
+      let current = '';
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && next === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          row.push(current.trim());
+          current = '';
+        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+          if (char === '\r' && next === '\n') i++;
+          row.push(current.trim());
+          if (row.some(c => c !== '')) lines.push(row);
+          row = [];
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      if (current || row.length > 0) {
+        row.push(current.trim());
+        if (row.some(c => c !== '')) lines.push(row);
+      }
+      return lines;
+    }
+
+    function SearchableSelect({ value, onChange, options, placeholder = "-- Select / เลือกหรือพิมพ์เพื่อค้นหา --", required = false, disabled = false, className = "" }) {
+      const [isOpen, setIsOpen] = useState(false);
+      const [searchTerm, setSearchTerm] = useState("");
+      const dropdownRef = useRef(null);
+
+      const normalizedOptions = useMemo(() => {
+        return options.map(opt => typeof opt === 'object' ? opt : { value: opt, label: opt });
+      }, [options]);
+
+      const selectedOption = normalizedOptions.find(o => String(o.value) === String(value));
+
+      useEffect(() => {
+        const handleClickOutside = (e) => {
+          if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+            setIsOpen(false);
+          }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+        return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+          document.removeEventListener("touchstart", handleClickOutside);
+        };
+      }, []);
+
+      const filteredOptions = useMemo(() => {
+        if (!searchTerm.trim()) return normalizedOptions;
+        const term = searchTerm.toLowerCase();
+        return normalizedOptions.filter(o => 
+          String(o.label).toLowerCase().includes(term) || String(o.value).toLowerCase().includes(term)
+        );
+      }, [normalizedOptions, searchTerm]);
+
+      const handleSelect = (optVal) => {
+        onChange(optVal);
+        setIsOpen(false);
+        setSearchTerm("");
+      };
+
+      return (
+        <div ref={dropdownRef} className={`relative ${className}`}>
+          <div className="relative">
+            <input
+              type="text"
+              disabled={disabled}
+              required={required && !value}
+              placeholder={placeholder}
+              value={isOpen ? searchTerm : (selectedOption ? selectedOption.label : value || "")}
+              onFocus={() => {
+                if (!disabled) {
+                  setIsOpen(true);
+                  setSearchTerm("");
+                }
+              }}
+              onChange={(e) => {
+                if (!disabled) {
+                  setSearchTerm(e.target.value);
+                  if (!isOpen) setIsOpen(true);
+                }
+              }}
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold pr-8 cursor-pointer text-slate-800 dark:text-slate-100 placeholder-slate-400"
+            />
+            <div 
+              onClick={() => !disabled && setIsOpen(!isOpen)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer pointer-events-auto"
+            >
+              <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+
+          {isOpen && !disabled && (
+            <div className="absolute z-50 w-full mt-1.5 max-h-52 overflow-y-auto bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl py-1 text-xs">
+              {filteredOptions.length === 0 ? (
+                <div className="px-3.5 py-2 text-slate-400 italic text-[11px]">ไม่พบข้อมูลที่พิมพ์ (No matching options)</div>
+              ) : (
+                filteredOptions.map((opt, idx) => (
+                  <div
+                    key={`${opt.value}-${idx}`}
+                    onClick={() => handleSelect(opt.value)}
+                    className={`px-3.5 py-2 hover:bg-brand-50 dark:hover:bg-brand-950/70 hover:text-brand-600 dark:hover:text-brand-300 cursor-pointer transition flex items-center justify-between ${
+                      String(value) === String(opt.value) ? 'bg-brand-50/90 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 font-bold' : 'text-slate-700 dark:text-slate-200'
+                    }`}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                    {String(value) === String(opt.value) && <span className="text-brand-600 dark:text-brand-400 text-xs shrink-0 ml-2">✓</span>}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const INITIAL_PERSONNEL_LIST = [
+      { name: "นางสาววรีรัตน์ รุจอุฬาร", email: "wareerat.ru@valuesourcing.co", position: "Executive Assistance Lead", department: "Executive Assistance & Admin Department" },
+      { name: "นางสาว พรธิดา วนเวียน", email: "porntida.wo@valuesourcing.co", position: "People Business Partner Team Lead (Factory)", department: "Human Resource Business Partner Department" },
+      { name: "ชณา วสุวัต", email: "chana.va@valuesourcing.co", position: "Executive Assistant", department: "Executive Assistance & Admin Department" },
+      { name: "สายชล วสุวัต", email: "saichon.va@valuesourcing.co", position: "Culture & HR-AI Director", department: "Culture & HR-AI Department" },
+      { name: "สลิสา วสุวัต", email: "salisa.va@valuesourcing.co", position: "Wealth Creation Specialist", department: "Wealth Creation Department" },
+      { name: "ปกเกศ ตั้นซ้าย", email: "pokkate.tu@valuesourcing.co", position: "Internal Control Officer", department: "Internal Control & Risk Management Department" },
+      { name: "สุมน คูสุวรรณ", email: "sumon.kh@valuesourcing.co", position: "Quality Assurance Manager", department: "Quality Assurance Department" },
+      { name: "ธนรักษ์ พึ่งธรรมะสกุล", email: "thanaruk.ph@valuesourcing.co", position: "Supply Chain Lead", department: "Supply Chain Management Department" },
+      { name: "อริชภัสร์ จิระปราสิทธิ์", email: "arichapat.ji@valuesourcing.co", position: "Product Strategy Architect", department: "Product Strategy & Creative Architect Department" },
+      { name: "ณพสิทธิ์ โชติวนิช", email: "nopparsit.ch@gmail.com", position: "AI & Digital Specialist", department: "AI & Digital Integration Department" },
+      { name: "พัชรี พวงศรี", email: "patcharee.pu@valuesourcing.co", position: "Accounting & Finance Specialist", department: "VSC - Wealth Creation Department" },
+      { name: "ปวีณา วรรณศิริมงคล", email: "paweena.wa@valuesourcing.co", position: "Quality Control Officer", department: "Quality Control Department" },
+      { name: "พรทิพา รุจิไพโรจน์", email: "porntipa.ru@valuesourcing.co", position: "Operations Excellence Lead", department: "TOE Throughput Operations Excellence Department" },
+      { name: "นาย ภานุวัฒน์ เดชสกุล", email: "panuwat.de@valuesourcing.co", position: "AI System Architect", department: "AI & Digital Integration Department" },
+      { name: "นาย สมชาย พัฒนาการ", email: "somchai.pa@valuesourcing.co", position: "Production Supervisor", department: "Production Department" },
+      { name: "นาง กนกวรรณ จันทร์เรือง", email: "kanokwan.ch@valuesourcing.co", position: "Supply Chain Manager", department: "Supply Chain Management Department" },
+      { name: "นาย สุรเชษฐ์ เจริญสุข", email: "surachet.ch@valuesourcing.co", position: "Warehouse Manager", department: "Warehouse Department" },
+      { name: "นางสาว วันวิสาข์ จันที", email: "wanwisa.ju@valuesourcing.co", position: "Culture & HR-AI Officer", department: "Culture & HR-AI Department" },
+      { name: "นาย เอกชัย มั่นคง", email: "akachai.ma@valuesourcing.co", position: "Full-Stack Developer", department: "AI & Digital Integration Department" },
+      { name: "นางสาว มัลลิกา โอบอ้อม", email: "mallika.ob@valuesourcing.co", position: "Inventory Specialist", department: "Supply Chain Management Department" }
+    ];
 
     const DEPARTMENTS = [
+      "-",
       "7-Eleven Channel Department",
       "AI & Digital Integration Department",
       "Amathal Department",
@@ -98,6 +257,37 @@
       "Viboth (P&L) Dept. Negotiate & Consultant Department",
       "Warehouse Department",
       "Wealth Creation Department"
+    ];
+
+    const EDUCATION_OPTIONS = [
+      "ไม่จำกัดการศึกษา (Any)",
+      "มัธยมศึกษาตอนต้น (ม.3 ขึ้นไป)",
+      "มัธยมศึกษาตอนปลาย / ปวช.",
+      "ปวส. / อนุปริญญา",
+      "ปริญญาตรี (Bachelor's Degree)",
+      "ปริญญาโท (Master's Degree)",
+      "ปริญญาเอก (Doctoral Degree)"
+    ];
+
+    const AGE_OPTIONS = [
+      "ไม่จำกัดอายุ (Any Age)",
+      "18 - 25 ปี",
+      "20 - 30 ปี",
+      "22 - 35 ปี",
+      "25 - 40 ปี",
+      "30 - 45 ปี",
+      "35 - 50 ปี",
+      "ต่ำกว่า 35 ปี (Under 35)",
+      "40 ปีขึ้นไป (40+ Years)"
+    ];
+
+    const EXPERIENCE_OPTIONS = [
+      "ยินดีรับนักศึกษาจบใหม่ / ไม่จำเป็นต้องมีประสบการณ์",
+      "น้อยกว่า 1 ปี (Under 1 Year)",
+      "1 - 2 ปี (1 - 2 Years)",
+      "3 - 5 ปี (3 - 5 Years)",
+      "5 - 10 ปี (5 - 10 Years)",
+      "มากกว่า 10 ปี (10+ Years)"
     ];
 
     const STAGES = [
@@ -130,8 +320,8 @@
 
     const INITIAL_RECRUITMENT_DATA = [
       {
-        id: "REQ-2025-001",
-        requestDate: "2025-08-27",
+        id: "REQ-2026-001",
+        requestDate: "2026-08-01",
         requesterName: "นางสาว พรธิดา วนเวียน",
         requesterPosition: "People Business Partner Team Lead (Factory)",
         requesterEmail: "porntida.wo@valuesourcing.co",
@@ -139,7 +329,7 @@
         approverEmail: "wareerat.ru@valuesourcing.co",
         forwardTo: "นางสาววรีรัตน์ รุจอุฬาร",
         forwardEmail: "wareerat.ru@valuesourcing.co",
-        lastUpdated: "2025-08-27 09:21:20",
+        lastUpdated: "2026-08-01 09:21:20",
         approverNote1: "ต้องการจ้างงานคนพิการตามที่กฎหมายกำหนด",
         approvalStatusL1: "Approved",
         approvalStatusL2: "Approved",
@@ -147,7 +337,7 @@
         headcountRequired: 1,
         positionType: "Replacement",
         docStatus: "Approved",
-        forwardToPeopleDept: "Culture & HR-AI Department",
+        forwardToPeopleDept: "People & Organization Success Division",
         peopleEmail: "people@valuesourcing.co",
         buddy: "นางสาว วันวิสาข์ จันที",
         jobTitle: "Factory Housekeeper Staff (Factory) (L1A)",
@@ -155,11 +345,11 @@
         jobDescription: "ทำความสะอาดดูแลความเรียบร้อยของพื้นที่และอาคาร",
         gender: "Male",
         age: "Under 35",
-        education: "Grade 9+",
+        education: "มัธยมศึกษาตอนต้น (ม.3 ขึ้นไป)",
         major: "-",
-        experience: "Fresh Graduate / 1 Year",
+        experience: "1 - 2 ปี (1 - 2 Years)",
         requiredSkills: "Disabled Person Certificate",
-        targetDate: "2025-09-26",
+        targetDate: "2026-08-30",
         equipment: { laptop: false, simCard: false, email: false, netsuite: false },
         stage: "interview",
         cancellationReason: "",
@@ -167,8 +357,8 @@
         resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view?usp=sharing"
       },
       {
-        id: "REQ-2025-002",
-        requestDate: "2025-08-28",
+        id: "REQ-2026-002",
+        requestDate: "2026-08-10",
         requesterName: "นาย ภานุวัฒน์ เดชสกุล",
         requesterPosition: "AI System Architect",
         requesterEmail: "panuwat.de@valuesourcing.co",
@@ -176,7 +366,7 @@
         approverEmail: "somchai.pa@valuesourcing.co",
         forwardTo: "นาย สมชาย พัฒนาการ",
         forwardEmail: "somchai.pa@valuesourcing.co",
-        lastUpdated: "2025-08-28 14:10:00",
+        lastUpdated: "2026-08-10 14:10:00",
         approverNote1: "Core Platform Expansion",
         approvalStatusL1: "Approved",
         approvalStatusL2: "Approved",
@@ -184,7 +374,7 @@
         headcountRequired: 2,
         positionType: "New Headcount",
         docStatus: "Approved",
-        forwardToPeopleDept: "AI & Digital Integration Department",
+        forwardToPeopleDept: "People & Organization Success Division",
         peopleEmail: "people@valuesourcing.co",
         buddy: "นาย เอกชัย มั่นคง",
         jobTitle: "Senior Full-Stack AI Engineer",
@@ -192,11 +382,11 @@
         jobDescription: "Develop and deploy enterprise LLM and AI workflows",
         gender: "Any",
         age: "25 - 38",
-        education: "Bachelor's Degree",
+        education: "ปริญญาตรี (Bachelor's Degree)",
         major: "Computer Science / Software Engineering",
-        experience: "3-5 Years",
+        experience: "3 - 5 ปี (3 - 5 Years)",
         requiredSkills: "TypeScript, Python, React, OpenAI APIs",
-        targetDate: "2025-09-27",
+        targetDate: "2026-09-09",
         equipment: { laptop: true, simCard: false, email: true, netsuite: true },
         stage: "sourcing",
         cancellationReason: "",
@@ -204,8 +394,8 @@
         resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink002/view?usp=sharing"
       },
       {
-        id: "REQ-2025-003",
-        requestDate: "2025-08-29",
+        id: "REQ-2026-003",
+        requestDate: "2026-08-20",
         requesterName: "นาง กนกวรรณ จันทร์เรือง",
         requesterPosition: "Supply Chain Manager",
         requesterEmail: "kanokwan.ch@valuesourcing.co",
@@ -213,7 +403,7 @@
         approverEmail: "surachet.ch@valuesourcing.co",
         forwardTo: "นาย สุรเชษฐ์ เจริญสุข",
         forwardEmail: "surachet.ch@valuesourcing.co",
-        lastUpdated: "2025-08-29 11:30:00",
+        lastUpdated: "2026-08-20 11:30:00",
         approverNote1: "Q4 Distribution Scaling",
         approvalStatusL1: "Approved",
         approvalStatusL2: "Pending",
@@ -221,7 +411,7 @@
         headcountRequired: 3,
         positionType: "New Headcount",
         docStatus: "Pending",
-        forwardToPeopleDept: "Supply Chain Management Department",
+        forwardToPeopleDept: "People & Organization Success Division",
         peopleEmail: "people@valuesourcing.co",
         buddy: "นางสาว มัลลิกา โอบอ้อม",
         jobTitle: "Logistics & Inventory Officer",
@@ -229,11 +419,11 @@
         jobDescription: "Manage logistics operations, stock control, and warehouse throughput",
         gender: "Any",
         age: "24 - 35",
-        education: "Bachelor's Degree",
+        education: "ปริญญาตรี (Bachelor's Degree)",
         major: "Logistics or related fields",
-        experience: "2+ Years",
+        experience: "1 - 2 ปี (1 - 2 Years)",
         requiredSkills: "WMS, ERP Netsuite, Excel",
-        targetDate: "2025-09-28",
+        targetDate: "2026-09-19",
         equipment: { laptop: true, simCard: true, email: true, netsuite: true },
         stage: "received",
         cancellationReason: "",
@@ -296,8 +486,13 @@
 
     function App() {
       const [requests, setRequests] = useState(() => {
-        const saved = localStorage.getItem("hr_headcount_requests_v8");
+        const saved = localStorage.getItem("hr_headcount_requests_v10");
         return saved ? JSON.parse(saved) : INITIAL_RECRUITMENT_DATA;
+      });
+
+      const [personnelList, setPersonnelList] = useState(() => {
+        const saved = localStorage.getItem("hr_personnel_list_v10");
+        return saved ? JSON.parse(saved) : INITIAL_PERSONNEL_LIST;
       });
 
       const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc/exec";
@@ -305,6 +500,78 @@
       const [googleScriptUrl, setGoogleScriptUrl] = useState(() => {
         return localStorage.getItem("hr_google_script_url") || DEFAULT_SCRIPT_URL;
       });
+
+      const [isSyncingPersonnel, setIsSyncingPersonnel] = useState(false);
+
+      const syncPersonnelFromGoogleSheet = async (showToast = false) => {
+        setIsSyncingPersonnel(true);
+        try {
+          const res = await fetch(GOOGLE_SHEET_DIRECTORY_CSV_URL);
+          if (!res.ok) throw new Error("Network response was not ok");
+          const csvText = await res.text();
+          const rows = parseCSVText(csvText);
+
+          if (rows.length > 1) {
+            const headers = rows[0].map(h => h.toLowerCase().trim());
+            
+            let posColIdx = -1;
+            let emailColIdx = -1;
+            let deptColIdx = -1;
+
+            headers.forEach((h, idx) => {
+              if (idx !== 2 && idx !== 3) {
+                if (h.includes("email") || h.includes("อีเมล") || h.includes("mail")) emailColIdx = idx;
+                if (h.includes("ตำแหน่ง") || h.includes("position") || h.includes("title")) posColIdx = idx;
+                if (h.includes("แผนก") || h.includes("department") || h.includes("dept") || h.includes("สังกัด") || h.includes("ฝ่าย")) deptColIdx = idx;
+              }
+            });
+
+            const loadedList = [];
+            for (let i = 1; i < rows.length; i++) {
+              const r = rows[i];
+              if (!r || r.length <= 2) continue;
+              
+              const nameVal = r[2]?.trim();
+              if (!nameVal || nameVal.toLowerCase().includes("ชื่อ") || nameVal.toLowerCase().includes("name") || nameVal === "C") continue;
+
+              let deptVal = r[3]?.trim();
+              if (!deptVal && deptColIdx !== -1) {
+                deptVal = r[deptColIdx]?.trim();
+              }
+
+              let emailVal = emailColIdx !== -1 ? r[emailColIdx]?.trim() : "";
+              let posVal = posColIdx !== -1 ? r[posColIdx]?.trim() : "";
+
+              if (!emailVal) {
+                const found = r.find(c => c && c.includes("@"));
+                if (found) emailVal = found.trim();
+              }
+
+              loadedList.push({
+                name: nameVal,
+                email: emailVal || "",
+                position: posVal || "Staff",
+                department: deptVal || "-"
+              });
+            }
+
+            if (loadedList.length > 0) {
+              setPersonnelList(loadedList);
+              localStorage.setItem("hr_personnel_list_v10", JSON.stringify(loadedList));
+              if (showToast) triggerToast(`ซิงค์รายชื่อผู้ขอ (คอลัมน์ C:C) และฝ่ายงาน (คอลัมน์ D:D) สำเร็จ! (${loadedList.length} รายชื่อ)`);
+            }
+          }
+        } catch (err) {
+          console.warn("Could not fetch live sheet CSV, using cached personnel data.", err);
+          if (showToast) triggerToast("ไม่สามารถดึงข้อมูลจาก Google Sheet ได้โดยตรง (ใช้ออฟไลน์ข้อมูลแคชเดิม)");
+        } finally {
+          setIsSyncingPersonnel(false);
+        }
+      };
+
+      useEffect(() => {
+        syncPersonnelFromGoogleSheet(false);
+      }, []);
 
       const [darkMode, setDarkMode] = useState(() => {
         return localStorage.getItem("theme_mode") === "dark" || 
@@ -315,8 +582,19 @@
       const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
       const [showLoginModal, setShowLoginModal] = useState(false);
       const [showSheetsModal, setShowSheetsModal] = useState(false);
+      const [showPersonnelModal, setShowPersonnelModal] = useState(false);
       const [adminPasscode, setAdminPasscode] = useState("");
       const [loginError, setLoginError] = useState("");
+
+      const [newPersonName, setNewPersonName] = useState("");
+      const [newPersonEmail, setNewPersonEmail] = useState("");
+      const [newPersonPosition, setNewPersonPosition] = useState("");
+      const [newPersonDept, setNewPersonDept] = useState("-");
+      const [editingPersonIndex, setEditingPersonIndex] = useState(null);
+      const [editPersonName, setEditPersonName] = useState("");
+      const [editPersonEmail, setEditPersonEmail] = useState("");
+      const [editPersonPosition, setEditPersonPosition] = useState("");
+      const [editPersonDept, setEditPersonDept] = useState("-");
 
       const [searchQuery, setSearchQuery] = useState("");
       const [selectedMonthFilter, setSelectedMonthFilter] = useState("ALL");
@@ -339,31 +617,39 @@
         requesterName: "",
         requesterPosition: "",
         requesterEmail: "",
-        approverName: "นางสาววรีรัตน์ รุจอุฬาร",
-        approverEmail: "wareerat.ru@valuesourcing.co",
-        forwardTo: "นางสาววรีรัตน์ รุจอุฬาร",
-        forwardEmail: "wareerat.ru@valuesourcing.co",
+        approverName: "",
+        approverEmail: "",
+        forwardTo: "",
+        forwardEmail: "",
         approverNote1: "",
+        approvalStatusL1: "Approved",
+        approvalStatusL2: "Pending",
         detailsForPeople: "",
         headcountRequired: 1,
         positionType: "Replacement",
-        forwardToPeopleDept: "Culture & HR-AI Department",
-        peopleEmail: "people@valuesourcing.co",
+        docStatus: "Pending",
+        forwardToPeopleDept: "ศรัณย์ภัทธ อุบล",
+        peopleEmail: "sarunpat.ub@valuesourcing.co",
         buddy: "",
         jobTitle: "",
         department: DEPARTMENTS[0],
         jobDescription: "",
         gender: "Any",
         age: "Under 35",
-        education: "Bachelor's Degree",
+        education: EDUCATION_OPTIONS[4],
         major: "-",
-        experience: "1-2 Years",
+        experience: EXPERIENCE_OPTIONS[2],
         requiredSkills: "",
         targetDate: new Date().toISOString().split('T')[0],
         equipment: { laptop: true, simCard: false, email: true, netsuite: false }
       };
+
       const [formInput, setFormInput] = useState(initialForm);
       const [formStep, setFormStep] = useState(1);
+
+      useEffect(() => {
+        localStorage.setItem("hr_personnel_list_v10", JSON.stringify(personnelList));
+      }, [personnelList]);
 
       useEffect(() => {
         if (darkMode) {
@@ -376,7 +662,7 @@
       }, [darkMode]);
 
       useEffect(() => {
-        localStorage.setItem("hr_headcount_requests_v8", JSON.stringify(requests));
+        localStorage.setItem("hr_headcount_requests_v10", JSON.stringify(requests));
       }, [requests]);
 
       useEffect(() => {
@@ -393,6 +679,38 @@
       const triggerToast = (msg) => {
         setToastMessage(msg);
         setTimeout(() => setToastMessage(""), 3500);
+      };
+
+      const handleAddPerson = (e) => {
+        e.preventDefault();
+        if (!newPersonName.trim() || !newPersonEmail.trim()) return;
+        setPersonnelList(prev => [...prev, { 
+          name: newPersonName.trim(), 
+          email: newPersonEmail.trim(),
+          position: newPersonPosition.trim() || "Staff",
+          department: newPersonDept || "-"
+        }]);
+        setNewPersonName("");
+        setNewPersonEmail("");
+        setNewPersonPosition("");
+        triggerToast("เพิ่มรายชื่อบุคลากรและข้อมูลตำแหน่งเรียบร้อยแล้ว!");
+      };
+
+      const handleSaveEditPerson = (index) => {
+        if (!editPersonName.trim() || !editPersonEmail.trim()) return;
+        setPersonnelList(prev => prev.map((p, i) => i === index ? { 
+          name: editPersonName.trim(), 
+          email: editPersonEmail.trim(),
+          position: editPersonPosition.trim() || p.position || "Staff",
+          department: editPersonDept || p.department || "-"
+        } : p));
+        setEditingPersonIndex(null);
+        triggerToast("อัปเดตข้อมูลบุคลากรเรียบร้อยแล้ว!");
+      };
+
+      const handleDeletePerson = (index) => {
+        setPersonnelList(prev => prev.filter((_, i) => i !== index));
+        triggerToast("ลบรายชื่อบุคลากรเรียบร้อยแล้ว!");
       };
 
       const handleCopyShareLink = () => {
@@ -415,10 +733,10 @@
       const filteredRequests = useMemo(() => {
         return requests.filter(r => {
           const query = searchQuery.toLowerCase();
-          const matchQuery = r.jobTitle.toLowerCase().includes(query) ||
-                             r.id.toLowerCase().includes(query) ||
-                             r.department.toLowerCase().includes(query) ||
-                             r.requesterName.toLowerCase().includes(query);
+          const matchQuery = (r.jobTitle || "").toLowerCase().includes(query) ||
+                             (r.id || "").toLowerCase().includes(query) ||
+                             (r.department || "").toLowerCase().includes(query) ||
+                             (r.requesterName || "").toLowerCase().includes(query);
 
           if (!matchQuery) return false;
 
@@ -529,9 +847,9 @@
           id: newId,
           requestDate: dateStr,
           lastUpdated: `${dateStr} ${timeStr}`,
-          approvalStatusL1: "Approved",
-          approvalStatusL2: "Pending",
-          docStatus: "Pending",
+          approvalStatusL1: formInput.approvalStatusL1 || "Approved",
+          approvalStatusL2: formInput.approvalStatusL2 || "Pending",
+          docStatus: formInput.docStatus || "Pending",
           stage: "received",
           cancellationReason: "",
           candidateName: "",
@@ -543,7 +861,6 @@
         setFormInput(initialForm);
         setFormStep(1);
 
-        // Real-time POST sync to Google Sheets Apps Script endpoint
         if (googleScriptUrl) {
           try {
             fetch(googleScriptUrl, {
@@ -557,7 +874,7 @@
             triggerToast("บันทึกในแอปสำเร็จ (แต่ซิงค์ Google Sheet ขัดข้อง)");
           }
         } else {
-          triggerToast("บันทึกในแอปสำเร็จ! (อย่าลืมวาง Google Script Web App URL ใน Admin เพื่อซิงค์ลง Sheet)");
+          triggerToast("บันทึกในแอปสำเร็จ!");
         }
       };
 
@@ -619,9 +936,10 @@
       const exportToCSV = () => {
         const headers = [
           "Request ID", "Date", "Days Elapsed", "SLA Status (30 Days)", "Requester", "Requester Title", "Requester Email",
-          "Approver L1", "Approver Email", "Status L1", "Status L2", "Doc Status",
+          "Approver L1", "Approver Email", "Forward To", "Forward Email", "Forward People Dept", "People Email", "Buddy",
+          "Status L1", "Status L2", "Doc Status",
           "Job Title", "Department", "Headcount", "Position Type", "Candidate Name", "CV / Resume Drive Link",
-          "Job Summary", "Gender", "Age", "Education", "Required Skills", "Target Date",
+          "Job Summary", "Details For People", "Approver Note 1", "Gender", "Age", "Education", "Major", "Experience", "Required Skills", "Target Date",
           "Laptop", "Sim Card", "Email Account", "Netsuite ERP", "Stage", "Cancel Reason", "Last Updated"
         ];
 
@@ -634,26 +952,35 @@
             r.requestDate,
             sla.daysElapsed,
             slaLabel,
-            `"${r.requesterName}"`,
-            `"${r.requesterPosition}"`,
-            r.requesterEmail,
-            `"${r.approverName}"`,
-            r.approverEmail,
-            r.approvalStatusL1,
-            r.approvalStatusL2,
-            r.docStatus,
-            `"${r.jobTitle}"`,
-            `"${r.department}"`,
-            r.headcountRequired,
-            `"${r.positionType}"`,
+            `"${r.requesterName || ''}"`,
+            `"${r.requesterPosition || ''}"`,
+            r.requesterEmail || '',
+            `"${r.approverName || ''}"`,
+            r.approverEmail || '',
+            `"${r.forwardTo || ''}"`,
+            r.forwardEmail || '',
+            `"${r.forwardToPeopleDept || ''}"`,
+            r.peopleEmail || '',
+            `"${r.buddy || ''}"`,
+            r.approvalStatusL1 || 'Approved',
+            r.approvalStatusL2 || 'Pending',
+            r.docStatus || 'Pending',
+            `"${r.jobTitle || ''}"`,
+            `"${r.department || ''}"`,
+            r.headcountRequired || 1,
+            `"${r.positionType || ''}"`,
             `"${r.candidateName || ''}"`,
             `"${r.resumeUrl || ''}"`,
             `"${(r.jobDescription || '').replace(/"/g, '""')}"`,
-            r.gender,
-            `"${r.age}"`,
-            `"${r.education}"`,
+            `"${(r.detailsForPeople || '').replace(/"/g, '""')}"`,
+            `"${(r.approverNote1 || '').replace(/"/g, '""')}"`,
+            r.gender || 'Any',
+            `"${r.age || ''}"`,
+            `"${r.education || ''}"`,
+            `"${r.major || ''}"`,
+            `"${r.experience || ''}"`,
             `"${(r.requiredSkills || '').replace(/"/g, '""')}"`,
-            r.targetDate,
+            r.targetDate || '',
             r.equipment?.laptop ? "Yes" : "No",
             r.equipment?.simCard ? "Yes" : "No",
             r.equipment?.email ? "Yes" : "No",
@@ -772,7 +1099,6 @@
             </div>
           </header>
 
-          {}
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             
             {/* Clickable KPI Cards Overview */}
@@ -830,7 +1156,7 @@
               </div>
             </div>
 
-            {}
+            {/* Public View Views */}
             {currentView === "public" && (
               <div className="space-y-8">
                 
@@ -973,7 +1299,7 @@
                         className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                       >
                         <option value="ALL">All Years</option>
-                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
                       </select>
                     </div>
                   </div>
@@ -1016,7 +1342,7 @@
               </div>
             )}
 
-            {}
+            {/* Admin View Views */}
             {currentView === "admin" && (
               <div className="space-y-8">
                 
@@ -1159,6 +1485,13 @@
 
                     <div className="flex flex-wrap items-center gap-2">
                       <button
+                        onClick={() => setShowPersonnelModal(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-semibold text-xs hover:bg-purple-100 flex items-center gap-1.5 transition"
+                      >
+                        <Icon name="users" className="w-3.5 h-3.5 text-purple-600" />
+                        จัดการรายชื่อบุคลากร (Personnel)
+                      </button>
+                      <button
                         onClick={() => setShowSheetsModal(true)}
                         className="px-3.5 py-1.5 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold text-xs hover:bg-brand-100 flex items-center gap-1.5 transition"
                       >
@@ -1292,7 +1625,7 @@
             HR Recruitment & Headcount Tracking Dashboard &bull; Enterprise Operations SLA Lead Time Engine
           </footer>
 
-          {}
+          {/* Department Breakdown Modal */}
           {selectedDepartmentDetail && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -1397,7 +1730,7 @@
             </div>
           )}
 
-          {}
+          {/* KPI Modal */}
           {activeKpiModalType && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -1488,164 +1821,651 @@
 
           {}
           {showRequestModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Icon name="plus" className="w-5 h-5 text-brand-600" />
-                      Manpower Requisition Request Form
-                    </h3>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden my-auto max-h-[92vh] flex flex-col">
+                
+                {/* Modal Header Banner */}
+                <div className="px-6 py-5 bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-brand-500/25 shrink-0">
+                      <Icon name="plus" className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                        แบบฟอร์มขอกำลังคน
+                        <span className="hidden sm:inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/60">
+                          Manpower Requisition
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">กรอกข้อมูลความต้องการและคุณสมบัติพนักงานที่ต้องการเปิดรับสมัคร</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={handleCopyShareLink}
-                      className="text-xs px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 font-semibold hover:bg-brand-100 transition flex items-center gap-1"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 shadow-2xs transition active:scale-95"
                     >
-                      <Icon name="link" className="w-3 h-3" />
-                      Share Link
+                      <Icon name="link" className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                      <span className="hidden sm:inline">Share Link</span>
                     </button>
-                    <button onClick={() => setShowRequestModal(false)} className="p-2 text-slate-400 hover:text-slate-600">
+                    <button 
+                      onClick={() => setShowRequestModal(false)} 
+                      className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition"
+                    >
                       <Icon name="x" className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
 
-                <form onSubmit={handleFormSubmit} className="py-4 space-y-4 max-h-[70vh] overflow-y-auto text-xs">
-                  {formStep === 1 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-slate-900 dark:text-white border-b pb-1">1. Requester & Approver Info</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Requester Name *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. นางสาว พรธิดา วนเวียน"
-                            value={formInput.requesterName}
-                            onChange={(e) => setFormInput({ ...formInput, requesterName: e.target.value })}
-                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Requester Title *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. People Lead"
-                            value={formInput.requesterPosition}
-                            onChange={(e) => setFormInput({ ...formInput, requesterPosition: e.target.value })}
-                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                          />
-                        </div>
-                      </div>
+                {/* Stepper Header Pills */}
+                <div className="px-6 py-3 bg-slate-100/60 dark:bg-slate-900/90 border-b border-slate-200/60 dark:border-slate-800 shrink-0">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(1)}
+                      className={`px-3 py-2 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2 border ${
+                        formStep === 1 
+                          ? "bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 border-brand-300 dark:border-brand-700 shadow-xs ring-2 ring-brand-500/10" 
+                          : "text-slate-500 dark:text-slate-400 border-transparent hover:bg-white/50 dark:hover:bg-slate-800/40"
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold ${
+                        formStep === 1 ? "bg-brand-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      }`}>1</span>
+                      <span className="truncate">ผู้ขอ & ผู้อนุมัติ</span>
+                    </button>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Requester Email *</label>
-                          <input
-                            type="email"
-                            required
-                            placeholder="name@valuesourcing.co"
-                            value={formInput.requesterEmail}
-                            onChange={(e) => setFormInput({ ...formInput, requesterEmail: e.target.value })}
-                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Department *</label>
-                          <select
-                            value={formInput.department}
-                            onChange={(e) => setFormInput({ ...formInput, department: e.target.value })}
-                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                          >
-                            {DEPARTMENTS.map(d => (
-                              <option key={d} value={d}>{d}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(2)}
+                      className={`px-3 py-2 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2 border ${
+                        formStep === 2 
+                          ? "bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 border-brand-300 dark:border-brand-700 shadow-xs ring-2 ring-brand-500/10" 
+                          : "text-slate-500 dark:text-slate-400 border-transparent hover:bg-white/50 dark:hover:bg-slate-800/40"
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold ${
+                        formStep === 2 ? "bg-brand-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      }`}>2</span>
+                      <span className="truncate">ตำแหน่ง & สถานะ</span>
+                    </button>
 
-                  {formStep === 2 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-slate-900 dark:text-white border-b pb-1">2. Job Specifications</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Title *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Senior Full-Stack Engineer"
-                            value={formInput.jobTitle}
-                            onChange={(e) => setFormInput({ ...formInput, jobTitle: e.target.value })}
-                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Headcount *</label>
-                          <input
-                            type="number"
-                            min="1"
-                            max="20"
-                            required
-                            value={formInput.headcountRequired}
-                            onChange={(e) => setFormInput({ ...formInput, headcountRequired: e.target.value })}
-                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Summary *</label>
-                        <textarea
-                          rows="2"
-                          required
-                          placeholder="Brief description of job responsibilities..."
-                          value={formInput.jobDescription}
-                          onChange={(e) => setFormInput({ ...formInput, jobDescription: e.target.value })}
-                          className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                        ></textarea>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between">
-                    {formStep > 1 ? (
-                      <button
-                        type="button"
-                        onClick={() => setFormStep(formStep - 1)}
-                        className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                      >
-                        Previous
-                      </button>
-                    ) : <div />}
-
-                    {formStep < 2 ? (
-                      <button
-                        type="button"
-                        onClick={() => setFormStep(formStep + 1)}
-                        className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700"
-                      >
-                        Next Step
-                      </button>
-                    ) : (
-                      <button
-                        type="submit"
-                        className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        Submit Requisition
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(3)}
+                      className={`px-3 py-2 rounded-2xl text-[11px] font-bold transition flex items-center justify-center gap-2 border ${
+                        formStep === 3 
+                          ? "bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 border-brand-300 dark:border-brand-700 shadow-xs ring-2 ring-brand-500/10" 
+                          : "text-slate-500 dark:text-slate-400 border-transparent hover:bg-white/50 dark:hover:bg-slate-800/40"
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold ${
+                        formStep === 3 ? "bg-brand-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      }`}>3</span>
+                      <span className="truncate">คุณสมบัติ & IT</span>
+                    </button>
                   </div>
+                </div>
+
+                {/* Form Content Area */}
+                <form onSubmit={handleFormSubmit} className="p-6 space-y-5 overflow-y-auto flex-1 text-xs">
+                  
+                  {/* STEP 1: ผู้ขอ & ผู้อนุมัติ */}
+                  {formStep === 1 && (
+                    <div className="space-y-4 animate-fadeIn">
+                      
+                      {/* Auto Info Banner */}
+                      <div className="p-3 rounded-2xl bg-gradient-to-r from-brand-50/80 to-sky-50/50 dark:from-brand-950/40 dark:to-sky-950/20 border border-brand-200/70 dark:border-brand-900/60 flex items-center justify-between text-[11px]">
+                        <div className="flex items-center gap-2 text-brand-900 dark:text-brand-200 font-medium">
+                          <Icon name="clock" className="w-4 h-4 text-brand-600 shrink-0" />
+                          <span>วันที่ขออัตโนมัติ: <strong className="font-bold">{new Date().toISOString().split('T')[0]}</strong></span>
+                        </div>
+                        <span className="text-slate-400 text-[10px] hidden sm:inline">ระบบจะอัปเดตวันเวลาแก้ไขให้อัตโนมัติเมื่อกดบันทึก</span>
+                      </div>
+
+                      {/* Requester Group Card */}
+                      <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                            <span className="w-2 h-2 rounded-full bg-brand-500"></span>
+                            ข้อมูลผู้ยื่นคำขอ (Requester Details)
+                          </h4>
+                          <span className="text-[10px] text-slate-400 font-medium">* จำเป็นต้องกรอก</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                                ผู้ขอ (Requester Name) <span className="text-rose-500">*</span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => syncPersonnelFromGoogleSheet(true)}
+                                disabled={isSyncingPersonnel}
+                                className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+                              >
+                                <Icon name="refresh" className={`w-3 h-3 ${isSyncingPersonnel ? 'animate-spin' : ''}`} />
+                                {isSyncingPersonnel ? "กำลังซิงค์..." : "ซิงค์จาก Sheet (gid=814265894)"}
+                              </button>
+                            </div>
+                            <SearchableSelect
+                              value={formInput.requesterName}
+                              placeholder="-- พิมพ์เพื่อค้นหาหรือเลือกผู้ขอ --"
+                              options={personnelList.map(p => ({ value: p.name, label: p.name }))}
+                              onChange={(selectedName) => {
+                                const person = personnelList.find(p => p.name === selectedName);
+                                setFormInput(prev => ({
+                                  ...prev,
+                                  requesterName: selectedName,
+                                  requesterEmail: person ? person.email : prev.requesterEmail,
+                                  requesterPosition: person && person.position ? person.position : prev.requesterPosition,
+                                  department: person && person.department ? person.department : prev.department
+                                }));
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              ตำแหน่งผู้ขอ <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="ตำแหน่งของผู้ขอ"
+                              value={formInput.requesterPosition}
+                              onChange={(e) => setFormInput({ ...formInput, requesterPosition: e.target.value })}
+                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              Email ผู้ขอ <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="email"
+                              required
+                              placeholder="email@valuesourcing.co"
+                              value={formInput.requesterEmail}
+                              onChange={(e) => setFormInput({ ...formInput, requesterEmail: e.target.value })}
+                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              สังกัดแผนก (Department) <span className="text-rose-500">*</span>
+                            </label>
+                            <SearchableSelect
+                              value={formInput.department}
+                              placeholder="-- พิมพ์เพื่อค้นหาแผนกสังกัด --"
+                              options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                              onChange={(selectedDept) => setFormInput({ ...formInput, department: selectedDept })}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Approver & Forwarding Group Card */}
+                      <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            ผู้อนุมัติ & การส่งต่อเอกสาร (Approval & Forwarding)
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              รายชื่อผู้อนุมัติ <span className="text-rose-500">*</span>
+                            </label>
+                            <SearchableSelect
+                              value={formInput.approverName}
+                              placeholder="-- เลือกหรือพิมพ์รายชื่อผู้อนุมัติ --"
+                              options={personnelList.map(p => ({ value: p.name, label: p.name }))}
+                              onChange={(selectedName) => {
+                                const person = personnelList.find(p => p.name === selectedName);
+                                setFormInput(prev => ({
+                                  ...prev,
+                                  approverName: selectedName,
+                                  approverEmail: person ? person.email : prev.approverEmail
+                                }));
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              Email ผู้อนุมัติ <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="email"
+                              required
+                              placeholder="approver@valuesourcing.co"
+                              value={formInput.approverEmail}
+                              onChange={(e) => setFormInput({ ...formInput, approverEmail: e.target.value })}
+                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ส่งต่อให้กับ</label>
+                            <SearchableSelect
+                              value={formInput.forwardTo}
+                              placeholder="-- เลือกหรือพิมพ์ผู้รับส่งต่อ --"
+                              options={personnelList.map(p => ({ value: p.name, label: p.name }))}
+                              onChange={(selectedName) => {
+                                const person = personnelList.find(p => p.name === selectedName);
+                                setFormInput(prev => ({
+                                  ...prev,
+                                  forwardTo: selectedName,
+                                  forwardEmail: person ? person.email : prev.forwardEmail
+                                }));
+                              }}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Email ผู้รับส่งต่อ</label>
+                            <input
+                              type="email"
+                              placeholder="forward@valuesourcing.co"
+                              value={formInput.forwardEmail}
+                              onChange={(e) => setFormInput({ ...formInput, forwardEmail: e.target.value })}
+                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ส่งต่อให้ People 🔒</label>
+                            <input
+                              type="text"
+                              readOnly
+                              value={formInput.forwardToPeopleDept}
+                              className="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold cursor-not-allowed"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Email People 🔒</label>
+                            <input
+                              type="email"
+                              readOnly
+                              value={formInput.peopleEmail}
+                              className="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-brand-400 font-bold cursor-not-allowed"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* STEP 2: ตำแหน่งงาน & สถานะ */}
+                  {formStep === 2 && (
+                    <div className="space-y-4 animate-fadeIn">
+                      
+                      <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                            รายละเอียดตำแหน่งงานที่เปิดรับ (Position Details)
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              ชื่อตำแหน่งที่ต้องการรับ (Job Title) <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. Factory Housekeeper Staff"
+                              value={formInput.jobTitle}
+                              onChange={(e) => setFormInput({ ...formInput, jobTitle: e.target.value })}
+                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              อัตราที่ต้องการ (Headcount) <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="flex items-center space-x-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setFormInput(prev => ({ ...prev, headcountRequired: Math.max(1, (Number(prev.headcountRequired) || 1) - 1) }))}
+                                className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-extrabold text-base flex items-center justify-center transition active:scale-95 shrink-0"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                required
+                                value={formInput.headcountRequired}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setFormInput(prev => ({
+                                    ...prev,
+                                    headcountRequired: val === "" ? "" : Math.max(1, parseInt(val) || 1)
+                                  }));
+                                }}
+                                onBlur={() => {
+                                  if (!formInput.headcountRequired || Number(formInput.headcountRequired) < 1) {
+                                    setFormInput(prev => ({ ...prev, headcountRequired: 1 }));
+                                  }
+                                }}
+                                className="w-full text-center px-3 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-bold text-brand-600 dark:text-brand-400"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setFormInput(prev => ({ ...prev, headcountRequired: (Number(prev.headcountRequired) || 1) + 1 }))}
+                                className="w-10 h-10 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-base flex items-center justify-center transition active:scale-95 shrink-0 shadow-xs"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              รายละเอียดตำแหน่ง <span className="text-rose-500">*</span>
+                            </label>
+                            <SearchableSelect
+                              value={formInput.positionType}
+                              options={[
+                                { value: "Replacement", label: "ทดแทนตำแหน่งเดิม (Replacement)" },
+                                { value: "New Headcount", label: "เปิดตำแหน่งใหม่ (New Headcount)" }
+                              ]}
+                              onChange={(selectedType) => setFormInput({ ...formInput, positionType: selectedType })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              ต้องการภายในวันที่ (Target Date) <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="date"
+                              required
+                              value={formInput.targetDate}
+                              onChange={(e) => setFormInput({ ...formInput, targetDate: e.target.value })}
+                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              Buddy (พี่เลี้ยง)
+                            </label>
+                            <SearchableSelect
+                              value={formInput.buddy}
+                              placeholder="-- เลือกหรือพิมพ์ชื่อ Buddy --"
+                              options={personnelList.map(p => ({ value: p.name, label: p.name }))}
+                              onChange={(selectedBuddy) => setFormInput({ ...formInput, buddy: selectedBuddy })}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            ลักษณะงานโดยย่อ <span className="text-rose-500">*</span>
+                          </label>
+                          <textarea
+                            rows="3"
+                            required
+                            placeholder="สรุปหน้าที่ความรับผิดชอบหลักของตำแหน่งงาน..."
+                            value={formInput.jobDescription}
+                            onChange={(e) => setFormInput({ ...formInput, jobDescription: e.target.value })}
+                            className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs"
+                          ></textarea>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            รายละเอียดส่งให้ทีม People
+                          </label>
+                          <textarea
+                            rows="2"
+                            placeholder="ข้อมูลเพิ่มเติมเฉพาะสำหรับทีม People / HR..."
+                            value={formInput.detailsForPeople}
+                            onChange={(e) => setFormInput({ ...formInput, detailsForPeople: e.target.value })}
+                            className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                          ></textarea>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            หมายเหตุจากผู้อนุมัติ 1
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="ข้อความหรือหมายเหตุเพิ่มเติม..."
+                            value={formInput.approverNote1}
+                            onChange={(e) => setFormInput({ ...formInput, approverNote1: e.target.value })}
+                            className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะอนุมัติ L1</label>
+                            <SearchableSelect
+                              value={formInput.approvalStatusL1}
+                              options={["Approved", "Pending", "Rejected"]}
+                              onChange={(val) => setFormInput({ ...formInput, approvalStatusL1: val })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะอนุมัติ L2</label>
+                            <SearchableSelect
+                              value={formInput.approvalStatusL2}
+                              options={["Pending", "Approved", "Rejected"]}
+                              onChange={(val) => setFormInput({ ...formInput, approvalStatusL2: val })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะปัจจุบันของเอกสาร</label>
+                            <SearchableSelect
+                              value={formInput.docStatus}
+                              options={["Pending", "Approved", "In Progress", "Cancelled"]}
+                              onChange={(val) => setFormInput({ ...formInput, docStatus: val })}
+                            />
+                          </div>
+                        </div>
+
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* STEP 3: คุณสมบัติ & IT Assets */}
+                  {formStep === 3 && (
+                    <div className="space-y-4 animate-fadeIn">
+                      
+                      <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                            <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                            คุณสมบัติผู้สมัครที่ต้องการ (Candidate Qualifications)
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">เพศ (Gender)</label>
+                            <SearchableSelect
+                              value={formInput.gender}
+                              options={[
+                                { value: "Any", label: "ไม่จำกัดเพศ (Any)" },
+                                { value: "Male", label: "ชาย (Male)" },
+                                { value: "Female", label: "หญิง (Female)" }
+                              ]}
+                              onChange={(val) => setFormInput({ ...formInput, gender: val })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ช่วงอายุ (Age)</label>
+                            <SearchableSelect
+                              value={formInput.age}
+                              placeholder="-- เลือกช่วงอายุ --"
+                              options={AGE_OPTIONS.map(a => ({ value: a, label: a }))}
+                              onChange={(val) => setFormInput({ ...formInput, age: val })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              ระดับการศึกษา (Education)
+                            </label>
+                            <SearchableSelect
+                              value={formInput.education}
+                              placeholder="-- เลือกหรือพิมพ์ระดับการศึกษา --"
+                              options={EDUCATION_OPTIONS.map(e => ({ value: e, label: e }))}
+                              onChange={(val) => setFormInput({ ...formInput, education: val })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">สาขาวิชา (Major)</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. วิทยาการคอมพิวเตอร์"
+                              value={formInput.major}
+                              onChange={(e) => setFormInput({ ...formInput, major: e.target.value })}
+                              className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                              ประสบการณ์ในการทำงาน (Experience)
+                            </label>
+                            <SearchableSelect
+                              value={formInput.experience}
+                              placeholder="-- เลือกหรือพิมพ์ประสบการณ์ทำงาน --"
+                              options={EXPERIENCE_OPTIONS.map(exp => ({ value: exp, label: exp }))}
+                              onChange={(val) => setFormInput({ ...formInput, experience: val })}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">คุณสมบัติที่จำเป็น / ทักษะ</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. ใบรับรองคนพิการ, React, Excel"
+                              value={formInput.requiredSkills}
+                              onChange={(e) => setFormInput({ ...formInput, requiredSkills: e.target.value })}
+                              className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* IT Assets Checklist Card */}
+                      <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
+                            <span className="w-2 h-2 rounded-full bg-sky-500"></span>
+                            อุปกรณ์ IT & สิทธิ์การใช้งานที่ต้องจัดเตรียม (Equipment Setup)
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                          {[
+                            { key: 'laptop', label: 'Laptop / PC', desc: 'เครื่องคอมพิวเตอร์' },
+                            { key: 'simCard', label: 'Sim Card', desc: 'ซิมการ์ดโทรศัพท์' },
+                            { key: 'email', label: 'Email Account', desc: 'อีเมลองค์กร' },
+                            { key: 'netsuite', label: 'ERP NetSuite', desc: 'สิทธิ์ระบบ ERP' }
+                          ].map(item => (
+                            <label
+                              key={item.key}
+                              className={`p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
+                                formInput.equipment[item.key]
+                                  ? "bg-brand-50/90 dark:bg-brand-950/60 border-brand-300 dark:border-brand-700 text-brand-900 dark:text-brand-200 shadow-2xs"
+                                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-bold text-xs">{item.label}</span>
+                                <input
+                                  type="checkbox"
+                                  checked={formInput.equipment[item.key]}
+                                  onChange={(e) => setFormInput({
+                                    ...formInput,
+                                    equipment: { ...formInput.equipment, [item.key]: e.target.checked }
+                                  })}
+                                  className="w-4 h-4 rounded-md text-brand-600 focus:ring-brand-500 border-slate-300"
+                                />
+                              </div>
+                              <span className="text-[10px] text-slate-400">{item.desc}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
                 </form>
+
+                {/* Modal Footer Action Bar */}
+                <div className="px-6 py-4 bg-slate-50/90 dark:bg-slate-800/80 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
+                  {formStep > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(formStep - 1)}
+                      className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition active:scale-95 flex items-center gap-1.5"
+                    >
+                      <span>← ย้อนกลับ (Previous)</span>
+                    </button>
+                  ) : <div />}
+
+                  {formStep < 3 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFormStep(formStep + 1)}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-700 hover:to-sky-600 shadow-md shadow-brand-500/20 transition active:scale-95 flex items-center gap-1.5"
+                    >
+                      <span>ถัดไป (Next Step) →</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleFormSubmit}
+                      className="px-6 py-2.5 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-md shadow-emerald-600/20 transition active:scale-95 flex items-center gap-1.5"
+                    >
+                      <span>✨ บันทึกคำขอกำลังคน (Submit Requisition)</span>
+                    </button>
+                  )}
+                </div>
+
               </div>
             </div>
           )}
 
-          {}
+          {/* Details Modal */}
           {selectedDetailRequest && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -1677,7 +2497,7 @@
                       }`}>
                         <div className="flex items-center gap-2">
                           <Icon name="clock" className="w-4 h-4" />
-                          <span>Request Date: {selectedDetailRequest.requestDate} ({sla.daysElapsed} days elapsed)</span>
+                          <span>วันที่ขอ: {selectedDetailRequest.requestDate} ({sla.daysElapsed} days elapsed)</span>
                         </div>
                         <div>
                           {sla.isCompleted ? (
@@ -1694,20 +2514,20 @@
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                     <div>
-                      <p className="text-[10px] text-slate-400">Headcount</p>
-                      <p className="font-bold text-brand-600">{selectedDetailRequest.headcountRequired}</p>
+                      <p className="text-[10px] text-slate-400">อัตราที่ต้องการ</p>
+                      <p className="font-bold text-brand-600">{selectedDetailRequest.headcountRequired} คน</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-400">Target Date</p>
+                      <p className="text-[10px] text-slate-400">ต้องการภายในวันที่</p>
                       <p className="font-bold text-slate-800 dark:text-slate-200">{selectedDetailRequest.targetDate}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-400">L1 Approval</p>
-                      <p className="font-bold text-emerald-600">{selectedDetailRequest.approvalStatusL1}</p>
+                      <p className="text-[10px] text-slate-400">รายละเอียดตำแหน่ง</p>
+                      <p className="font-bold text-emerald-600">{selectedDetailRequest.positionType}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-400">Current Stage</p>
-                      <p className="font-bold text-amber-600">{selectedDetailRequest.stage}</p>
+                      <p className="text-[10px] text-slate-400">สถานะเอกสาร</p>
+                      <p className="font-bold text-amber-600">{selectedDetailRequest.docStatus || 'Pending'}</p>
                     </div>
                   </div>
 
@@ -1794,7 +2614,7 @@
                   )}
 
                   <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white mb-1">Job Summary</h4>
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-1">ลักษณะงานโดยย่อ</h4>
                     <p className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                       {selectedDetailRequest.jobDescription}
                     </p>
@@ -1802,15 +2622,24 @@
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                      <p className="font-bold text-slate-900 dark:text-white mb-1">Requester</p>
+                      <p className="font-bold text-slate-900 dark:text-white mb-1">ข้อมูลผู้ขอ (Requester)</p>
                       <p>{selectedDetailRequest.requesterName} ({selectedDetailRequest.requesterPosition})</p>
                       <p className="text-brand-600">{selectedDetailRequest.requesterEmail}</p>
                     </div>
                     <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                      <p className="font-bold text-slate-900 dark:text-white mb-1">Approver</p>
+                      <p className="font-bold text-slate-900 dark:text-white mb-1">ข้อมูลผู้อนุมัติ (Approver)</p>
                       <p>{selectedDetailRequest.approverName}</p>
                       <p className="text-brand-600">{selectedDetailRequest.approverEmail}</p>
                     </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 space-y-1">
+                    <p><strong>ระดับการศึกษา:</strong> {selectedDetailRequest.education || '-'}</p>
+                    <p><strong>ประสบการณ์ทำงาน:</strong> {selectedDetailRequest.experience || '-'}</p>
+                    <p><strong>ส่งต่อให้กับ:</strong> {selectedDetailRequest.forwardTo || '-'} ({selectedDetailRequest.forwardEmail || '-'})</p>
+                    <p><strong>ส่งต่อให้ People:</strong> {selectedDetailRequest.forwardToPeopleDept || '-'} ({selectedDetailRequest.peopleEmail || '-'})</p>
+                    <p><strong>Buddy (พี่เลี้ยง):</strong> {selectedDetailRequest.buddy || '-'}</p>
+                    <p><strong>วันที่แก้ไขล่าสุด:</strong> {selectedDetailRequest.lastUpdated || '-'}</p>
                   </div>
 
                   {selectedDetailRequest.cancellationReason && (
@@ -1833,7 +2662,174 @@
             </div>
           )}
 
-          {}
+          {/* Personnel Directory Admin Modal */}
+          {showPersonnelModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="users" className="w-5 h-5 text-purple-600" />
+                    จัดการรายชื่อบุคลากรในระบบ (Manage Personnel Directory)
+                  </h3>
+                  <button onClick={() => setShowPersonnelModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="py-4 space-y-4 text-xs max-h-[60vh] overflow-y-auto pr-1">
+                  
+                  {/* Add New Personnel Form */}
+                  <form onSubmit={handleAddPerson} className="p-3.5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 space-y-3">
+                    <h4 className="font-bold text-purple-900 dark:text-purple-300 text-xs">➕ เพิ่มรายชื่อบุคลากรใหม่</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="ชื่อ-นามสกุล (e.g. สมชาย ใจดี)"
+                        value={newPersonName}
+                        onChange={(e) => setNewPersonName(e.target.value)}
+                        className="p-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-purple-500"
+                      />
+                      <input
+                        type="email"
+                        required
+                        placeholder="Email (e.g. somchai.ja@valuesourcing.co)"
+                        value={newPersonEmail}
+                        onChange={(e) => setNewPersonEmail(e.target.value)}
+                        className="p-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-purple-500"
+                      />
+                      <input
+                        type="text"
+                        placeholder="ตำแหน่ง (e.g. Operations Manager)"
+                        value={newPersonPosition}
+                        onChange={(e) => setNewPersonPosition(e.target.value)}
+                        className="p-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-purple-500"
+                      />
+                      <SearchableSelect
+                        value={newPersonDept}
+                        options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                        onChange={(val) => setNewPersonDept(val)}
+                        placeholder="-- เลือกแผนกสังกัด --"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        className="px-4 py-1.5 rounded-xl text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 transition"
+                      >
+                        + เพิ่มรายชื่อ
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Personnel Directory List */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                        รายชื่อบุคลากรปัจจุบัน ({personnelList.length} รายชื่อ)
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => syncPersonnelFromGoogleSheet(true)}
+                        disabled={isSyncingPersonnel}
+                        className="text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+                      >
+                        <Icon name="refresh" className={`w-3.5 h-3.5 ${isSyncingPersonnel ? 'animate-spin' : ''}`} />
+                        ซิงค์ข้อมูลจาก Google Sheet (gid=814265894)
+                      </button>
+                    </div>
+
+                    {personnelList.map((person, idx) => (
+                      <div 
+                        key={`person-${idx}`}
+                        className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      >
+                        {editingPersonIndex === idx ? (
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                            <input
+                              type="text"
+                              value={editPersonName}
+                              onChange={(e) => setEditPersonName(e.target.value)}
+                              className="p-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600"
+                            />
+                            <input
+                              type="email"
+                              value={editPersonEmail}
+                              onChange={(e) => setEditPersonEmail(e.target.value)}
+                              className="p-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600"
+                            />
+                            <input
+                              type="text"
+                              value={editPersonPosition}
+                              onChange={(e) => setEditPersonPosition(e.target.value)}
+                              className="p-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600"
+                            />
+                            <SearchableSelect
+                              value={editPersonDept}
+                              options={DEPARTMENTS.map(d => ({ value: d, label: d }))}
+                              onChange={(val) => setEditPersonDept(val)}
+                              placeholder="-- เลือกแผนก --"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex-1">
+                            <div className="font-bold text-slate-900 dark:text-white text-xs">{person.name}</div>
+                            <div className="text-[11px] text-brand-600 dark:text-brand-400">{person.email || "No Email"}</div>
+                            <div className="text-[10px] text-slate-400">{person.position || "Staff"} &bull; {person.department || "-"}</div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {editingPersonIndex === idx ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEditPerson(idx)}
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition"
+                            >
+                              บันทึก
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingPersonIndex(idx);
+                                setEditPersonName(person.name);
+                                setEditPersonEmail(person.email);
+                                setEditPersonPosition(person.position || "");
+                                setEditPersonDept(person.department || "-");
+                              }}
+                              className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-300 transition"
+                            >
+                              แก้ไข
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePerson(idx)}
+                            className="px-2 py-1 rounded-lg text-[10px] font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 transition"
+                          >
+                            ลบ
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setShowPersonnelModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Cancel Reason Modal */}
           {cancelModalItem && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
@@ -1874,7 +2870,7 @@
             </div>
           )}
 
-          {}
+          {/* Sheets Config Modal */}
           {showSheetsModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
@@ -1912,20 +2908,6 @@
                     />
                     <p className="text-[10px] text-slate-400 mt-1">Paste your deployed Apps Script Web App URL here to stream submissions live into Google Sheets.</p>
                   </div>
-
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
-                    <p className="font-bold text-slate-800 dark:text-slate-200">1-Minute Apps Script Deploy Guide:</p>
-                    <ol className="list-decimal pl-4 space-y-1 text-slate-600 dark:text-slate-400 text-[11px]">
-                      <li>Open your Google Sheet &rarr; Click <strong>Extensions &rarr; Apps Script</strong>.</li>
-                      <li>Paste this code: <br />
-                        <code className="block bg-slate-200 dark:bg-slate-900 p-2 rounded text-[10px] my-1 text-slate-800 dark:text-slate-200 select-all">
-                          {`function doPost(e) { const data = JSON.parse(e.postData.contents); const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet(); sheet.appendRow([data.id, data.requestDate, data.requesterName, data.jobTitle, data.department, data.headcountRequired, data.stage, data.targetDate]); return ContentService.createTextOutput("Success"); }`}
-                        </code>
-                      </li>
-                      <li>Click <strong>Deploy &rarr; New deployment &rarr; Web app</strong>.</li>
-                      <li>Set <i>"Who has access"</i> to <strong>Anyone</strong> &rarr; Deploy &amp; copy the Web App URL into the field above!</li>
-                    </ol>
-                  </div>
                 </div>
 
                 <div className="flex gap-2 justify-end pt-2 border-t border-slate-200 dark:border-slate-800">
@@ -1940,7 +2922,7 @@
             </div>
           )}
 
-          {}
+          {/* Admin Login Modal */}
           {showLoginModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
@@ -1981,7 +2963,7 @@
             </div>
           )}
 
-          {}
+          {/* Toast Notification */}
           {toastMessage && (
             <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl text-xs font-semibold flex items-center gap-2 animate-bounce">
               <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
