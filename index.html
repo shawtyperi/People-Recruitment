@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HR Recruitment & Headcount Tracking Dashboard</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49',
+              950: '#03192a',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Sarabun', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- React & Babel for Single-File Execution -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', 'Sarabun', sans-serif;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.35);
+      border-radius: 9999px;
+    }
+    .glass-effect {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 h-full flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+  <div id="root" class="h-full flex flex-col"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1-B8OanU7ZJoluFfpZPH45gCo2FhXOOrIZUpjzKDcUlM/edit?gid=0#gid=0";
+
+    const DEPARTMENTS = [
+      "7-Eleven Channel Department",
+      "AI & Digital Integration Department",
+      "Amathal Department",
+      "Amathopia Clinic Department",
+      "Appertise TasteLab Department",
+      "Culture & HR-AI Department",
+      "Executive Assistance & Admin Department",
+      "Happy Harvest Department",
+      "Human Resource Business Partner Department",
+      "Internal Control & Risk Management Department",
+      "Occupational Health & Safety Department",
+      "Product Strategy & Creative Architect Department",
+      "Production Department",
+      "Quality Assurance Department",
+      "Quality Control Department",
+      "Reo’s Selection Department",
+      "Supply Chain Management Department",
+      "TOC & AI Academy Department",
+      "TOE Throughput Operations Excellence Department",
+      "VSC - Wealth Creation Department",
+      "Value Creation System Data Department",
+      "Viboth (P&L) Dept. Negotiate & Consultant Department",
+      "Warehouse Department",
+      "Wealth Creation Department"
+    ];
+
+    const STAGES = [
+      { id: "received", label: "Request Received", color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" },
+      { id: "sourcing", label: "Sourcing & Screening", color: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" },
+      { id: "interview", label: "Interview Stage", color: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300" },
+      { id: "offer", label: "Offer Sent", color: "bg-purple-50 text-purple-700 dark:bg-purple-950/60 text-purple-300" },
+      { id: "onboarded", label: "Onboarded / Filled", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" },
+      { id: "cancelled", label: "Cancelled / Rejected", color: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300" }
+    ];
+
+    const STANDARD_SLA_DAYS = 30;
+
+    const getSLAInfo = (requestDate, stage) => {
+      const start = new Date(requestDate);
+      const today = new Date();
+      const diffTime = today - start;
+      const daysElapsed = Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+      const daysRemaining = STANDARD_SLA_DAYS - daysElapsed;
+      const isCompleted = stage === "onboarded" || stage === "cancelled";
+      const isOverdue = !isCompleted && daysElapsed > STANDARD_SLA_DAYS;
+
+      return {
+        daysElapsed,
+        daysRemaining,
+        isOverdue,
+        isCompleted
+      };
+    };
+
+    const INITIAL_RECRUITMENT_DATA = [
+      {
+        id: "REQ-2025-001",
+        requestDate: "2025-08-27",
+        requesterName: "นางสาว พรธิดา วนเวียน",
+        requesterPosition: "People Business Partner Team Lead (Factory)",
+        requesterEmail: "porntida.wo@valuesourcing.co",
+        approverName: "นางสาววรีรัตน์ รุจอุฬาร",
+        approverEmail: "wareerat.ru@valuesourcing.co",
+        forwardTo: "นางสาววรีรัตน์ รุจอุฬาร",
+        forwardEmail: "wareerat.ru@valuesourcing.co",
+        lastUpdated: "2025-08-27 09:21:20",
+        approverNote1: "ต้องการจ้างงานคนพิการตามที่กฎหมายกำหนด",
+        approvalStatusL1: "Approved",
+        approvalStatusL2: "Approved",
+        detailsForPeople: "ต้องการจ้างงานคนพิการตามที่กฎหมายกำหนด",
+        headcountRequired: 1,
+        positionType: "Replacement",
+        docStatus: "Approved",
+        forwardToPeopleDept: "Culture & HR-AI Department",
+        peopleEmail: "people@valuesourcing.co",
+        buddy: "นางสาว วันวิสาข์ จันที",
+        jobTitle: "Factory Housekeeper Staff (Factory) (L1A)",
+        department: "Production Department",
+        jobDescription: "ทำความสะอาดดูแลความเรียบร้อยของพื้นที่และอาคาร",
+        gender: "Male",
+        age: "Under 35",
+        education: "Grade 9+",
+        major: "-",
+        experience: "Fresh Graduate / 1 Year",
+        requiredSkills: "Disabled Person Certificate",
+        targetDate: "2025-09-26",
+        equipment: { laptop: false, simCard: false, email: false, netsuite: false },
+        stage: "interview",
+        cancellationReason: "",
+        candidateName: "นาย สมศักดิ์ มีสุข",
+        resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view?usp=sharing"
+      },
+      {
+        id: "REQ-2025-002",
+        requestDate: "2025-08-28",
+        requesterName: "นาย ภานุวัฒน์ เดชสกุล",
+        requesterPosition: "AI System Architect",
+        requesterEmail: "panuwat.de@valuesourcing.co",
+        approverName: "นาย สมชาย พัฒนาการ",
+        approverEmail: "somchai.pa@valuesourcing.co",
+        forwardTo: "นาย สมชาย พัฒนาการ",
+        forwardEmail: "somchai.pa@valuesourcing.co",
+        lastUpdated: "2025-08-28 14:10:00",
+        approverNote1: "Core Platform Expansion",
+        approvalStatusL1: "Approved",
+        approvalStatusL2: "Approved",
+        detailsForPeople: "Need React & Python AI integration expertise",
+        headcountRequired: 2,
+        positionType: "New Headcount",
+        docStatus: "Approved",
+        forwardToPeopleDept: "AI & Digital Integration Department",
+        peopleEmail: "people@valuesourcing.co",
+        buddy: "นาย เอกชัย มั่นคง",
+        jobTitle: "Senior Full-Stack AI Engineer",
+        department: "AI & Digital Integration Department",
+        jobDescription: "Develop and deploy enterprise LLM and AI workflows",
+        gender: "Any",
+        age: "25 - 38",
+        education: "Bachelor's Degree",
+        major: "Computer Science / Software Engineering",
+        experience: "3-5 Years",
+        requiredSkills: "TypeScript, Python, React, OpenAI APIs",
+        targetDate: "2025-09-27",
+        equipment: { laptop: true, simCard: false, email: true, netsuite: true },
+        stage: "sourcing",
+        cancellationReason: "",
+        candidateName: "นาย วรวิทย์ พัฒนาพร",
+        resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink002/view?usp=sharing"
+      },
+      {
+        id: "REQ-2025-003",
+        requestDate: "2025-08-29",
+        requesterName: "นาง กนกวรรณ จันทร์เรือง",
+        requesterPosition: "Supply Chain Manager",
+        requesterEmail: "kanokwan.ch@valuesourcing.co",
+        approverName: "นาย สุรเชษฐ์ เจริญสุข",
+        approverEmail: "surachet.ch@valuesourcing.co",
+        forwardTo: "นาย สุรเชษฐ์ เจริญสุข",
+        forwardEmail: "surachet.ch@valuesourcing.co",
+        lastUpdated: "2025-08-29 11:30:00",
+        approverNote1: "Q4 Distribution Scaling",
+        approvalStatusL1: "Approved",
+        approvalStatusL2: "Pending",
+        detailsForPeople: "Warehouse inventory experience needed",
+        headcountRequired: 3,
+        positionType: "New Headcount",
+        docStatus: "Pending",
+        forwardToPeopleDept: "Supply Chain Management Department",
+        peopleEmail: "people@valuesourcing.co",
+        buddy: "นางสาว มัลลิกา โอบอ้อม",
+        jobTitle: "Logistics & Inventory Officer",
+        department: "Supply Chain Management Department",
+        jobDescription: "Manage logistics operations, stock control, and warehouse throughput",
+        gender: "Any",
+        age: "24 - 35",
+        education: "Bachelor's Degree",
+        major: "Logistics or related fields",
+        experience: "2+ Years",
+        requiredSkills: "WMS, ERP Netsuite, Excel",
+        targetDate: "2025-09-28",
+        equipment: { laptop: true, simCard: true, email: true, netsuite: true },
+        stage: "received",
+        cancellationReason: "",
+        candidateName: "",
+        resumeUrl: ""
+      }
+    ];
+
+    const Icon = ({ name, className = "" }) => {
+      const hasSize = /\b(w-|h-)/.test(className);
+      const finalClass = `${hasSize ? '' : 'w-4 h-4 '} ${className}`.trim();
+
+      switch (name) {
+        case "briefcase":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>;
+        case "users":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>;
+        case "userSearch":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>;
+        case "checkCircle":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+        case "plus":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>;
+        case "lock":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>;
+        case "shieldCheck":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>;
+        case "sun":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>;
+        case "moon":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>;
+        case "search":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>;
+        case "download":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>;
+        case "eye":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>;
+        case "x":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>;
+        case "chart":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>;
+        case "grid":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>;
+        case "externalLink":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>;
+        case "logOut":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>;
+        case "clock":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+        case "building":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a2 2 0 012-2h2a2 2 0 012 2v5m-6 0h6"/></svg>;
+        case "link":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>;
+        case "refresh":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>;
+        default:
+          return null;
+      }
+    };
+
+    function App() {
+      const [requests, setRequests] = useState(() => {
+        const saved = localStorage.getItem("hr_headcount_requests_v8");
+        return saved ? JSON.parse(saved) : INITIAL_RECRUITMENT_DATA;
+      });
+
+      const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc/exec";
+
+      const [googleScriptUrl, setGoogleScriptUrl] = useState(() => {
+        return localStorage.getItem("hr_google_script_url") || DEFAULT_SCRIPT_URL;
+      });
+
+      const [darkMode, setDarkMode] = useState(() => {
+        return localStorage.getItem("theme_mode") === "dark" || 
+               (!('theme_mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      });
+
+      const [currentView, setCurrentView] = useState("public");
+      const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+      const [showLoginModal, setShowLoginModal] = useState(false);
+      const [showSheetsModal, setShowSheetsModal] = useState(false);
+      const [adminPasscode, setAdminPasscode] = useState("");
+      const [loginError, setLoginError] = useState("");
+
+      const [searchQuery, setSearchQuery] = useState("");
+      const [selectedMonthFilter, setSelectedMonthFilter] = useState("ALL");
+      const [selectedYearFilter, setSelectedYearFilter] = useState("ALL");
+
+      const [showRequestModal, setShowRequestModal] = useState(false);
+      const [selectedDetailRequest, setSelectedDetailRequest] = useState(null);
+      const [selectedDepartmentDetail, setSelectedDepartmentDetail] = useState(null);
+      const [cancelModalItem, setCancelModalItem] = useState(null);
+      const [cancelReasonInput, setCancelReasonInput] = useState("");
+      const [toastMessage, setToastMessage] = useState("");
+
+      const [activeKpiModalType, setActiveKpiModalType] = useState(null);
+      const [isEditingCandidate, setIsEditingCandidate] = useState(false);
+      const [candidateNameInput, setCandidateNameInput] = useState("");
+      const [resumeUrlInput, setResumeUrlInput] = useState("");
+      const [draggedRequestId, setDraggedRequestId] = useState(null);
+
+      const initialForm = {
+        requesterName: "",
+        requesterPosition: "",
+        requesterEmail: "",
+        approverName: "นางสาววรีรัตน์ รุจอุฬาร",
+        approverEmail: "wareerat.ru@valuesourcing.co",
+        forwardTo: "นางสาววรีรัตน์ รุจอุฬาร",
+        forwardEmail: "wareerat.ru@valuesourcing.co",
+        approverNote1: "",
+        detailsForPeople: "",
+        headcountRequired: 1,
+        positionType: "Replacement",
+        forwardToPeopleDept: "Culture & HR-AI Department",
+        peopleEmail: "people@valuesourcing.co",
+        buddy: "",
+        jobTitle: "",
+        department: DEPARTMENTS[0],
+        jobDescription: "",
+        gender: "Any",
+        age: "Under 35",
+        education: "Bachelor's Degree",
+        major: "-",
+        experience: "1-2 Years",
+        requiredSkills: "",
+        targetDate: new Date().toISOString().split('T')[0],
+        equipment: { laptop: true, simCard: false, email: true, netsuite: false }
+      };
+      const [formInput, setFormInput] = useState(initialForm);
+      const [formStep, setFormStep] = useState(1);
+
+      useEffect(() => {
+        if (darkMode) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme_mode', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme_mode', 'light');
+        }
+      }, [darkMode]);
+
+      useEffect(() => {
+        localStorage.setItem("hr_headcount_requests_v8", JSON.stringify(requests));
+      }, [requests]);
+
+      useEffect(() => {
+        localStorage.setItem("hr_google_script_url", googleScriptUrl);
+      }, [googleScriptUrl]);
+
+      useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('openRequest') === 'true') {
+          setShowRequestModal(true);
+        }
+      }, []);
+
+      const triggerToast = (msg) => {
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(""), 3500);
+      };
+
+      const handleCopyShareLink = () => {
+        const baseUrl = window.location.href.split('?')[0];
+        const shareUrl = `${baseUrl}?openRequest=true`;
+        
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          triggerToast("คัดลอกลิงก์ฟอร์มแล้ว! ส่งต่อให้ผู้อื่นกรอกขอกำลังคนได้ทันที 🔗");
+        } catch (err) {
+          triggerToast("Share Link: " + shareUrl);
+        }
+        document.body.removeChild(textArea);
+      };
+
+      const filteredRequests = useMemo(() => {
+        return requests.filter(r => {
+          const query = searchQuery.toLowerCase();
+          const matchQuery = r.jobTitle.toLowerCase().includes(query) ||
+                             r.id.toLowerCase().includes(query) ||
+                             r.department.toLowerCase().includes(query) ||
+                             r.requesterName.toLowerCase().includes(query);
+
+          if (!matchQuery) return false;
+
+          const reqDate = new Date(r.requestDate);
+          const monthStr = String(reqDate.getMonth() + 1).padStart(2, '0');
+          const yearStr = String(reqDate.getFullYear());
+
+          const matchMonth = selectedMonthFilter === "ALL" || monthStr === selectedMonthFilter;
+          const matchYear = selectedYearFilter === "ALL" || yearStr === selectedYearFilter;
+
+          return matchMonth && matchYear;
+        });
+      }, [requests, searchQuery, selectedMonthFilter, selectedYearFilter]);
+
+      const departmentStats = useMemo(() => {
+        const statsMap = {};
+        DEPARTMENTS.forEach(dept => {
+          statsMap[dept] = { total: 0, open: 0, filled: 0, cancelled: 0 };
+        });
+
+        filteredRequests.forEach(r => {
+          const dept = r.department;
+          if (!statsMap[dept]) {
+            statsMap[dept] = { total: 0, open: 0, filled: 0, cancelled: 0 };
+          }
+          const hc = Number(r.headcountRequired) || 1;
+          statsMap[dept].total += hc;
+          if (r.stage === "onboarded") {
+            statsMap[dept].filled += hc;
+          } else if (r.stage === "cancelled") {
+            statsMap[dept].cancelled += hc;
+          } else {
+            statsMap[dept].open += hc;
+          }
+        });
+
+        return Object.entries(statsMap)
+          .map(([department, counts]) => ({ department, ...counts }))
+          .sort((a, b) => b.total - a.total);
+      }, [filteredRequests]);
+
+      const kpis = useMemo(() => {
+        const totalReq = filteredRequests.reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
+        const openReq = filteredRequests.filter(r => r.stage !== "onboarded" && r.stage !== "cancelled").reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
+        const filledReq = filteredRequests.filter(r => r.stage === "onboarded").reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
+        const cancelledReq = filteredRequests.filter(r => r.stage === "cancelled").reduce((sum, r) => sum + (Number(r.headcountRequired) || 1), 0);
+        return { totalReq, openReq, filledReq, cancelledReq };
+      }, [filteredRequests]);
+
+      const activeKpiItems = useMemo(() => {
+        if (!activeKpiModalType) return [];
+        if (activeKpiModalType === "total") return filteredRequests;
+        if (activeKpiModalType === "open") return filteredRequests.filter(r => r.stage !== "onboarded" && r.stage !== "cancelled");
+        if (activeKpiModalType === "filled") return filteredRequests.filter(r => r.stage === "onboarded");
+        if (activeKpiModalType === "cancelled") return filteredRequests.filter(r => r.stage === "cancelled");
+        return [];
+      }, [filteredRequests, activeKpiModalType]);
+
+      const activeKpiTitle = useMemo(() => {
+        if (activeKpiModalType === "total") return "Total Headcount Requisitions";
+        if (activeKpiModalType === "open") return "Open Pipeline Positions";
+        if (activeKpiModalType === "filled") return "Onboarded / Filled Positions";
+        if (activeKpiModalType === "cancelled") return "Cancelled / On Hold Requests";
+        return "";
+      }, [activeKpiModalType]);
+
+      const departmentModalRequests = useMemo(() => {
+        if (!selectedDepartmentDetail) return [];
+        return filteredRequests.filter(r => r.department === selectedDepartmentDetail);
+      }, [filteredRequests, selectedDepartmentDetail]);
+
+      const departmentModalStats = useMemo(() => {
+        if (!selectedDepartmentDetail) return { total: 0, open: 0, filled: 0, cancelled: 0 };
+        let total = 0, open = 0, filled = 0, cancelled = 0;
+        departmentModalRequests.forEach(r => {
+          const hc = Number(r.headcountRequired) || 1;
+          total += hc;
+          if (r.stage === "onboarded") filled += hc;
+          else if (r.stage === "cancelled") cancelled += hc;
+          else open += hc;
+        });
+        return { total, open, filled, cancelled };
+      }, [departmentModalRequests, selectedDepartmentDetail]);
+
+      const handleAdminLoginSubmit = (e) => {
+        e.preventDefault();
+        if (adminPasscode === "admin123" || adminPasscode === "hr2025") {
+          setIsAdminAuthenticated(true);
+          setShowLoginModal(false);
+          setCurrentView("admin");
+          setAdminPasscode("");
+          setLoginError("");
+          triggerToast("Authenticated as HR Admin");
+        } else {
+          setLoginError("Invalid passcode. Try 'admin123'");
+        }
+      };
+
+      const handleFormSubmit = (e) => {
+        e.preventDefault();
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toTimeString().split(' ')[0];
+
+        const newId = `REQ-${now.getFullYear()}-${String(requests.length + 1).padStart(3, '0')}`;
+        const newReq = {
+          ...formInput,
+          id: newId,
+          requestDate: dateStr,
+          lastUpdated: `${dateStr} ${timeStr}`,
+          approvalStatusL1: "Approved",
+          approvalStatusL2: "Pending",
+          docStatus: "Pending",
+          stage: "received",
+          cancellationReason: "",
+          candidateName: "",
+          resumeUrl: ""
+        };
+
+        setRequests([newReq, ...requests]);
+        setShowRequestModal(false);
+        setFormInput(initialForm);
+        setFormStep(1);
+
+        // Real-time POST sync to Google Sheets Apps Script endpoint
+        if (googleScriptUrl) {
+          try {
+            fetch(googleScriptUrl, {
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "text/plain" },
+              body: JSON.stringify(newReq)
+            });
+            triggerToast("บันทึกสำเร็จ & ซิงค์ข้อมูลลง Google Sheet เรียบร้อยแล้ว! 📊");
+          } catch (err) {
+            triggerToast("บันทึกในแอปสำเร็จ (แต่ซิงค์ Google Sheet ขัดข้อง)");
+          }
+        } else {
+          triggerToast("บันทึกในแอปสำเร็จ! (อย่าลืมวาง Google Script Web App URL ใน Admin เพื่อซิงค์ลง Sheet)");
+        }
+      };
+
+      const handleSaveCandidateInfo = (id) => {
+        setRequests(prev => prev.map(r => {
+          if (r.id === id) {
+            return {
+              ...r,
+              candidateName: candidateNameInput,
+              resumeUrl: resumeUrlInput,
+              lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
+            };
+          }
+          return r;
+        }));
+        setSelectedDetailRequest(prev => prev ? { ...prev, candidateName: candidateNameInput, resumeUrl: resumeUrlInput } : null);
+        setIsEditingCandidate(false);
+        triggerToast("Saved Candidate CV/Resume link successfully!");
+      };
+
+      const updateStageDirectly = (id, targetStage, reason = "") => {
+        setRequests(prev => prev.map(r => {
+          if (r.id === id) {
+            return {
+              ...r,
+              stage: targetStage,
+              cancellationReason: reason || r.cancellationReason,
+              lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
+            };
+          }
+          return r;
+        }));
+        triggerToast(`Updated stage to ${targetStage}`);
+      };
+
+      const handleDragStart = (e, id) => {
+        setDraggedRequestId(id);
+        e.dataTransfer.setData("text/plain", id);
+      };
+
+      const handleDragOver = (e) => {
+        e.preventDefault();
+      };
+
+      const handleDrop = (e, targetStage) => {
+        e.preventDefault();
+        const id = draggedRequestId || e.dataTransfer.getData("text/plain");
+        if (!id) return;
+
+        if (targetStage === "cancelled") {
+          setCancelModalItem({ id, targetStage });
+          setCancelReasonInput("");
+        } else {
+          updateStageDirectly(id, targetStage);
+        }
+        setDraggedRequestId(null);
+      };
+
+      const exportToCSV = () => {
+        const headers = [
+          "Request ID", "Date", "Days Elapsed", "SLA Status (30 Days)", "Requester", "Requester Title", "Requester Email",
+          "Approver L1", "Approver Email", "Status L1", "Status L2", "Doc Status",
+          "Job Title", "Department", "Headcount", "Position Type", "Candidate Name", "CV / Resume Drive Link",
+          "Job Summary", "Gender", "Age", "Education", "Required Skills", "Target Date",
+          "Laptop", "Sim Card", "Email Account", "Netsuite ERP", "Stage", "Cancel Reason", "Last Updated"
+        ];
+
+        const rows = requests.map(r => {
+          const sla = getSLAInfo(r.requestDate, r.stage);
+          const slaLabel = sla.isCompleted ? "Closed" : (sla.isOverdue ? `Overdue (${sla.daysElapsed}d)` : `Within SLA (${sla.daysElapsed}d)`);
+
+          return [
+            r.id,
+            r.requestDate,
+            sla.daysElapsed,
+            slaLabel,
+            `"${r.requesterName}"`,
+            `"${r.requesterPosition}"`,
+            r.requesterEmail,
+            `"${r.approverName}"`,
+            r.approverEmail,
+            r.approvalStatusL1,
+            r.approvalStatusL2,
+            r.docStatus,
+            `"${r.jobTitle}"`,
+            `"${r.department}"`,
+            r.headcountRequired,
+            `"${r.positionType}"`,
+            `"${r.candidateName || ''}"`,
+            `"${r.resumeUrl || ''}"`,
+            `"${(r.jobDescription || '').replace(/"/g, '""')}"`,
+            r.gender,
+            `"${r.age}"`,
+            `"${r.education}"`,
+            `"${(r.requiredSkills || '').replace(/"/g, '""')}"`,
+            r.targetDate,
+            r.equipment?.laptop ? "Yes" : "No",
+            r.equipment?.simCard ? "Yes" : "No",
+            r.equipment?.email ? "Yes" : "No",
+            r.equipment?.netsuite ? "Yes" : "No",
+            r.stage,
+            `"${(r.cancellationReason || '').replace(/"/g, '""')}"`,
+            r.lastUpdated
+          ];
+        });
+
+        const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `HR_Headcount_Export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
+          
+          {/* Top Header Bar */}
+          <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 glass-effect">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16 sm:h-20">
+                
+                {/* Logo & Title */}
+                <div className="flex items-center space-x-3">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-sky-500 to-cyan-400 flex items-center justify-center text-white shadow-md shadow-sky-400/30 shrink-0">
+                    <Icon name="users" className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2.5 tracking-tight">
+                      <span>HR Recruitment Dashboard</span>
+                      <span className="text-xs px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-semibold tracking-normal">
+                        {currentView === "admin" ? "Admin Portal" : "Public View"}
+                      </span>
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-400 font-normal mt-0.5">Headcount Tracking & SLA Lead Time (Target: 30 Days)</p>
+                  </div>
+                </div>
+
+                {/* Header Action Buttons */}
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <button 
+                    onClick={() => setDarkMode(!darkMode)}
+                    title="Toggle Light/Dark Theme"
+                    className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition"
+                  >
+                    <Icon name={darkMode ? "sun" : "moon"} className="w-4 h-4" />
+                  </button>
+
+                  {currentView === "public" ? (
+                    <button
+                      onClick={() => {
+                        if (isAdminAuthenticated) {
+                          setCurrentView("admin");
+                        } else {
+                          setShowLoginModal(true);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition"
+                    >
+                      <Icon name="lock" className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Admin Portal</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentView("public")}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                      >
+                        <Icon name="grid" className="w-3.5 h-3.5" />
+                        <span>Public View</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAdminAuthenticated(false);
+                          setCurrentView("public");
+                          triggerToast("Logged out of Admin Portal");
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 transition"
+                      >
+                        <Icon name="logOut" className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Logout</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => {
+                        setFormStep(1);
+                        setShowRequestModal(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-700 hover:to-sky-600 shadow-md shadow-brand-500/20 transition hover:scale-[1.02]"
+                    >
+                      <Icon name="plus" className="w-4 h-4 text-white" />
+                      <span>+ Request Headcount</span>
+                    </button>
+                    
+                    <button
+                      onClick={handleCopyShareLink}
+                      title="คัดลอกลิงก์ฟอร์มขอกำลังคน"
+                      className="p-2 sm:p-2.5 rounded-xl text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950 hover:bg-brand-100 dark:hover:bg-brand-900 border border-brand-200 dark:border-brand-800 transition active:scale-95"
+                    >
+                      <Icon name="link" className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </header>
+
+          {}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            
+            {/* Clickable KPI Cards Overview */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div 
+                onClick={() => setActiveKpiModalType("total")}
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-brand-400 hover:shadow-md transition group"
+              >
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider group-hover:text-brand-600 transition">Total Headcount</p>
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">{kpis.totalReq}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center group-hover:scale-110 transition">
+                  <Icon name="users" className="w-5 h-5 text-brand-600" />
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setActiveKpiModalType("open")}
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-amber-400 hover:shadow-md transition group"
+              >
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider group-hover:text-amber-600 transition">Open Pipeline</p>
+                  <p className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{kpis.openReq}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center group-hover:scale-110 transition">
+                  <Icon name="userSearch" className="w-5 h-5 text-amber-600" />
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setActiveKpiModalType("filled")}
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-emerald-400 hover:shadow-md transition group"
+              >
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider group-hover:text-emerald-600 transition">Onboarded / Filled</p>
+                  <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{kpis.filledReq}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition">
+                  <Icon name="checkCircle" className="w-5 h-5 text-emerald-600" />
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setActiveKpiModalType("cancelled")}
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-rose-400 hover:shadow-md transition group"
+              >
+                <div>
+                  <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider group-hover:text-rose-600 transition">Cancelled / On Hold</p>
+                  <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">{kpis.cancelledReq}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-600 flex items-center justify-center group-hover:scale-110 transition">
+                  <Icon name="x" className="w-5 h-5 text-rose-600" />
+                </div>
+              </div>
+            </div>
+
+            {}
+            {currentView === "public" && (
+              <div className="space-y-8">
+                
+                {/* SECTION 1: RECRUITMENT STAGE TRACKER (READ-ONLY KANBAN) */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+                          <Icon name="grid" className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        </span>
+                        Recruitment Stage Tracker
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Current progress of open positions across recruitment stages. Click any position card to view full details.
+                      </p>
+                    </div>
+
+                    <div className="relative w-full sm:w-72">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        <Icon name="search" className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search title, ID, department..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Kanban Horizontal Scroll Columns */}
+                  <div className="flex gap-4 overflow-x-auto pb-4 snap-x min-w-full">
+                    {STAGES.map(stage => {
+                      const stageItems = filteredRequests.filter(r => r.stage === stage.id);
+                      return (
+                        <div 
+                          key={stage.id} 
+                          className="w-64 shrink-0 snap-start flex flex-col rounded-2xl bg-slate-50 dark:bg-slate-800/40 p-3 border border-slate-200/60 dark:border-slate-800"
+                        >
+                          <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
+                              {stage.label}
+                            </span>
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-2xs">
+                              {stageItems.length}
+                            </span>
+                          </div>
+
+                          <div className="space-y-3 flex-1 overflow-y-auto max-h-[500px] pr-0.5">
+                            {stageItems.length === 0 ? (
+                              <div className="py-8 text-center text-[11px] text-slate-400 italic">No positions</div>
+                            ) : (
+                              stageItems.map(item => {
+                                const sla = getSLAInfo(item.requestDate, item.stage);
+                                return (
+                                  <div
+                                    key={item.id}
+                                    onClick={() => {
+                                      setSelectedDetailRequest(item);
+                                      setIsEditingCandidate(false);
+                                      setCandidateNameInput(item.candidateName || "");
+                                      setResumeUrlInput(item.resumeUrl || "");
+                                    }}
+                                    className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs hover:border-brand-400 transition cursor-pointer group"
+                                  >
+                                    <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                                      <span>{item.id}</span>
+                                      <span className="text-brand-600 dark:text-brand-400 font-bold">{item.headcountRequired} Headcount</span>
+                                    </div>
+                                    <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition line-clamp-2">
+                                      {item.jobTitle}
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+                                      {item.department}
+                                    </p>
+
+                                    {/* SLA Lead Time Badge Counter */}
+                                    <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md">
+                                      {sla.isCompleted ? (
+                                        <span className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                          ⏱️ Closed in {sla.daysElapsed} days
+                                        </span>
+                                      ) : sla.isOverdue ? (
+                                        <span className="bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 animate-pulse">
+                                          ⚠️ SLA Overdue: {sla.daysElapsed} days open
+                                        </span>
+                                      ) : (
+                                        <span className="bg-sky-50 text-sky-700 dark:bg-sky-950/80 dark:text-sky-300">
+                                          ⏱️ Open {sla.daysElapsed}d ({sla.daysRemaining}d SLA left)
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400">
+                                      <span>Target: {item.targetDate}</span>
+                                      <span className="text-brand-500 font-semibold">Details &rarr;</span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* SECTION 2: COMPACT DEPARTMENT HEADCOUNT DEMAND GRID */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400">
+                          <Icon name="chart" className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+                        </span>
+                        Headcount Demand by Department
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Compact overview of total requested headcounts broken down by department. Click any card to inspect details.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      <select
+                        value={selectedMonthFilter}
+                        onChange={(e) => setSelectedMonthFilter(e.target.value)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      >
+                        <option value="ALL">All Months</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                      </select>
+                      <select
+                        value={selectedYearFilter}
+                        onChange={(e) => setSelectedYearFilter(e.target.value)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      >
+                        <option value="ALL">All Years</option>
+                        <option value="2025">2025</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
+                    {departmentStats.map((item, idx) => {
+                      const maxTotal = departmentStats[0]?.total || 1;
+                      const percent = Math.min(100, Math.round((item.total / maxTotal) * 100));
+
+                      return (
+                        <div 
+                          key={item.department} 
+                          onClick={() => setSelectedDepartmentDetail(item.department)}
+                          className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+                              <span className="text-brand-500 font-semibold mr-1.5">#{idx + 1}</span>
+                              {item.department}
+                            </span>
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
+                              <span className="text-slate-700 dark:text-slate-300">Total: {item.total}</span>
+                              <span className="text-amber-600">Open: {item.open}</span>
+                              <span className="text-emerald-600">Filled: {item.filled}</span>
+                            </div>
+                          </div>
+
+                          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-brand-500 to-sky-400 rounded-full transition-all duration-500"
+                              style={{ width: `${item.total > 0 ? percent : 0}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {}
+            {currentView === "admin" && (
+              <div className="space-y-8">
+                
+                {/* ADMIN INTERACTIVE DRAG-AND-DROP KANBAN */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400">
+                          <Icon name="grid" className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+                        </span>
+                        Interactive Kanban Pipeline (Drag & Drop to Change Stage)
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Drag cards between columns to update recruitment stages instantly.
+                      </p>
+                    </div>
+
+                    <div className="relative w-full sm:w-72">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        <Icon name="search" className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search positions..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 overflow-x-auto pb-4 snap-x min-w-full">
+                    {STAGES.map(stage => {
+                      const stageItems = filteredRequests.filter(r => r.stage === stage.id);
+                      return (
+                        <div 
+                          key={stage.id} 
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, stage.id)}
+                          className="w-64 shrink-0 snap-start flex flex-col rounded-2xl bg-slate-50 dark:bg-slate-800/40 p-3 border-2 border-dashed border-slate-200 dark:border-slate-800 transition hover:border-brand-400"
+                        >
+                          <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 dark:border-slate-700">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
+                              {stage.label}
+                            </span>
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-2xs">
+                              {stageItems.length}
+                            </span>
+                          </div>
+
+                          <div className="space-y-3 flex-1 overflow-y-auto max-h-[500px] pr-0.5">
+                            {stageItems.length === 0 ? (
+                              <div className="py-8 text-center text-[11px] text-slate-400 italic">Drag cards here</div>
+                            ) : (
+                              stageItems.map(item => {
+                                const sla = getSLAInfo(item.requestDate, item.stage);
+                                return (
+                                  <div
+                                    key={item.id}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, item.id)}
+                                    className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-brand-500 transition cursor-grab active:cursor-grabbing group"
+                                  >
+                                    <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                                      <span className="font-bold">{item.id}</span>
+                                      <span className="text-brand-600 dark:text-brand-400 font-bold">{item.headcountRequired} Headcount</span>
+                                    </div>
+                                    <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition line-clamp-2">
+                                      {item.jobTitle}
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+                                      {item.department}
+                                    </p>
+
+                                    {item.candidateName && (
+                                      <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md truncate max-w-full">
+                                        <span>👤 {item.candidateName}</span>
+                                      </div>
+                                    )}
+
+                                    <div className="mt-2 text-[10px]">
+                                      {sla.isCompleted ? (
+                                        <span className="text-slate-400">⏱️ Days open: {sla.daysElapsed}d</span>
+                                      ) : sla.isOverdue ? (
+                                        <span className="text-rose-600 font-bold">⚠️ Overdue: {sla.daysElapsed}d</span>
+                                      ) : (
+                                        <span className="text-sky-600 font-medium">⏱️ {sla.daysElapsed}d open ({sla.daysRemaining}d left)</span>
+                                      )}
+                                    </div>
+
+                                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400">
+                                      <span>Target: {item.targetDate}</span>
+                                      <button 
+                                        onClick={() => {
+                                          setSelectedDetailRequest(item);
+                                          setIsEditingCandidate(false);
+                                          setCandidateNameInput(item.candidateName || "");
+                                          setResumeUrlInput(item.resumeUrl || "");
+                                        }}
+                                        className="text-brand-500 font-semibold hover:underline"
+                                      >
+                                        Details
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ADMIN MASTER DATA TABLE */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-4">
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
+                          <Icon name="shieldCheck" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        </span>
+                        Admin Master Data Table & Google Sheets Sync
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                        <span>Manage statuses, SLA lead time tracking, and auto-sync data to Google Sheets.</span>
+                        {googleScriptUrl ? (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
+                            ● Live Sync Active
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-bold">
+                            ○ Sync Script Not Set
+                          </span>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => setShowSheetsModal(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold text-xs hover:bg-brand-100 flex items-center gap-1.5 transition"
+                      >
+                        <Icon name="refresh" className="w-3.5 h-3.5 text-brand-600" />
+                        Configure Live Sheets Sync
+                      </button>
+                      <a 
+                        href={GOOGLE_SHEET_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+                      >
+                        Open Google Sheet <Icon name="externalLink" className="w-3.5 h-3.5" />
+                      </a>
+                      <button
+                        onClick={exportToCSV}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white font-semibold text-xs hover:bg-emerald-700 flex items-center gap-1.5 transition"
+                      >
+                        <Icon name="download" className="w-3.5 h-3.5 text-white" />
+                        Export CSV
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                      <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                          <th className="px-4 py-3">ID / Date</th>
+                          <th className="px-4 py-3">Job Title</th>
+                          <th className="px-4 py-3">Requester & Dept</th>
+                          <th className="px-4 py-3">Candidate & CV</th>
+                          <th className="px-4 py-3">Lead Time (SLA: 30d)</th>
+                          <th className="px-4 py-3">Stage</th>
+                          <th className="px-4 py-3 text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {filteredRequests.map(r => {
+                          const sla = getSLAInfo(r.requestDate, r.stage);
+                          return (
+                            <tr key={r.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                              <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                                {r.id}
+                                <div className="text-[10px] text-slate-400">{r.requestDate}</div>
+                              </td>
+                              <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">
+                                {r.jobTitle}
+                                <div className="text-[10px] font-normal text-slate-400">{r.positionType}</div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div>{r.requesterName}</div>
+                                <div className="text-[10px] text-slate-400">{r.department}</div>
+                              </td>
+                              <td className="px-4 py-3">
+                                {r.candidateName ? (
+                                  <div>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{r.candidateName}</span>
+                                    {r.resumeUrl && (
+                                      <a
+                                        href={r.resumeUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="block text-[10px] text-emerald-600 hover:underline"
+                                      >
+                                        CV Drive Link 🔗
+                                      </a>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 italic">Unassigned</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                {sla.isCompleted ? (
+                                  <span className="text-[11px] font-semibold text-slate-500">Completed in {sla.daysElapsed}d</span>
+                                ) : sla.isOverdue ? (
+                                  <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">⚠️ {sla.daysElapsed}d (Overdue)</span>
+                                ) : (
+                                  <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400">⏱️ {sla.daysElapsed}d ({sla.daysRemaining}d left)</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <select
+                                  value={r.stage}
+                                  onChange={(e) => {
+                                    const targetStage = e.target.value;
+                                    if (targetStage === "cancelled") {
+                                      setCancelModalItem({ id: r.id, targetStage });
+                                      setCancelReasonInput("");
+                                    } else {
+                                      updateStageDirectly(r.id, targetStage);
+                                    }
+                                  }}
+                                  className="text-xs p-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                                >
+                                  {STAGES.map(s => (
+                                    <option key={s.id} value={s.id}>{s.label}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td className="px-4 py-3 text-center whitespace-nowrap">
+                                <button
+                                  onClick={() => {
+                                    setSelectedDetailRequest(r);
+                                    setIsEditingCandidate(false);
+                                    setCandidateNameInput(r.candidateName || "");
+                                    setResumeUrlInput(r.resumeUrl || "");
+                                  }}
+                                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-slate-600 dark:text-slate-300 transition"
+                                  title="View Specifications & CV"
+                                >
+                                  <Icon name="eye" className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </main>
+
+          {/* Footer */}
+          <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-400">
+            HR Recruitment & Headcount Tracking Dashboard &bull; Enterprise Operations SLA Lead Time Engine
+          </footer>
+
+          {}
+          {selectedDepartmentDetail && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                      Department Position Breakdown
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5 flex items-center gap-2">
+                      <Icon name="building" className="w-5 h-5 text-brand-500" />
+                      {selectedDepartmentDetail}
+                    </h3>
+                  </div>
+                  <button onClick={() => setSelectedDepartmentDetail(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 my-4 text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Total Requested</p>
+                    <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">{departmentModalStats.total}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-semibold">Open Pipeline</p>
+                    <p className="text-base sm:text-lg font-bold text-amber-600 dark:text-amber-400 mt-0.5">{departmentModalStats.open}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-semibold">Filled / Onboarded</p>
+                    <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{departmentModalStats.filled}</p>
+                  </div>
+                  <div className="hidden sm:block">
+                    <p className="text-[10px] text-rose-600 dark:text-rose-400 uppercase font-semibold">Cancelled</p>
+                    <p className="text-base sm:text-lg font-bold text-rose-600 dark:text-rose-400 mt-0.5">{departmentModalStats.cancelled}</p>
+                  </div>
+                </div>
+
+                <div className="py-2 space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                  {departmentModalRequests.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-slate-400 italic">No position requisitions recorded for this department.</div>
+                  ) : (
+                    departmentModalRequests.map(item => {
+                      const sla = getSLAInfo(item.requestDate, item.stage);
+                      return (
+                        <div 
+                          key={item.id}
+                          onClick={() => {
+                            setSelectedDepartmentDetail(null);
+                            setSelectedDetailRequest(item);
+                            setIsEditingCandidate(false);
+                            setCandidateNameInput(item.candidateName || "");
+                            setResumeUrlInput(item.resumeUrl || "");
+                          }}
+                          className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 hover:border-brand-500 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1">
+                              <span className="font-bold text-slate-600 dark:text-slate-300">{item.id}</span>
+                              <span>&bull;</span>
+                              <span>Requested: {item.requestDate}</span>
+                              <span>&bull;</span>
+                              <span className="text-brand-600 dark:text-brand-400 font-bold">{item.headcountRequired} Headcount</span>
+                            </div>
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition">
+                              {item.jobTitle}
+                            </h4>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              Type: {item.positionType} &bull; Target: {item.targetDate}
+                            </p>
+                          </div>
+
+                          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1 shrink-0">
+                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                              Stage: {item.stage}
+                            </span>
+                            
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                              sla.isCompleted 
+                                ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" 
+                                : sla.isOverdue 
+                                  ? "bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300" 
+                                  : "bg-sky-100 text-sky-700 dark:bg-sky-950/80 dark:text-sky-300"
+                            }`}>
+                              ⏱️ {sla.isCompleted ? `Closed in ${sla.daysElapsed}d` : `${sla.daysElapsed}d open (${sla.daysRemaining}d SLA left)`}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setSelectedDepartmentDetail(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {}
+          {activeKpiModalType && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
+                      KPI Breakdown & Detail List
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5 flex items-center gap-2">
+                      {activeKpiTitle} ({activeKpiItems.length})
+                    </h3>
+                  </div>
+                  <button onClick={() => setActiveKpiModalType(null)} className="p-2 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                  {activeKpiItems.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-slate-400 italic">No positions found in this category.</div>
+                  ) : (
+                    activeKpiItems.map(item => {
+                      const sla = getSLAInfo(item.requestDate, item.stage);
+                      return (
+                        <div 
+                          key={item.id}
+                          onClick={() => {
+                            setActiveKpiModalType(null);
+                            setSelectedDetailRequest(item);
+                            setIsEditingCandidate(false);
+                            setCandidateNameInput(item.candidateName || "");
+                            setResumeUrlInput(item.resumeUrl || "");
+                          }}
+                          className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 hover:border-brand-500 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1">
+                              <span className="font-bold text-slate-600 dark:text-slate-300">{item.id}</span>
+                              <span>&bull;</span>
+                              <span>Requested: {item.requestDate}</span>
+                            </div>
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                              {item.jobTitle}
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {item.department} &bull; <strong className="text-brand-600">{item.headcountRequired} Headcount</strong>
+                            </p>
+
+                            {isAdminAuthenticated && item.candidateName && (
+                              <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1">
+                                Candidate: {item.candidateName}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col sm:items-end gap-1 shrink-0">
+                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                              Stage: {item.stage}
+                            </span>
+                            
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                              sla.isCompleted 
+                                ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" 
+                                : sla.isOverdue 
+                                  ? "bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300" 
+                                  : "bg-sky-100 text-sky-700 dark:bg-sky-950/80 dark:text-sky-300"
+                            }`}>
+                              ⏱️ {sla.isCompleted ? `Lead time: ${sla.daysElapsed}d` : `${sla.daysElapsed} days open (${sla.daysRemaining}d SLA remaining)`}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setActiveKpiModalType(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {}
+          {showRequestModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Icon name="plus" className="w-5 h-5 text-brand-600" />
+                      Manpower Requisition Request Form
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyShareLink}
+                      className="text-xs px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 font-semibold hover:bg-brand-100 transition flex items-center gap-1"
+                    >
+                      <Icon name="link" className="w-3 h-3" />
+                      Share Link
+                    </button>
+                    <button onClick={() => setShowRequestModal(false)} className="p-2 text-slate-400 hover:text-slate-600">
+                      <Icon name="x" className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <form onSubmit={handleFormSubmit} className="py-4 space-y-4 max-h-[70vh] overflow-y-auto text-xs">
+                  {formStep === 1 && (
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-slate-900 dark:text-white border-b pb-1">1. Requester & Approver Info</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Requester Name *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. นางสาว พรธิดา วนเวียน"
+                            value={formInput.requesterName}
+                            onChange={(e) => setFormInput({ ...formInput, requesterName: e.target.value })}
+                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Requester Title *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. People Lead"
+                            value={formInput.requesterPosition}
+                            onChange={(e) => setFormInput({ ...formInput, requesterPosition: e.target.value })}
+                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Requester Email *</label>
+                          <input
+                            type="email"
+                            required
+                            placeholder="name@valuesourcing.co"
+                            value={formInput.requesterEmail}
+                            onChange={(e) => setFormInput({ ...formInput, requesterEmail: e.target.value })}
+                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Department *</label>
+                          <select
+                            value={formInput.department}
+                            onChange={(e) => setFormInput({ ...formInput, department: e.target.value })}
+                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          >
+                            {DEPARTMENTS.map(d => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {formStep === 2 && (
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-slate-900 dark:text-white border-b pb-1">2. Job Specifications</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Title *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Senior Full-Stack Engineer"
+                            value={formInput.jobTitle}
+                            onChange={(e) => setFormInput({ ...formInput, jobTitle: e.target.value })}
+                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Headcount *</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="20"
+                            required
+                            value={formInput.headcountRequired}
+                            onChange={(e) => setFormInput({ ...formInput, headcountRequired: e.target.value })}
+                            className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Summary *</label>
+                        <textarea
+                          rows="2"
+                          required
+                          placeholder="Brief description of job responsibilities..."
+                          value={formInput.jobDescription}
+                          onChange={(e) => setFormInput({ ...formInput, jobDescription: e.target.value })}
+                          className="w-full p-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                        ></textarea>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between">
+                    {formStep > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(formStep - 1)}
+                        className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      >
+                        Previous
+                      </button>
+                    ) : <div />}
+
+                    {formStep < 2 ? (
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(formStep + 1)}
+                        className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700"
+                      >
+                        Next Step
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        Submit Requisition
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {}
+          {selectedDetailRequest && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
+                <div className="flex items-start justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300">
+                      {selectedDetailRequest.id}
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                      {selectedDetailRequest.jobTitle}
+                    </h3>
+                    <p className="text-xs text-slate-500">{selectedDetailRequest.department}</p>
+                  </div>
+                  <button onClick={() => setSelectedDetailRequest(null)} className="p-2 text-slate-400">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto text-xs">
+                  {(() => {
+                    const sla = getSLAInfo(selectedDetailRequest.requestDate, selectedDetailRequest.stage);
+                    return (
+                      <div className={`p-3 rounded-xl flex items-center justify-between text-xs font-semibold ${
+                        sla.isCompleted 
+                          ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                          : sla.isOverdue
+                            ? "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900"
+                            : "bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-900"
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <Icon name="clock" className="w-4 h-4" />
+                          <span>Request Date: {selectedDetailRequest.requestDate} ({sla.daysElapsed} days elapsed)</span>
+                        </div>
+                        <div>
+                          {sla.isCompleted ? (
+                            <span>Closed</span>
+                          ) : sla.isOverdue ? (
+                            <span className="font-bold text-rose-600 dark:text-rose-400">SLA Overdue</span>
+                          ) : (
+                            <span>{sla.daysRemaining} days remaining (30d SLA)</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                    <div>
+                      <p className="text-[10px] text-slate-400">Headcount</p>
+                      <p className="font-bold text-brand-600">{selectedDetailRequest.headcountRequired}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400">Target Date</p>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">{selectedDetailRequest.targetDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400">L1 Approval</p>
+                      <p className="font-bold text-emerald-600">{selectedDetailRequest.approvalStatusL1}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400">Current Stage</p>
+                      <p className="font-bold text-amber-600">{selectedDetailRequest.stage}</p>
+                    </div>
+                  </div>
+
+                  {/* CANDIDATE & CV SECTION (ADMIN ONLY) */}
+                  {isAdminAuthenticated && (
+                    <div className="p-4 rounded-2xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-900 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5 text-xs">
+                          <Icon name="users" className="w-4 h-4 text-brand-600" />
+                          Candidate Info & CV / Resume (Google Drive Link)
+                        </h4>
+                        {!isEditingCandidate && (
+                          <button
+                            onClick={() => setIsEditingCandidate(true)}
+                            className="px-2.5 py-1 rounded-lg bg-brand-600 text-white font-semibold text-[11px] hover:bg-brand-700 transition"
+                          >
+                            Edit CV / Candidate Link
+                          </button>
+                        )}
+                      </div>
+
+                      {isEditingCandidate ? (
+                        <div className="space-y-3 pt-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Candidate Full Name</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. นาย สมศักดิ์ มีสุข"
+                              value={candidateNameInput}
+                              onChange={(e) => setCandidateNameInput(e.target.value)}
+                              className="w-full p-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Google Drive Resume / CV Link</label>
+                            <input
+                              type="url"
+                              placeholder="https://drive.google.com/file/d/..."
+                              value={resumeUrlInput}
+                              onChange={(e) => setResumeUrlInput(e.target.value)}
+                              className="w-full p-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end pt-1">
+                            <button
+                              onClick={() => setIsEditingCandidate(false)}
+                              className="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleSaveCandidateInfo(selectedDetailRequest.id)}
+                              className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              Save Candidate CV Link
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <span className="text-[11px] text-slate-500">Candidate Name: </span>
+                              <span className="font-bold text-slate-900 dark:text-white">
+                                {selectedDetailRequest.candidateName || "No candidate assigned yet"}
+                              </span>
+                            </div>
+                            {selectedDetailRequest.resumeUrl ? (
+                              <a
+                                href={selectedDetailRequest.resumeUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700 shadow-xs transition shrink-0"
+                              >
+                                Open CV (Google Drive) <Icon name="externalLink" className="w-3.5 h-3.5 text-white" />
+                              </a>
+                            ) : (
+                              <span className="text-[11px] italic text-slate-400">No CV Drive Link Attached</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-1">Job Summary</h4>
+                    <p className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {selectedDetailRequest.jobDescription}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                      <p className="font-bold text-slate-900 dark:text-white mb-1">Requester</p>
+                      <p>{selectedDetailRequest.requesterName} ({selectedDetailRequest.requesterPosition})</p>
+                      <p className="text-brand-600">{selectedDetailRequest.requesterEmail}</p>
+                    </div>
+                    <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                      <p className="font-bold text-slate-900 dark:text-white mb-1">Approver</p>
+                      <p>{selectedDetailRequest.approverName}</p>
+                      <p className="text-brand-600">{selectedDetailRequest.approverEmail}</p>
+                    </div>
+                  </div>
+
+                  {selectedDetailRequest.cancellationReason && (
+                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300">
+                      <p className="font-bold">Cancellation / Rejection Reason:</p>
+                      <p className="mt-1">{selectedDetailRequest.cancellationReason}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setSelectedDetailRequest(null)}
+                    className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {}
+          {cancelModalItem && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
+                <h3 className="text-base font-bold text-rose-600 dark:text-rose-400 mb-2">
+                  Cancellation / Rejection Reason
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Please specify why position ID <strong>{cancelModalItem.id}</strong> is being cancelled or rejected.
+                </p>
+
+                <textarea
+                  rows="3"
+                  autoFocus
+                  placeholder="e.g. Budget revoked, Position on hold, Candidate declined..."
+                  value={cancelReasonInput}
+                  onChange={(e) => setCancelReasonInput(e.target.value)}
+                  className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500 mb-4"
+                ></textarea>
+
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => setCancelModalItem(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      updateStageDirectly(cancelModalItem.id, cancelModalItem.targetStage, cancelReasonInput || "Cancelled by admin");
+                      setCancelModalItem(null);
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700"
+                  >
+                    Confirm Stage Change
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {}
+          {showSheetsModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Icon name="refresh" className="w-5 h-5 text-brand-600" />
+                    Google Sheets Real-Time Sync Setup
+                  </h3>
+                  <button onClick={() => setShowSheetsModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="py-4 space-y-4 text-xs">
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Google Sheet Link:</label>
+                    <a
+                      href={GOOGLE_SHEET_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-brand-600 font-medium hover:underline flex items-center gap-1"
+                    >
+                      {GOOGLE_SHEET_URL} <Icon name="externalLink" className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Google Apps Script Web App URL (for live POST sync):</label>
+                    <input
+                      type="url"
+                      placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
+                      value={googleScriptUrl}
+                      onChange={(e) => setGoogleScriptUrl(e.target.value)}
+                      className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Paste your deployed Apps Script Web App URL here to stream submissions live into Google Sheets.</p>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <p className="font-bold text-slate-800 dark:text-slate-200">1-Minute Apps Script Deploy Guide:</p>
+                    <ol className="list-decimal pl-4 space-y-1 text-slate-600 dark:text-slate-400 text-[11px]">
+                      <li>Open your Google Sheet &rarr; Click <strong>Extensions &rarr; Apps Script</strong>.</li>
+                      <li>Paste this code: <br />
+                        <code className="block bg-slate-200 dark:bg-slate-900 p-2 rounded text-[10px] my-1 text-slate-800 dark:text-slate-200 select-all">
+                          {`function doPost(e) { const data = JSON.parse(e.postData.contents); const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet(); sheet.appendRow([data.id, data.requestDate, data.requesterName, data.jobTitle, data.department, data.headcountRequired, data.stage, data.targetDate]); return ContentService.createTextOutput("Success"); }`}
+                        </code>
+                      </li>
+                      <li>Click <strong>Deploy &rarr; New deployment &rarr; Web app</strong>.</li>
+                      <li>Set <i>"Who has access"</i> to <strong>Anyone</strong> &rarr; Deploy &amp; copy the Web App URL into the field above!</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 justify-end pt-2 border-t border-slate-200 dark:border-slate-800">
+                  <button
+                    onClick={() => setShowSheetsModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700"
+                  >
+                    Save &amp; Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {}
+          {showLoginModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center mx-auto mb-3">
+                  <Icon name="lock" className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Admin Authentication</h3>
+                <p className="text-xs text-slate-500 mt-1 mb-4">Enter passcode to access HR Admin Portal</p>
+
+                <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
+                  <input
+                    type="password"
+                    autoFocus
+                    placeholder="Enter passcode (admin123)"
+                    value={adminPasscode}
+                    onChange={(e) => setAdminPasscode(e.target.value)}
+                    className="w-full p-2.5 text-sm text-center tracking-widest rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500"
+                  />
+                  {loginError && <p className="text-[11px] text-rose-500 font-medium">{loginError}</p>}
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginModal(false)}
+                      className="w-1/2 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="w-1/2 py-2 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700"
+                    >
+                      Login
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {}
+          {toastMessage && (
+            <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl text-xs font-semibold flex items-center gap-2 animate-bounce">
+              <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
+              <span>{toastMessage}</span>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
