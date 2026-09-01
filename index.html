@@ -96,7 +96,7 @@
         cancelled: "ยกเลิก / ชะลอ",
         stageTracker: "Recruitment Stage Tracker",
         stageTrackerDesc: "ติดตามสถานะการสรรหาบุคลากรแยกตามอัตราตำแหน่งงาน (Position Slots)",
-        searchPlaceholder: "ค้นหาชื่อตำแหน่ง, รหัส, แผนก, ผู้สมัคร...",
+        searchPlaceholder: "ค้นหาชื่อตำแหน่ง, รหัส, ฝ่ายงาน, ผู้สมัคร...",
         departmentDemand: "Headcount Demand by Department",
         departmentDemandDesc: "สรุปภาพรวมจำนวนอัตรากำลังคนที่เปิดรับสมัครจำแนกตามฝ่ายงาน",
         kanbanPipeline: "Interactive Kanban Pipeline (Drag & Drop)",
@@ -115,7 +115,7 @@
         syncCandidatesBtn: "ซิงค์ผู้สมัครจาก Sheet",
         assignToSlotBtn: "แมปลงตำแหน่ง Stage",
         confidentialNotice: "🔒 ข้อมูลภายในสงวนสิทธิ์สำหรับ HR Admin",
-        confidentialDesc: "ข้อมูลผู้ยื่นขอ, ผู้อนุมัติ, เอกสารส่งต่อ, คุณสมบัติเฉพาะ และ Candidate CV ดูได้เฉพาะใน Admin Portal เท่านั้น",
+        confidentialDesc: "ข้อมูลผู้ยื่นขอ, ผู้อนุมัติ, เอกสารส่งต่อ และรายละเอียดการจัดตั้ง IT Assets ดูได้เฉพาะใน Admin Portal เท่านั้น",
         step1: "ผู้ขอ & ผู้อนุมัติ",
         step2: "ตำแหน่ง & พี่เลี้ยง",
         step3: "คุณสมบัติ & IT Assets",
@@ -160,7 +160,7 @@
         syncCandidatesBtn: "Sync Candidates",
         assignToSlotBtn: "Assign to Slot Stage",
         confidentialNotice: "🔒 Confidential HR Internal Data",
-        confidentialDesc: "Requester details, approvals, candidate CV links, and IT setups are accessible in Admin Portal only.",
+        confidentialDesc: "Requester details, approvals, candidate details, and IT setups are accessible in Admin Portal only.",
         step1: "Requester & Approver",
         step2: "Position & Buddy",
         step3: "Qualifications & Assets",
@@ -212,10 +212,14 @@
       return lines;
     }
 
-    function SearchableSelect({ value, onChange, options, placeholder = "-- Select or type to search --", required = false, disabled = false, className = "" }) {
+    function SearchableSelect({ value, onChange, options, placeholder = "-- เลือกหรือพิมพ์เพื่อค้นหา --", required = false, disabled = false, className = "" }) {
       const [isOpen, setIsOpen] = useState(false);
       const [searchTerm, setSearchTerm] = useState("");
       const dropdownRef = useRef(null);
+
+      useEffect(() => {
+        setSearchTerm(value || "");
+      }, [value]);
 
       const normalizedOptions = useMemo(() => {
         return options.map(opt => typeof opt === 'object' ? opt : { value: opt, label: opt });
@@ -309,13 +313,14 @@
     }
 
     const INITIAL_PERSONNEL_LIST = [
+      { name: "นางสาว พัฒนรา ทัศจันทร์", email: "pattara2228@gmail.com", position: "Director", department: "Executive Assistance & Admin Department" },
+      { name: "นางสาว อริชภัสร์ จิระปราสิทธิ์", email: "arichapat.ji@valuesourcing.co", position: "Chief Financial Officer (CFO) & Chief Tech", department: "Product Strategy & Creative Architect Department" },
       { name: "ชณา วสุวัต", email: "chana.va@valuesourcing.co", position: "Executive Assistant", department: "Executive Assistance & Admin Department" },
       { name: "สายชล วสุวัต", email: "saichon.va@valuesourcing.co", position: "Culture & HR-AI Director", department: "Culture & HR-AI Department" },
       { name: "สลิสา วสุวัต", email: "salisa.va@valuesourcing.co", position: "Wealth Creation Specialist", department: "Wealth Creation Department" },
       { name: "ปกเกศ ตั้นซ้าย", email: "pokkate.tu@valuesourcing.co", position: "Internal Control Officer", department: "Internal Control & Risk Management Department" },
       { name: "สุมน คูสุวรรณ", email: "sumon.kh@valuesourcing.co", position: "Quality Assurance Manager", department: "Quality Assurance Department" },
       { name: "ธนรักษ์ พึ่งธรรมะสกุล", email: "thanaruk.ph@valuesourcing.co", position: "Supply Chain Lead", department: "Supply Chain Management Department" },
-      { name: "อริชภัสร์ จิระปราสิทธิ์", email: "arichapat.ji@valuesourcing.co", position: "Product Strategy Architect", department: "Product Strategy & Creative Architect Department" },
       { name: "ณพสิทธิ์ โชติวนิช", email: "nopparsit.ch@gmail.com", position: "AI & Digital Specialist", department: "AI & Digital Integration Department" },
       { name: "พัชรี พวงศรี", email: "patcharee.pu@valuesourcing.co", position: "Accounting Specialist", department: "VSC - Wealth Creation Department" },
       { name: "ปวีณา วรรณศิริมงคล", email: "paweena.wa@valuesourcing.co", position: "Quality Control Officer", department: "Quality Control Department" },
@@ -353,7 +358,6 @@
         fullName: "นางสาว ศวิตา กาญจนเวทางค์",
         nickname: "สร",
         phone: "089-486-5918",
-        email: "sawita.k@valuesourcing.co",
         source: "LinkedIn",
         resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view?usp=sharing",
         status: "Pass",
@@ -366,7 +370,6 @@
         fullName: "นาย วรวิทย์ พัฒนาพร",
         nickname: "วิทย์",
         phone: "089-876-5432",
-        email: "worawit.dev@gmail.com",
         source: "JobsDB",
         resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink002/view?usp=sharing",
         status: "Hiring",
@@ -379,7 +382,6 @@
         fullName: "นางสาว กานดา อรุณรัตน์",
         nickname: "กานต์",
         phone: "086-555-4321",
-        email: "kanda.a@gmail.com",
         source: "JobThai",
         resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink003/view?usp=sharing",
         status: "Offer",
@@ -392,7 +394,6 @@
         fullName: "นาย ธีรเดช เจริญผล",
         nickname: "ธีร์",
         phone: "092-333-8899",
-        email: "teeradech.c@gmail.com",
         source: "Facebook Page / Ads",
         resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink004/view?usp=sharing",
         status: "Pending",
@@ -452,15 +453,6 @@
       "40 ปีขึ้นไป (40+ Years)"
     ];
 
-    const EXPERIENCE_OPTIONS = [
-      "ยินดีรับนักศึกษาจบใหม่ / ไม่จำเป็นต้องมีประสบการณ์",
-      "น้อยกว่า 1 ปี (Under 1 Year)",
-      "1 - 2 ปี (1 - 2 Years)",
-      "3 - 5 ปี (3 - 5 Years)",
-      "5 - 10 ปี (5 - 10 Years)",
-      "มากกว่า 10 ปี (10+ Years)"
-    ];
-
     const STAGES = [
       { id: "received", label: "Request Received", color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" },
       { id: "sourcing", label: "Sourcing & Screening", color: "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" },
@@ -481,12 +473,7 @@
       const isCompleted = stage === "onboarded" || stage === "cancelled";
       const isOverdue = !isCompleted && daysElapsed > STANDARD_SLA_DAYS;
 
-      return {
-        daysElapsed,
-        daysRemaining,
-        isOverdue,
-        isCompleted
-      };
+      return { daysElapsed, daysRemaining, isOverdue, isCompleted };
     };
 
     const INITIAL_RECRUITMENT_DATA = [
@@ -625,32 +612,68 @@
 
     function App() {
       const [lang, setLang] = useState(() => localStorage.getItem("app_lang") || "th");
-      const t = (key) => TRANSLATIONS[lang][key] || TRANSLATIONS['th'][key] || key;
+      const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['th'][key] || key;
 
       const [requests, setRequests] = useState(() => {
-        const saved = localStorage.getItem("hr_headcount_requests_v16");
+        const saved = localStorage.getItem("hr_headcount_requests_v18");
         return saved ? JSON.parse(saved) : INITIAL_RECRUITMENT_DATA;
       });
 
       const [personnelList, setPersonnelList] = useState(() => {
-        const saved = localStorage.getItem("hr_personnel_list_v16");
+        const saved = localStorage.getItem("hr_personnel_list_v18");
         return saved ? JSON.parse(saved) : INITIAL_PERSONNEL_LIST;
       });
 
       const [candidatePool, setCandidatePool] = useState(() => {
-        const saved = localStorage.getItem("hr_candidate_pool_v16");
+        const saved = localStorage.getItem("hr_candidate_pool_v18");
         return saved ? JSON.parse(saved) : INITIAL_CANDIDATE_POOL;
       });
+
+      const initialForm = {
+        requesterName: "",
+        requesterPosition: "",
+        requesterEmail: "",
+        department: "-",
+        approverName: "",
+        approverEmail: "",
+        forwardTo: "",
+        forwardEmail: "",
+        forwardToPeopleDept: "ศรัณย์ภัทธ อุบล",
+        peopleEmail: "sarunpat.ub@valuesourcing.co",
+        jobTitle: "",
+        headcountRequired: 1,
+        positionType: "Replacement",
+        targetDate: "",
+        buddy: "",
+        jobDescription: "",
+        detailsForPeople: "",
+        approverNote1: "",
+        approvalStatusL1: "Approved",
+        approvalStatusL2: "Pending",
+        docStatus: "Pending",
+        gender: "Any",
+        age: "25 - 40 ปี",
+        education: "ปริญญาตรี (Bachelor's Degree)",
+        major: "",
+        experience: "1 - 2 ปี (1 - 2 Years)",
+        requiredSkills: "",
+        equipment: { laptop: false, simCard: false, email: false, netsuite: false }
+      };
+
+      const [formInput, setFormInput] = useState(initialForm);
 
       const departmentOptions = useMemo(() => {
         const set = new Set(DEPARTMENTS);
         personnelList.forEach(p => {
-          if (p.department && p.department !== "-" && p.department.trim()) {
+          if (p?.department && p.department !== "-" && p.department.trim()) {
             set.add(p.department.trim());
           }
         });
+        if (formInput?.department && formInput.department !== "-" && formInput.department.trim()) {
+          set.add(formInput.department.trim());
+        }
         return Array.from(set);
-      }, [personnelList]);
+      }, [personnelList, formInput?.department]);
 
       const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc/exec";
       const [googleScriptUrl, setGoogleScriptUrl] = useState(() => {
@@ -678,10 +701,7 @@
             const header = rows[0].map(h => (h || '').toLowerCase().trim().replace(/\uFEFF/g, ''));
             
             let nameIdx = header.findIndex(h => (h.includes('ชื่อ') || h.includes('name') || h.includes('personnel') || h.includes('requester')) && !h.includes('เล่น') && !h.includes('nick'));
-            let deptIdx = header.findIndex(h => h.includes('ฝ่ายงาน'));
-            if (deptIdx === -1) {
-              deptIdx = header.findIndex(h => h.includes('ฝ่าย') || h.includes('แผนก') || h.includes('สังกัด') || h.includes('department') || h.includes('dept'));
-            }
+            let deptIdx = header.findIndex(h => h.includes('ฝ่ายงาน') || h.includes('ฝ่าย') || h.includes('แผนก') || h.includes('สังกัด') || h.includes('department') || h.includes('dept'));
             let posIdx = header.findIndex(h => h.includes('ตำแหน่ง') || h.includes('position') || h.includes('role') || h.includes('title'));
             let emailIdx = header.findIndex(h => h.includes('email') || h.includes('อีเมล') || h.includes('อีเมลล์') || h.includes('mail'));
 
@@ -693,7 +713,7 @@
               if (!r || r.length <= 1) continue;
 
               const nameVal = (r[nameIdx] || r[0])?.trim();
-              if (!nameVal || nameVal.toLowerCase().includes("ชื่อ") || nameVal.toLowerCase().includes("name") || nameVal === "C") continue;
+              if (!nameVal || nameVal.toLowerCase().includes("ชื่อ") || nameVal.toLowerCase().includes("name")) continue;
 
               let emailVal = (emailIdx !== -1 ? r[emailIdx] : r.find(c => c && c.includes("@")))?.trim() || "";
               let deptVal = (deptIdx !== -1 && r[deptIdx]) ? r[deptIdx].trim() : "-";
@@ -709,7 +729,7 @@
 
             if (loadedList.length > 0) {
               setPersonnelList(loadedList);
-              localStorage.setItem("hr_personnel_list_v16", JSON.stringify(loadedList));
+              localStorage.setItem("hr_personnel_list_v18", JSON.stringify(loadedList));
               if (showToast) triggerToast(lang === 'th' ? `ซิงค์รายชื่อบุคลากรสำเร็จ! (${loadedList.length} รายชื่อ)` : `Synced ${loadedList.length} personnel records!`);
             }
           }
@@ -734,7 +754,6 @@
             let nameIdx = header.findIndex(h => (h.includes('ชื่อ') || h.includes('name')) && !h.includes('เล่น') && !h.includes('nick'));
             let nickIdx = header.findIndex(h => h.includes('เล่น') || h.includes('nick'));
             let phoneIdx = header.findIndex(h => h.includes('เบอร์') || h.includes('phone') || h.includes('tel'));
-            let emailIdx = header.findIndex(h => h.includes('email') || h.includes('อีเมล') || h.includes('อีเมลล์'));
             let sourceIdx = header.findIndex(h => h.includes('source') || h.includes('channel') || h.includes('ช่องทาง') || h.includes('รับสมัคร'));
             let posIdx = header.findIndex(h => h.includes('ตำแหน่ง') || h.includes('position') || h.includes('title') || h.includes('role'));
             let locIdx = header.findIndex(h => h.includes('location') || h.includes('สถานที่') || h.includes('site'));
@@ -744,7 +763,6 @@
             if (nameIdx === -1) nameIdx = 2;
             if (nickIdx === -1) nickIdx = 3;
             if (phoneIdx === -1) phoneIdx = 4;
-            if (emailIdx === -1) emailIdx = 5;
             if (sourceIdx === -1) sourceIdx = 6;
             if (posIdx === -1) posIdx = 7;
             if (locIdx === -1) locIdx = 8;
@@ -760,25 +778,12 @@
               if (!fullName || fullName.toLowerCase().includes("ชื่อ") || fullName.toLowerCase().includes("name")) continue;
 
               let candidateId = r[0]?.trim() || "";
-              if (!candidateId || candidateId.includes("2025") || candidateId.includes("2507") || !candidateId.startsWith("CAND")) {
+              if (!candidateId || !candidateId.startsWith("CAND")) {
                 candidateId = `CAND-2026-${String(i).padStart(3, '0')}`;
               }
 
               const nickname = r[nickIdx]?.trim() || "";
               let phone = r[phoneIdx]?.trim() || "";
-              let email = r[emailIdx]?.trim() || "";
-              
-              if (email && !email.includes('@') && (email.startsWith('0') || email.includes('-'))) {
-                const realEmail = r.find(col => col && col.includes('@')) || "";
-                if (realEmail) {
-                  phone = email;
-                  email = realEmail;
-                }
-              }
-              if (!email && r.find(col => col && col.includes('@'))) {
-                email = r.find(col => col && col.includes('@')) || "";
-              }
-
               const source = r[sourceIdx]?.trim() || "LinkedIn";
               const targetJobTitle = r[posIdx]?.trim() || "General Application";
               const location = r[locIdx]?.trim() || "-";
@@ -790,7 +795,6 @@
                 fullName,
                 nickname,
                 phone,
-                email,
                 source,
                 resumeUrl,
                 status: CANDIDATE_STATUSES.includes(status) ? status : "In Review",
@@ -802,7 +806,7 @@
 
             if (loadedCandidates.length > 0) {
               setCandidatePool(loadedCandidates);
-              localStorage.setItem("hr_candidate_pool_v16", JSON.stringify(loadedCandidates));
+              localStorage.setItem("hr_candidate_pool_v18", JSON.stringify(loadedCandidates));
               if (showToast) triggerToast(lang === 'th' ? `ซิงค์คลังผู้สมัครสำเร็จ! (${loadedCandidates.length} รายชื่อ)` : `Synced ${loadedCandidates.length} candidate profiles!`);
             }
           }
@@ -852,53 +856,22 @@
       const [showRequestModal, setShowRequestModal] = useState(false);
       const [formStep, setFormStep] = useState(1);
 
-      const initialForm = {
-        requesterName: "",
-        requesterPosition: "",
-        requesterEmail: "",
-        department: "",
-        approverName: "",
-        approverEmail: "",
-        forwardTo: "",
-        forwardEmail: "",
-        forwardToPeopleDept: "ศรัณย์ภัทธ อุบล",
-        peopleEmail: "sarunpat.ub@valuesourcing.co",
-        jobTitle: "",
-        headcountRequired: 1,
-        positionType: "Replacement",
-        targetDate: "",
-        buddy: "",
-        jobDescription: "",
-        detailsForPeople: "",
-        approverNote1: "",
-        approvalStatusL1: "Approved",
-        approvalStatusL2: "Pending",
-        docStatus: "Pending",
-        gender: "Any",
-        age: "25 - 40 ปี",
-        education: "ปริญญาตรี (Bachelor's Degree)",
-        major: "",
-        experience: "1 - 2 ปี (1 - 2 Years)",
-        requiredSkills: "",
-        equipment: { laptop: false, simCard: false, email: false, netsuite: false }
-      };
-
-      const [formInput, setFormInput] = useState(initialForm);
-
       const [showCandidateModal, setShowCandidateModal] = useState(false);
       const [mappingCandidate, setMappingCandidate] = useState(null);
       const [assignConfirmData, setAssignConfirmData] = useState(null);
+      const [unassignConfirmData, setUnassignConfirmData] = useState(null);
+      const [deleteConfirmData, setDeleteConfirmData] = useState(null);
       const [selectedDetailSlot, setSelectedDetailSlot] = useState(null);
       const [selectedCandidateDetail, setSelectedCandidateDetail] = useState(null);
       const [selectedDepartmentDetail, setSelectedDepartmentDetail] = useState(null);
+      const [activeKpiModalType, setActiveKpiModalType] = useState(null);
+
+      const [draggedSlotId, setDraggedSlotId] = useState(null);
       const [cancelModalSlot, setCancelModalSlot] = useState(null);
       const [cancelReasonInput, setCancelReasonInput] = useState("");
 
-      const [activeKpiModalType, setActiveKpiModalType] = useState(null);
-      const [isEditingCandidate, setIsEditingCandidate] = useState(false);
-      const [candidateNameInput, setCandidateNameInput] = useState("");
-      const [resumeUrlInput, setResumeUrlInput] = useState("");
-      const [draggedSlotId, setDraggedSlotId] = useState(null);
+      const [isEditingReqSlot, setIsEditingReqSlot] = useState(false);
+      const [editReqData, setEditReqData] = useState(null);
 
       const [isEditingCandProfile, setIsEditingCandProfile] = useState(false);
       const [editCandData, setEditCandData] = useState(null);
@@ -906,12 +879,101 @@
       const [newCandName, setNewCandName] = useState("");
       const [newCandNick, setNewCandNick] = useState("");
       const [newCandPhone, setNewCandPhone] = useState("");
-      const [newCandEmail, setNewCandEmail] = useState("");
-      const [newCandSource, setNewCandSource] = useState(APPLICATION_SOURCES[0]);
-      const [newCandUrl, setNewCandUrl] = useState("");
+      const [newCandSource, setNewCandSource] = useState("LinkedIn");
+      const [newCandStatus, setNewCandStatus] = useState("In Review");
       const [newCandRole, setNewCandRole] = useState("");
       const [newCandLocation, setNewCandLocation] = useState("");
-      const [newCandStatus, setNewCandStatus] = useState("In Review");
+      const [newCandUrl, setNewCandUrl] = useState("");
+
+      const executeUnassignSlot = (slotId) => {
+        setCandidatePool(prev => prev.map(c => c.assignedSlotId === slotId ? { ...c, assignedSlotId: "", status: "In Review" } : c));
+
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          let updated = false;
+          const updatedSlots = r.slots.map(s => {
+            if (s.slotId === slotId) {
+              updated = true;
+              return {
+                ...s,
+                candidateName: "",
+                candidateNickname: "",
+                candidatePhone: "",
+                resumeUrl: ""
+              };
+            }
+            return s;
+          });
+          return updated ? { ...r, slots: updatedSlots, lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19) } : r;
+        }));
+
+        if (selectedDetailSlot && selectedDetailSlot.slotId === slotId) {
+          setSelectedDetailSlot(prev => ({
+            ...prev,
+            candidateName: "",
+            candidateNickname: "",
+            candidatePhone: "",
+            resumeUrl: ""
+          }));
+        }
+
+        setUnassignConfirmData(null);
+        triggerToast(lang === 'th' ? `ถอดผู้สมัครออกจากตำแหน่ง Slot #${slotId} เรียบร้อยแล้ว` : `Unassigned candidate from slot #${slotId}`);
+      };
+
+      const handleUnassignSlot = (slotId, candidateName = "") => {
+        setUnassignConfirmData({ slotId, candidateName });
+      };
+
+      const handleUnassignCandidate = (candidateId) => {
+        const cand = candidatePool.find(c => c.candidateId === candidateId);
+        if (!cand || !cand.assignedSlotId) return;
+
+        setUnassignConfirmData({ slotId: cand.assignedSlotId, candidateName: cand.fullName });
+      };
+
+      const executeDeleteCandidate = (candidateId) => {
+        const cand = candidatePool.find(c => c.candidateId === candidateId);
+        if (cand && cand.assignedSlotId) {
+          executeUnassignSlot(cand.assignedSlotId);
+        }
+        setCandidatePool(prev => prev.filter(c => c.candidateId !== candidateId));
+        setSelectedCandidateDetail(null);
+        setDeleteConfirmData(null);
+        triggerToast(lang === 'th' ? "ลบผู้สมัครออกจากคลังเรียบร้อยแล้ว" : "Deleted candidate from pool");
+      };
+
+      const handleDeleteCandidate = (candidate) => {
+        setDeleteConfirmData(candidate);
+      };
+
+      const handleSaveEditedRequisition = () => {
+        if (!editReqData || !editReqData.jobTitle.trim()) return;
+
+        const targetReqId = editReqData.id;
+        setRequests(prev => prev.map(r => {
+          if (r.id !== targetReqId) return r;
+          return {
+            ...r,
+            jobTitle: editReqData.jobTitle,
+            department: editReqData.department,
+            positionType: editReqData.positionType,
+            targetDate: editReqData.targetDate,
+            lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
+          };
+        }));
+
+        setSelectedDetailSlot(prev => prev ? {
+          ...prev,
+          jobTitle: editReqData.jobTitle,
+          department: editReqData.department,
+          positionType: editReqData.positionType,
+          targetDate: editReqData.targetDate
+        } : prev);
+
+        setIsEditingReqSlot(false);
+        triggerToast(lang === 'th' ? "อัปเดตข้อมูลตำแหน่งงานเรียบร้อยแล้ว!" : "Updated requisition position details!");
+      };
 
       const allPositionSlots = useMemo(() => {
         return requests.flatMap(r => {
@@ -969,7 +1031,6 @@
           const matchesQuery = !candidateSearchQuery.trim() ||
             c.fullName?.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
             c.nickname?.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
-            c.email?.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
             c.phone?.includes(candidateSearchQuery) ||
             c.targetJobTitle?.toLowerCase().includes(candidateSearchQuery.toLowerCase()) ||
             c.location?.toLowerCase().includes(candidateSearchQuery.toLowerCase());
@@ -991,7 +1052,6 @@
           fullName: newCandName.trim(),
           nickname: newCandNick.trim(),
           phone: newCandPhone.trim(),
-          email: newCandEmail.trim(),
           source: newCandSource,
           resumeUrl: newCandUrl.trim(),
           status: newCandStatus,
@@ -1005,7 +1065,6 @@
         setNewCandName("");
         setNewCandNick("");
         setNewCandPhone("");
-        setNewCandEmail("");
         setNewCandUrl("");
         setNewCandRole("");
         setNewCandLocation("");
@@ -1136,23 +1195,6 @@
           .sort((a, b) => b.total - a.total);
       }, [filteredPositionSlots]);
 
-      const departmentModalRequests = useMemo(() => {
-        if (!selectedDepartmentDetail) return [];
-        return filteredPositionSlots.filter(s => s.department === selectedDepartmentDetail);
-      }, [filteredPositionSlots, selectedDepartmentDetail]);
-
-      const departmentModalStats = useMemo(() => {
-        if (!selectedDepartmentDetail) return { total: 0, open: 0, filled: 0, cancelled: 0 };
-        let total = 0, open = 0, filled = 0, cancelled = 0;
-        departmentModalRequests.forEach(s => {
-          total += 1;
-          if (s.stage === "onboarded") filled += 1;
-          else if (s.stage === "cancelled") cancelled += 1;
-          else open += 1;
-        });
-        return { total, open, filled, cancelled };
-      }, [departmentModalRequests, selectedDepartmentDetail]);
-
       const kpis = useMemo(() => {
         const totalReq = filteredPositionSlots.length;
         const openReq = filteredPositionSlots.filter(s => s.stage !== "onboarded" && s.stage !== "cancelled").length;
@@ -1246,47 +1288,6 @@
         } else {
           triggerToast(lang === 'th' ? "บันทึกสำเร็จ!" : "Requisition submitted!");
         }
-      };
-
-      const handleSaveCandidateInfoForSlot = (targetSlotId) => {
-        setRequests(prev => prev.map(r => {
-          const headcount = Math.max(1, Number(r.headcountRequired) || 1);
-          let slots = r.slots && r.slots.length === headcount ? [...r.slots] : Array.from({ length: headcount }, (_, i) => ({
-            slotId: `${r.id}-${i + 1}`,
-            slotIndex: i + 1,
-            candidateName: "",
-            resumeUrl: "",
-            stage: r.stage || "received",
-            cancellationReason: ""
-          }));
-
-          let slotUpdated = false;
-          slots = slots.map(s => {
-            if (s.slotId === targetSlotId) {
-              slotUpdated = true;
-              return { ...s, candidateName: candidateNameInput, resumeUrl: resumeUrlInput };
-            }
-            return s;
-          });
-
-          if (slotUpdated) {
-            return {
-              ...r,
-              slots,
-              lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
-            };
-          }
-          return r;
-        }));
-
-        setSelectedDetailSlot(prev => prev && prev.slotId === targetSlotId ? {
-          ...prev,
-          candidateName: candidateNameInput,
-          resumeUrl: resumeUrlInput
-        } : prev);
-
-        setIsEditingCandidate(false);
-        triggerToast(lang === 'th' ? "อัปเดตข้อมูลผู้สมัครสำหรับตำแหน่งนี้แล้ว" : "Saved candidate info for this position slot!");
       };
 
       const updateSlotStageDirectly = (targetSlotId, targetStage, reason = "") => {
@@ -1412,6 +1413,7 @@
       return (
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
           
+          {/* Header Bar */}
           <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 glass-effect">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16 sm:h-20">
@@ -1432,10 +1434,8 @@
                 </div>
 
                 <div className="flex items-center space-x-2 sm:space-x-3">
-                  
                   <button
                     onClick={() => setLang(lang === "th" ? "en" : "th")}
-                    title="Switch Language / เปลี่ยนภาษา"
                     className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition"
                   >
                     <Icon name="globe" className="w-4 h-4 text-brand-500" />
@@ -1444,7 +1444,6 @@
 
                   <button 
                     onClick={() => setDarkMode(!darkMode)}
-                    title="Toggle Light/Dark Theme"
                     className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition"
                   >
                     <Icon name={darkMode ? "sun" : "moon"} className="w-4 h-4" />
@@ -1515,7 +1514,7 @@
 
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             
-            {}
+            {/* KPI Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div 
                 onClick={() => setActiveKpiModalType("total")}
@@ -1570,7 +1569,7 @@
               </div>
             </div>
 
-            {}
+            {/* Public View */}
             {currentView === "public" && (
               <div className="space-y-8">
                 
@@ -1628,12 +1627,7 @@
                                 return (
                                   <div
                                     key={item.slotId}
-                                    onClick={() => {
-                                      setSelectedDetailSlot(item);
-                                      setIsEditingCandidate(false);
-                                      setCandidateNameInput(item.candidateName || "");
-                                      setResumeUrlInput(item.resumeUrl || "");
-                                    }}
+                                    onClick={() => setSelectedDetailSlot(item)}
                                     className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs hover:border-brand-500 transition cursor-pointer group"
                                   >
                                     <div className="flex items-center justify-between text-[10px] mb-1.5">
@@ -1754,7 +1748,7 @@
               </div>
             )}
 
-            {}
+            {/* Admin Portal */}
             {currentView === "admin" && (
               <div className="space-y-6">
                 
@@ -1882,12 +1876,7 @@
 
                                         <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-end text-[10px]">
                                           <button 
-                                            onClick={() => {
-                                              setSelectedDetailSlot(item);
-                                              setIsEditingCandidate(false);
-                                              setCandidateNameInput(item.candidateName || "");
-                                              setResumeUrlInput(item.resumeUrl || "");
-                                            }}
+                                            onClick={() => setSelectedDetailSlot(item)}
                                             className="text-brand-500 font-semibold hover:underline"
                                           >
                                             Details &rarr;
@@ -1934,7 +1923,7 @@
                         <div className="flex flex-wrap items-center gap-1.5">
                           <button
                             onClick={() => setShowPersonnelModal(true)}
-                            className="px-2.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200/80 font-semibold text-xs hover:bg-purple-100 flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200/80 font-semibold text-xs hover:bg-sky-100 flex items-center gap-1"
                           >
                             <Icon name="users" className="w-3.5 h-3.5" />
                             <span>Directory</span>
@@ -1942,7 +1931,7 @@
                           
                           <button
                             onClick={() => setShowSheetsModal(true)}
-                            className="px-2.5 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200/80 font-semibold text-xs hover:bg-sky-100 flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-semibold text-xs hover:bg-slate-200 flex items-center gap-1"
                           >
                             <Icon name="refresh" className="w-3.5 h-3.5" />
                             <span>Setup</span>
@@ -1970,81 +1959,73 @@
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {filteredPositionSlots.map(s => {
-                              const sla = getSLAInfo(s.requestDate, s.stage);
-                              return (
-                                <tr key={s.slotId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                                  <td className="px-3 py-2.5 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
-                                    <span className="text-brand-600 font-bold">{s.slotId}</span>
-                                    <div className="text-[10px] text-slate-400">{s.requestDate}</div>
-                                  </td>
-                                  <td className="px-3 py-2.5 font-bold text-slate-900 dark:text-white">
-                                    <div className="line-clamp-1">{s.jobTitle}</div>
-                                    <div className="text-[10px] font-normal text-slate-400 truncate max-w-[140px]">
-                                      {s.department}
+                            {filteredPositionSlots.map(s => (
+                              <tr key={s.slotId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                                <td className="px-3 py-2.5 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                                  <span className="text-brand-600 font-bold">{s.slotId}</span>
+                                  <div className="text-[10px] text-slate-400">{s.requestDate}</div>
+                                </td>
+                                <td className="px-3 py-2.5 font-bold text-slate-900 dark:text-white">
+                                  <div className="line-clamp-1">{s.jobTitle}</div>
+                                  <div className="text-[10px] font-normal text-slate-400 truncate max-w-[140px]">
+                                    {s.department}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  {s.candidateName ? (
+                                    <div>
+                                      <span className="font-semibold text-slate-900 dark:text-white line-clamp-1">{s.candidateName}</span>
+                                      {s.resumeUrl && (
+                                        <a
+                                          href={s.resumeUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="block text-[10px] text-emerald-600 hover:underline"
+                                        >
+                                          CV Drive 🔗
+                                        </a>
+                                      )}
                                     </div>
-                                  </td>
-                                  <td className="px-3 py-2.5">
-                                    {s.candidateName ? (
-                                      <div>
-                                        <span className="font-semibold text-slate-900 dark:text-white line-clamp-1">{s.candidateName}</span>
-                                        {s.resumeUrl && (
-                                          <a
-                                            href={s.resumeUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="block text-[10px] text-emerald-600 hover:underline"
-                                          >
-                                            CV Drive 🔗
-                                          </a>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <span className="text-[10px] text-slate-400 italic">Unassigned</span>
-                                    )}
-                                  </td>
-                                  <td className="px-3 py-2.5">
-                                    <select
-                                      value={s.stage}
-                                      onChange={(e) => {
-                                        const targetStage = e.target.value;
-                                        if (targetStage === "cancelled") {
-                                          setCancelModalSlot({ slotId: s.slotId, targetStage });
-                                          setCancelReasonInput("");
-                                        } else {
-                                          updateSlotStageDirectly(s.slotId, targetStage);
-                                        }
-                                      }}
-                                      className="text-[11px] p-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                                    >
-                                      {STAGES.map(stg => (
-                                        <option key={stg.id} value={stg.id}>{stg.label}</option>
-                                      ))}
-                                    </select>
-                                  </td>
-                                  <td className="px-3 py-2.5 text-center whitespace-nowrap">
-                                    <button
-                                      onClick={() => {
-                                        setSelectedDetailSlot(s);
-                                        setIsEditingCandidate(false);
-                                        setCandidateNameInput(s.candidateName || "");
-                                        setResumeUrlInput(s.resumeUrl || "");
-                                      }}
-                                      className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-slate-600 dark:text-slate-300 transition"
-                                      title="View Details"
-                                    >
-                                      <Icon name="eye" className="w-3.5 h-3.5" />
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                                  ) : (
+                                    <span className="text-[10px] text-slate-400 italic">Unassigned</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2.5">
+                                  <select
+                                    value={s.stage}
+                                    onChange={(e) => {
+                                      const targetStage = e.target.value;
+                                      if (targetStage === "cancelled") {
+                                        setCancelModalSlot({ slotId: s.slotId, targetStage });
+                                        setCancelReasonInput("");
+                                      } else {
+                                        updateSlotStageDirectly(s.slotId, targetStage);
+                                      }
+                                    }}
+                                    className="text-[11px] p-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                                  >
+                                    {STAGES.map(stg => (
+                                      <option key={stg.id} value={stg.id}>{stg.label}</option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                                  <button
+                                    onClick={() => setSelectedDetailSlot(s)}
+                                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-slate-600 dark:text-slate-300 transition"
+                                    title="View Details"
+                                  >
+                                    <Icon name="eye" className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
                     </div>
 
-                    {/* Right Column: Candidate Pool Directory */}
+                    {/* Right Column: Candidate Pool Directory Table */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 space-y-5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
                         <div>
@@ -2079,51 +2060,6 @@
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                          Filter Candidate Stage / Status:
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <button
-                            onClick={() => setSelectedCandidateStageFilter("ALL")}
-                            className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition ${
-                              selectedCandidateStageFilter === "ALL"
-                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
-                            }`}
-                          >
-                            All ({candidatePool.length})
-                          </button>
-                          {CANDIDATE_STATUSES.map(stg => {
-                            const count = candidatePool.filter(c => c.status === stg).length;
-                            const isPassOrHiring = stg === "Pass" || stg === "Hiring";
-                            const isNotSuitableOrCancel = stg === "Not Suitable" || stg === "Cancel by Candidate" || stg === "Hold";
-                            const isOffer = stg === "Offer";
-
-                            return (
-                              <button
-                                key={stg}
-                                onClick={() => setSelectedCandidateStageFilter(stg)}
-                                className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition flex items-center gap-1 ${
-                                  selectedCandidateStageFilter === stg
-                                    ? isPassOrHiring
-                                      ? "bg-emerald-600 text-white shadow-xs"
-                                      : isOffer
-                                        ? "bg-sky-600 text-white shadow-xs"
-                                        : isNotSuitableOrCancel
-                                          ? "bg-rose-600 text-white shadow-xs"
-                                          : "bg-brand-600 text-white shadow-xs"
-                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
-                                }`}
-                              >
-                                <span>{stg}</span>
-                                <span className="px-1 py-0.2 text-[9px] rounded-full bg-black/10 dark:bg-white/20">{count}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="relative">
                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
@@ -2150,97 +2086,92 @@
                         </select>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[620px] overflow-y-auto pr-1">
-                        {filteredCandidates.map(cand => {
-                          const isPassOrHiring = cand.status === "Pass" || cand.status === "Hiring";
-                          const isNotSuitableOrCancel = cand.status === "Not Suitable" || cand.status === "Cancel by Candidate" || cand.status === "Hold";
-                          const isOffer = cand.status === "Offer";
+                      {/* Clean Executive Data Table Layout */}
+                      <div className="overflow-x-auto max-h-[620px] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                          <thead className="bg-slate-50 dark:bg-slate-800 text-[10px] uppercase tracking-wider text-slate-500 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                              <th className="px-3 py-2.5">Candidate ID</th>
+                              <th className="px-3 py-2.5">Name & Phone</th>
+                              <th className="px-3 py-2.5">Target Role & Location</th>
+                              <th className="px-3 py-2.5">Status</th>
+                              <th className="px-3 py-2.5 text-center">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {filteredCandidates.map(cand => {
+                              const isPassOrHiring = cand.status === "Pass" || cand.status === "Hiring";
+                              const isNotSuitableOrCancel = cand.status === "Not Suitable" || cand.status === "Cancel by Candidate" || cand.status === "Hold";
+                              const isOffer = cand.status === "Offer";
 
-                          return (
-                            <div 
-                              key={cand.candidateId}
-                              onClick={() => setSelectedCandidateDetail(cand)}
-                              className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-brand-500 dark:hover:border-brand-400 hover:shadow-sm transition cursor-pointer group flex flex-col justify-between space-y-2"
-                            >
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-                                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md truncate max-w-[130px]">
-                                    {cand.location && cand.location !== "-" ? `📍 ${cand.location}` : `ID: ${cand.candidateId}`}
-                                  </span>
-                                  
-                                  <select
-                                    value={cand.status}
-                                    onChange={(e) => handleUpdateCandidateStatus(cand.candidateId, e.target.value)}
-                                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-lg border border-transparent cursor-pointer shadow-2xs transition ${
-                                      isPassOrHiring
-                                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                                        : isOffer
-                                          ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300"
-                                          : isNotSuitableOrCancel
-                                            ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold"
-                                            : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300"
-                                    }`}
-                                  >
-                                    {CANDIDATE_STATUSES.map(stg => (
-                                      <option key={stg} value={stg}>{stg}</option>
-                                    ))}
-                                  </select>
-                                </div>
-
-                                <div>
-                                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white leading-tight group-hover:text-brand-600 transition line-clamp-1">
-                                    {cand.fullName} {cand.nickname ? `(${cand.nickname})` : ''}
-                                  </h3>
-                                </div>
-
-                                <div className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/80">
-                                  <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">
-                                    🎯 {cand.targetJobTitle || 'General Application'}
-                                  </p>
-                                </div>
-
-                                {cand.assignedSlotId ? (
-                                  <div className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-lg w-full">
-                                    <span>✓ Assigned to Slot #{cand.assignedSlotId}</span>
-                                  </div>
-                                ) : null}
-                              </div>
-
-                              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
-                                {cand.resumeUrl ? (
-                                  <a
-                                    href={cand.resumeUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
-                                  >
-                                    <span>CV Link</span>
-                                    <Icon name="link" className="w-3 h-3 text-emerald-500" />
-                                  </a>
-                                ) : <span className="text-[10px] text-slate-400 italic">No CV</span>}
-
-                                {cand.assignedSlotId ? (
-                                  <button
-                                    disabled
-                                    className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold text-[10px] cursor-not-allowed border border-emerald-200 dark:border-emerald-800"
-                                  >
-                                    🔒 Assigned
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedCandidateDetail(cand);
-                                    }}
-                                    className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-[10px] transition active:scale-95 shrink-0"
-                                  >
-                                    {lang === 'th' ? 'ดูรายละเอียด →' : 'View Details →'}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+                              return (
+                                <tr key={cand.candidateId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                                  <td className="px-3 py-2.5 font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                                    <span className="text-brand-600 font-bold">{cand.candidateId}</span>
+                                    <div className="text-[10px] text-slate-400">{cand.source || '-'}</div>
+                                  </td>
+                                  <td className="px-3 py-2.5 font-bold text-slate-900 dark:text-white">
+                                    <div className="line-clamp-1">{cand.fullName} {cand.nickname ? `(${cand.nickname})` : ''}</div>
+                                    <div className="text-[10px] font-normal text-slate-400">
+                                      {cand.phone ? `📞 ${cand.phone}` : '-'}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2.5 font-bold text-slate-900 dark:text-white">
+                                    <div className="line-clamp-1">{cand.targetJobTitle || 'General Application'}</div>
+                                    <div className="text-[10px] font-normal text-slate-400 truncate max-w-[140px]">
+                                      📍 {cand.location || '-'}
+                                      {cand.assignedSlotId && <span className="ml-1 text-emerald-600 font-bold">• Slot #{cand.assignedSlotId}</span>}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <select
+                                      value={cand.status}
+                                      onChange={(e) => handleUpdateCandidateStatus(cand.candidateId, e.target.value)}
+                                      className={`text-[11px] font-bold p-1 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer ${
+                                        isPassOrHiring
+                                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                                          : isOffer
+                                            ? "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                                            : isNotSuitableOrCancel
+                                              ? "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+                                              : "bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                      }`}
+                                    >
+                                      {CANDIDATE_STATUSES.map(stg => (
+                                        <option key={stg} value={stg}>{stg}</option>
+                                      ))}
+                                    </select>
+                                  </td>
+                                  <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      {cand.resumeUrl ? (
+                                        <a
+                                          href={cand.resumeUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-[10px] hover:underline flex items-center gap-1"
+                                          title="Open Google Drive CV"
+                                        >
+                                          <span>CV Drive</span>
+                                          <Icon name="link" className="w-3 h-3 text-emerald-500" />
+                                        </a>
+                                      ) : (
+                                        <span className="text-[10px] text-slate-400 italic">No CV</span>
+                                      )}
+                                      <button
+                                        onClick={() => setSelectedCandidateDetail(cand)}
+                                        className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 text-slate-600 dark:text-slate-300 transition"
+                                        title="View Candidate Details"
+                                      >
+                                        <Icon name="eye" className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
@@ -2252,11 +2183,7 @@
 
           </main>
 
-          <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-400">
-            HR Recruitment & Headcount Tracking Dashboard &bull; Enterprise Operations SLA Lead Time Engine
-          </footer>
-
-          {}
+          {/* Candidate Profile Specification Modal */}
           {selectedCandidateDetail && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
               <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -2326,15 +2253,6 @@
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block font-semibold mb-1">Email / อีเมล</label>
-                        <input
-                          type="email"
-                          value={editCandData.email}
-                          onChange={(e) => setEditCandData({ ...editCandData, email: e.target.value })}
-                          className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                        />
-                      </div>
-                      <div>
                         <label className="block font-semibold mb-1">Source / ช่องทาง</label>
                         <select
                           value={editCandData.source}
@@ -2343,6 +2261,18 @@
                         >
                           {APPLICATION_SOURCES.map(src => (
                             <option key={src} value={src}>{src}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-semibold mb-1">Status / สถานะ</label>
+                        <select
+                          value={editCandData.status}
+                          onChange={(e) => setEditCandData({ ...editCandData, status: e.target.value })}
+                          className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                        >
+                          {CANDIDATE_STATUSES.map(stg => (
+                            <option key={stg} value={stg}>{stg}</option>
                           ))}
                         </select>
                       </div>
@@ -2358,28 +2288,14 @@
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block font-semibold mb-1">Location / สถานที่</label>
-                        <input
-                          type="text"
-                          value={editCandData.location}
-                          onChange={(e) => setEditCandData({ ...editCandData, location: e.target.value })}
-                          className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-semibold mb-1">Status / สถานะ</label>
-                        <select
-                          value={editCandData.status}
-                          onChange={(e) => setEditCandData({ ...editCandData, status: e.target.value })}
-                          className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                        >
-                          {CANDIDATE_STATUSES.map(stg => (
-                            <option key={stg} value={stg}>{stg}</option>
-                          ))}
-                        </select>
-                      </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Location / สถานที่</label>
+                      <input
+                        type="text"
+                        value={editCandData.location}
+                        onChange={(e) => setEditCandData({ ...editCandData, location: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      />
                     </div>
 
                     <div>
@@ -2426,11 +2342,6 @@
                         <span className="font-bold text-slate-800 dark:text-slate-200">{selectedCandidateDetail.phone || '-'}</span>
                       </p>
                       <p className="flex items-center gap-2">
-                        <span className="w-5 text-center shrink-0">✉️</span>
-                        <span className="text-slate-400 shrink-0">Email:</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{selectedCandidateDetail.email || '-'}</span>
-                      </p>
-                      <p className="flex items-center gap-2">
                         <span className="w-5 text-center shrink-0">🌐</span>
                         <span className="text-slate-400 shrink-0">Channel Source:</span>
                         <span className="font-bold text-brand-600 dark:text-brand-400">{selectedCandidateDetail.source || '-'}</span>
@@ -2473,22 +2384,38 @@
                 )}
 
                 {!isEditingCandProfile && (
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-between gap-2">
-                    {!selectedCandidateDetail.assignedSlotId ? (
-                      <button
-                        onClick={() => {
-                          setSelectedCandidateDetail(null);
-                          setMappingCandidate(selectedCandidateDetail);
-                        }}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-600/20"
-                      >
-                        Assign to Slot Stage
-                      </button>
-                    ) : (
-                      <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-200">
-                        ✓ Assigned to Slot #{selectedCandidateDetail.assignedSlotId}
-                      </div>
-                    )}
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      {!selectedCandidateDetail.assignedSlotId ? (
+                        <button
+                          onClick={() => {
+                            setSelectedCandidateDetail(null);
+                            setMappingCandidate(selectedCandidateDetail);
+                          }}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-600/20 transition active:scale-95"
+                        >
+                          ✨ {lang === 'th' ? 'แมปลงตำแหน่ง Stage' : 'Assign to Slot Stage'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleUnassignCandidate(selectedCandidateDetail.candidateId)}
+                          className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 font-bold text-xs hover:bg-rose-100 dark:hover:bg-rose-900 transition flex items-center gap-1 border border-rose-200 dark:border-rose-900 active:scale-95"
+                        >
+                          ❌ {lang === 'th' ? `ถอดออกจาก Slot #${selectedCandidateDetail.assignedSlotId}` : `Unassign from Slot #${selectedCandidateDetail.assignedSlotId}`}
+                        </button>
+                      )}
+
+                      {isAdminAuthenticated && (
+                        <button
+                          onClick={() => handleDeleteCandidate(selectedCandidateDetail)}
+                          className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition flex items-center gap-1"
+                          title="Delete Candidate"
+                        >
+                          🗑️ {lang === 'th' ? 'ลบผู้สมัคร' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
+
                     <button
                       onClick={() => setSelectedCandidateDetail(null)}
                       className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
@@ -2501,97 +2428,136 @@
             </div>
           )}
 
-          {}
+          {/* Custom Unassign Confirmation Modal */}
+          {unassignConfirmData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                    ⚠️ {lang === 'th' ? 'ยืนยันการถอดผู้สมัครออกจากตำแหน่ง' : 'Confirm Unassign Candidate'}
+                  </h3>
+                  <button onClick={() => setUnassignConfirmData(null)} className="p-1.5 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="py-4 space-y-3 text-xs">
+                  <p className="text-slate-600 dark:text-slate-300">
+                    {lang === 'th'
+                      ? 'คุณแน่ใจหรือไม่ว่าต้องการถอดผู้สมัครรายนี้ออกจากตำแหน่งงานดังกล่าว?'
+                      : 'Are you sure you want to unassign this candidate from the position slot?'}
+                  </p>
+                  <div className="p-3.5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 space-y-1">
+                    <p className="text-[10px] font-bold uppercase text-rose-600">Slot ID / Position Slot:</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">#{unassignConfirmData.slotId}</p>
+                    {unassignConfirmData.candidateName && (
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                        ผู้สมัคร: <strong>{unassignConfirmData.candidateName}</strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                  <button
+                    onClick={() => setUnassignConfirmData(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={() => executeUnassignSlot(unassignConfirmData.slotId)}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/20"
+                  >
+                    ❌ {lang === 'th' ? 'ยืนยันถอดตำแหน่ง' : 'Confirm Unassign'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Custom Delete Candidate Confirmation Modal */}
+          {deleteConfirmData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                    🗑️ {lang === 'th' ? 'ยืนยันการลบผู้สมัครออกจากคลัง' : 'Confirm Delete Candidate'}
+                  </h3>
+                  <button onClick={() => setDeleteConfirmData(null)} className="p-1.5 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="py-4 space-y-3 text-xs">
+                  <p className="text-slate-600 dark:text-slate-300">
+                    {lang === 'th'
+                      ? 'คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลผู้สมัครรายนี้ออกจากคลัง? การดำเนินการนี้ไม่สามารถย้อนกลับได้'
+                      : 'Are you sure you want to delete this candidate profile from the pool? This action cannot be undone.'}
+                  </p>
+                  <div className="p-3.5 rounded-2xl bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 space-y-1">
+                    <p className="text-[10px] font-bold uppercase text-rose-600">Candidate Profile:</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">{deleteConfirmData.fullName} {deleteConfirmData.nickname ? `(${deleteConfirmData.nickname})` : ''}</p>
+                    <p className="text-[10px] text-slate-500">Candidate ID: {deleteConfirmData.candidateId}</p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                  <button
+                    onClick={() => setDeleteConfirmData(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    {lang === 'th' ? 'ยกเลิก' : 'Cancel'}
+                  </button>
+                  <button
+                    onClick={() => executeDeleteCandidate(deleteConfirmData.candidateId)}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/20"
+                  >
+                    🗑️ {lang === 'th' ? 'ยืนยันลบข้อมูล' : 'Confirm Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Department Breakdown Modal */}
           {selectedDepartmentDetail && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
               <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
-                      Department Position Breakdown
+                      Department Breakdown
                     </span>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5 flex items-center gap-2">
-                      <Icon name="building" className="w-5 h-5 text-brand-500" />
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
                       {selectedDepartmentDetail}
                     </h3>
                   </div>
-                  <button onClick={() => setSelectedDepartmentDetail(null)} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                  <button onClick={() => setSelectedDepartmentDetail(null)} className="p-2 text-slate-400 hover:text-slate-600">
                     <Icon name="x" className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 my-4 text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Total Requested</p>
-                    <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">{departmentModalStats.total}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-semibold">Open Pipeline</p>
-                    <p className="text-base sm:text-lg font-bold text-amber-600 dark:text-amber-400 mt-0.5">{departmentModalStats.open}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-semibold">Filled / Onboarded</p>
-                    <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{departmentModalStats.filled}</p>
-                  </div>
-                  <div className="hidden sm:block">
-                    <p className="text-[10px] text-rose-600 dark:text-rose-400 uppercase font-semibold">Cancelled</p>
-                    <p className="text-base sm:text-lg font-bold text-rose-600 dark:text-rose-400 mt-0.5">{departmentModalStats.cancelled}</p>
-                  </div>
-                </div>
-
-                <div className="py-2 space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-                  {departmentModalRequests.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-slate-400 italic">No position requisitions recorded for this department.</div>
-                  ) : (
-                    departmentModalRequests.map(item => {
-                      const sla = getSLAInfo(item.requestDate, item.stage);
-                      return (
-                        <div 
-                          key={item.slotId}
-                          onClick={() => {
-                            setSelectedDepartmentDetail(null);
-                            setSelectedDetailSlot(item);
-                            setIsEditingCandidate(false);
-                            setCandidateNameInput(item.candidateName || "");
-                            setResumeUrlInput(item.resumeUrl || "");
-                          }}
-                          className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 hover:border-brand-500 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-                        >
-                          <div>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1">
-                              <span className="font-bold text-slate-600 dark:text-slate-300">{item.slotId}</span>
-                              <span>&bull;</span>
-                              <span>Requested: {item.requestDate}</span>
-                              <span>&bull;</span>
-                              <span className="text-brand-600 dark:text-brand-400 font-bold">Slot #{item.slotIndex}/{item.totalSlots}</span>
-                            </div>
-                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition">
-                              {item.jobTitle}
-                            </h4>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              Type: {item.positionType} &bull; Target: {item.targetDate}
-                            </p>
-                          </div>
-
-                          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1 shrink-0">
-                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                              Stage: {item.stage}
-                            </span>
-                            
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                              sla.isCompleted 
-                                ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" 
-                                : sla.isOverdue 
-                                  ? "bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300" 
-                                  : "bg-sky-100 text-sky-700 dark:bg-sky-950/80 dark:text-sky-300"
-                            }`}>
-                              ⏱️ {sla.isCompleted ? `${t("closedIn")} ${sla.daysElapsed}d` : `${sla.daysElapsed}d open (${sla.daysRemaining}d SLA left)`}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                <div className="py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                  {allPositionSlots.filter(s => s.department === selectedDepartmentDetail).map(item => (
+                    <div 
+                      key={item.slotId}
+                      onClick={() => {
+                        setSelectedDepartmentDetail(null);
+                        setSelectedDetailSlot(item);
+                      }}
+                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 hover:border-brand-500 transition cursor-pointer flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="text-[10px] font-bold text-brand-600">{item.slotId}</span>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">{item.jobTitle}</h4>
+                        <p className="text-[10px] text-slate-400">Target Date: {item.targetDate || '-'}</p>
+                      </div>
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700">
+                        Stage: {item.stage}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
@@ -2606,7 +2572,7 @@
             </div>
           )}
 
-          {}
+          {/* KPI Breakdown Modal */}
           {activeKpiModalType && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
               <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -2636,9 +2602,6 @@
                           onClick={() => {
                             setActiveKpiModalType(null);
                             setSelectedDetailSlot(item);
-                            setIsEditingCandidate(false);
-                            setCandidateNameInput(item.candidateName || "");
-                            setResumeUrlInput(item.resumeUrl || "");
                           }}
                           className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 hover:border-brand-500 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
                         >
@@ -2697,7 +2660,7 @@
             </div>
           )}
 
-          {}
+          {/* Assign Candidate Modal */}
           {mappingCandidate && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
               <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -2757,7 +2720,7 @@
             </div>
           )}
 
-          {}
+          {/* Assign Confirm Modal */}
           {assignConfirmData && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
               <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
@@ -2787,10 +2750,6 @@
                       <p className="text-[10px] text-slate-500">{assignConfirmData.slot.department}</p>
                     </div>
                   </div>
-
-                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-[11px] text-amber-800 dark:text-amber-300">
-                    ⚠️ {lang === 'th' ? 'เมื่อยืนยันแล้ว ระบบจะทำการล็อกสถานะการแมปตำแหน่งของผู้สมัครรายนี้ทันที' : 'Once confirmed, this candidate will be locked to this slot and cannot be re-assigned.'}
-                  </div>
                 </div>
 
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
@@ -2811,7 +2770,7 @@
             </div>
           )}
 
-          {}
+          {/* Add Candidate Modal */}
           {showCandidateModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -2863,16 +2822,6 @@
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-semibold mb-1">Email</label>
-                      <input
-                        type="email"
-                        placeholder="candidate@gmail.com"
-                        value={newCandEmail}
-                        onChange={(e) => setNewCandEmail(e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                      />
-                    </div>
-                    <div>
                       <label className="block font-semibold mb-1">ช่องทางรับสมัคร (Source)</label>
                       <select
                         value={newCandSource}
@@ -2884,20 +2833,6 @@
                         ))}
                       </select>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-semibold mb-1">ตำแหน่งที่สนใจ (Target Role)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Senior Full-Stack AI Engineer"
-                        value={newCandRole}
-                        onChange={(e) => setNewCandRole(e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                      />
-                    </div>
-
                     <div>
                       <label className="block font-semibold mb-1">สถานะผู้สมัคร (Stage)</label>
                       <select
@@ -2913,10 +2848,21 @@
                   </div>
 
                   <div>
+                    <label className="block font-semibold mb-1">ตำแหน่งที่สนใจ (Target Role)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Senior Full-Stack AI Engineer"
+                      value={newCandRole}
+                      onChange={(e) => setNewCandRole(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block font-semibold mb-1">สถานที่ปฏิบัติงาน / Location</label>
                     <input
                       type="text"
-                      placeholder="e.g. Corporate Finance & Accounting Senior Specialist"
+                      placeholder="e.g. Headquarter Office"
                       value={newCandLocation}
                       onChange={(e) => setNewCandLocation(e.target.value)}
                       className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
@@ -2954,7 +2900,7 @@
             </div>
           )}
 
-          {}
+          {/* Requisition Request Modal */}
           {showRequestModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
               <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden my-auto max-h-[92vh] flex flex-col">
@@ -3085,11 +3031,12 @@
                                 label: p.name 
                               }))}
                               onChange={(selectedName) => {
-                                const person = personnelList.find(p => p.name.trim().toLowerCase() === selectedName.trim().toLowerCase()) || personnelList.find(p => p.name === selectedName);
+                                const cleanName = selectedName.trim();
+                                const person = personnelList.find(p => p.name.trim().toLowerCase() === cleanName.toLowerCase());
                                 const matchedDept = (person && person.department && person.department.trim()) ? person.department.trim() : "-";
                                 setFormInput(prev => ({
                                   ...prev,
-                                  requesterName: selectedName,
+                                  requesterName: cleanName,
                                   requesterEmail: person && person.email ? person.email : prev.requesterEmail,
                                   requesterPosition: person && person.position ? person.position : prev.requesterPosition,
                                   department: matchedDept
@@ -3130,11 +3077,11 @@
 
                           <div>
                             <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                              สังกัดแผนก (Department) <span className="text-rose-500">*</span>
+                              ฝ่ายงาน <span className="text-rose-500">*</span>
                             </label>
                             <SearchableSelect
                               value={formInput.department}
-                              placeholder="-- พิมพ์เพื่อค้นหาแผนกสังกัด --"
+                              placeholder="-- พิมพ์เพื่อค้นหาฝ่ายงาน --"
                               options={departmentOptions.map(d => ({ value: d, label: d }))}
                               onChange={(selectedDept) => setFormInput({ ...formInput, department: selectedDept })}
                             />
@@ -3160,7 +3107,7 @@
                               placeholder="-- เลือกหรือพิมพ์รายชื่อผู้อนุมัติ --"
                               options={personnelList.map(p => ({ 
                                 value: p.name, 
-                                label: p.department && p.department !== "-" ? `${p.name} — [${p.department}]` : p.name 
+                                label: p.name 
                               }))}
                               onChange={(selectedName) => {
                                 const person = personnelList.find(p => p.name === selectedName);
@@ -3196,7 +3143,7 @@
                               placeholder="-- เลือกหรือพิมพ์ผู้รับส่งต่อ --"
                               options={personnelList.map(p => ({ 
                                 value: p.name, 
-                                label: p.department && p.department !== "-" ? `${p.name} — [${p.department}]` : p.name 
+                                label: p.name 
                               }))}
                               onChange={(selectedName) => {
                                 const person = personnelList.find(p => p.name === selectedName);
@@ -3220,28 +3167,6 @@
                             />
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ส่งต่อให้ People 🔒</label>
-                            <input
-                              type="text"
-                              readOnly
-                              value={formInput.forwardToPeopleDept}
-                              className="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold cursor-not-allowed"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Email People 🔒</label>
-                            <input
-                              type="email"
-                              readOnly
-                              value={formInput.peopleEmail}
-                              className="w-full px-3 py-2 text-xs rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-brand-400 font-bold cursor-not-allowed"
-                            />
-                          </div>
-                        </div>
                       </div>
 
                     </div>
@@ -3249,7 +3174,6 @@
 
                   {formStep === 2 && (
                     <div className="space-y-4 animate-fadeIn">
-                      
                       <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
                           <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
@@ -3281,7 +3205,7 @@
                               <button
                                 type="button"
                                 onClick={() => setFormInput(prev => ({ ...prev, headcountRequired: Math.max(1, (Number(prev.headcountRequired) || 1) - 1) }))}
-                                className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-extrabold text-base flex items-center justify-center transition active:scale-95 shrink-0"
+                                className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-extrabold flex items-center justify-center"
                               >
                                 -
                               </button>
@@ -3291,24 +3215,13 @@
                                 max="100"
                                 required
                                 value={formInput.headcountRequired}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setFormInput(prev => ({
-                                    ...prev,
-                                    headcountRequired: val === "" ? "" : Math.max(1, parseInt(val) || 1)
-                                  }));
-                                }}
-                                onBlur={() => {
-                                  if (!formInput.headcountRequired || Number(formInput.headcountRequired) < 1) {
-                                    setFormInput(prev => ({ ...prev, headcountRequired: 1 }));
-                                  }
-                                }}
-                                className="w-full text-center px-3 py-2 text-xs sm:text-sm rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-bold text-brand-600 dark:text-brand-400"
+                                onChange={(e) => setFormInput({ ...formInput, headcountRequired: e.target.value })}
+                                className="w-full text-center px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
                               />
                               <button
                                 type="button"
                                 onClick={() => setFormInput(prev => ({ ...prev, headcountRequired: (Number(prev.headcountRequired) || 1) + 1 }))}
-                                className="w-10 h-10 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-base flex items-center justify-center transition active:scale-95 shrink-0 shadow-xs"
+                                className="w-10 h-10 rounded-xl bg-brand-600 text-white font-extrabold flex items-center justify-center"
                               >
                                 +
                               </button>
@@ -3340,7 +3253,7 @@
                               required
                               value={formInput.targetDate}
                               onChange={(e) => setFormInput({ ...formInput, targetDate: e.target.value })}
-                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold"
+                              className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                             />
                           </div>
 
@@ -3367,73 +3280,15 @@
                             placeholder="สรุปหน้าที่ความรับผิดชอบหลักของตำแหน่งงาน..."
                             value={formInput.jobDescription}
                             onChange={(e) => setFormInput({ ...formInput, jobDescription: e.target.value })}
-                            className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs"
+                            className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                           ></textarea>
                         </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            รายละเอียดส่งให้ทีม People
-                          </label>
-                          <textarea
-                            rows="2"
-                            placeholder="ข้อมูลเพิ่มเติมเฉพาะสำหรับทีม People / HR..."
-                            value={formInput.detailsForPeople}
-                            onChange={(e) => setFormInput({ ...formInput, detailsForPeople: e.target.value })}
-                            className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                          ></textarea>
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            หมายเหตุจากผู้อนุมัติ 1
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="ข้อความหรือหมายเหตุเพิ่มเติม..."
-                            value={formInput.approverNote1}
-                            onChange={(e) => setFormInput({ ...formInput, approverNote1: e.target.value })}
-                            className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะอนุมัติ L1</label>
-                            <SearchableSelect
-                              value={formInput.approvalStatusL1}
-                              options={["Approved", "Pending", "Rejected"]}
-                              onChange={(val) => setFormInput({ ...formInput, approvalStatusL1: val })}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะอนุมัติ L2</label>
-                            <SearchableSelect
-                              value={formInput.approvalStatusL2}
-                              options={["Pending", "Approved", "Rejected"]}
-                              onChange={(val) => setFormInput({ ...formInput, approvalStatusL2: val })}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">สถานะปัจจุบันของเอกสาร</label>
-                            <SearchableSelect
-                              value={formInput.docStatus}
-                              options={["Pending", "Approved", "In Progress", "Cancelled"]}
-                              onChange={(val) => setFormInput({ ...formInput, docStatus: val })}
-                            />
-                          </div>
-                        </div>
-
                       </div>
-
                     </div>
                   )}
 
                   {formStep === 3 && (
                     <div className="space-y-4 animate-fadeIn">
-                      
                       <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
                           <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
@@ -3460,19 +3315,15 @@
                             <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ช่วงอายุ (Age)</label>
                             <SearchableSelect
                               value={formInput.age}
-                              placeholder="-- เลือกช่วงอายุ --"
                               options={AGE_OPTIONS.map(a => ({ value: a, label: a }))}
                               onChange={(val) => setFormInput({ ...formInput, age: val })}
                             />
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                              ระดับการศึกษา
-                            </label>
+                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ระดับการศึกษา</label>
                             <SearchableSelect
                               value={formInput.education}
-                              placeholder="-- เลือกหรือพิมพ์ระดับการศึกษา --"
                               options={EDUCATION_OPTIONS.map(e => ({ value: e, label: e }))}
                               onChange={(val) => setFormInput({ ...formInput, education: val })}
                             />
@@ -3489,114 +3340,46 @@
                             />
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                              ประสบการณ์ในการทำงาน
-                            </label>
-                            <SearchableSelect
-                              value={formInput.experience}
-                              placeholder="-- เลือกหรือพิมพ์ประสบการณ์ทำงาน --"
-                              options={EXPERIENCE_OPTIONS.map(exp => ({ value: exp, label: exp }))}
-                              onChange={(val) => setFormInput({ ...formInput, experience: val })}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">คุณสมบัติที่จำเป็น / ทักษะ</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. ใบรับรองคนพิการ, React, Excel"
-                              value={formInput.requiredSkills}
-                              onChange={(e) => setFormInput({ ...formInput, requiredSkills: e.target.value })}
-                              className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                            />
-                          </div>
-                        </div>
                       </div>
-
-                      <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
-                          <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-xs">
-                            <span className="w-2 h-2 rounded-full bg-sky-500"></span>
-                            อุปกรณ์ IT & สิทธิ์การใช้งานที่ต้องจัดเตรียม
-                          </h4>
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                          {[
-                            { key: 'laptop', label: 'Laptop / PC', desc: 'เครื่องคอมพิวเตอร์' },
-                            { key: 'simCard', label: 'Sim Card', desc: 'ซิมการ์ดโทรศัพท์' },
-                            { key: 'email', label: 'Email Account', desc: 'อีเมลองค์กร' },
-                            { key: 'netsuite', label: 'ERP NetSuite', desc: 'สิทธิ์ระบบ ERP' }
-                          ].map(item => (
-                            <label
-                              key={item.key}
-                              className={`p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
-                                formInput.equipment[item.key]
-                                  ? "bg-brand-50/90 dark:bg-brand-950/60 border-brand-300 dark:border-brand-700 text-brand-900 dark:text-brand-200 shadow-2xs"
-                                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-bold text-xs">{item.label}</span>
-                                <input
-                                  type="checkbox"
-                                  checked={formInput.equipment[item.key]}
-                                  onChange={(e) => setFormInput({
-                                    ...formInput,
-                                    equipment: { ...formInput.equipment, [item.key]: e.target.checked }
-                                  })}
-                                  className="w-4 h-4 rounded-md text-brand-600 focus:ring-brand-500 border-slate-300"
-                                />
-                              </div>
-                              <span className="text-[10px] text-slate-400">{item.desc}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
                     </div>
                   )}
 
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    {formStep > 1 ? (
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(formStep - 1)}
+                        className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      >
+                        {t("prevStep")}
+                      </button>
+                    ) : (
+                      <div></div>
+                    )}
+
+                    {formStep < 3 ? (
+                      <button
+                        type="button"
+                        onClick={() => setFormStep(formStep + 1)}
+                        className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700"
+                      >
+                        {t("nextStep")}
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-md shadow-emerald-600/20"
+                      >
+                        {t("submitForm")}
+                      </button>
+                    )}
+                  </div>
                 </form>
-
-                <div className="px-6 py-4 bg-slate-50/90 dark:bg-slate-800/80 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
-                  {formStep > 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => setFormStep(formStep - 1)}
-                      className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs transition active:scale-95 flex items-center gap-1.5"
-                    >
-                      <span>{t("prevStep")}</span>
-                    </button>
-                  ) : <div />}
-
-                  {formStep < 3 ? (
-                    <button
-                      type="button"
-                      onClick={() => setFormStep(formStep + 1)}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-500/20 transition active:scale-95 flex items-center gap-1.5 ml-auto"
-                    >
-                      <span>{t("nextStep")}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleFormSubmit}
-                      className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-md shadow-emerald-500/20 transition active:scale-95 flex items-center gap-1.5 ml-auto"
-                    >
-                      <span>{t("submitForm")}</span>
-                    </button>
-                  )}
-                </div>
-
               </div>
             </div>
           )}
 
-          {}
+          {/* Slot Detail Inspection Modal */}
           {selectedDetailSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -3615,12 +3398,100 @@
                     </h3>
                     <p className="text-xs text-slate-500">{selectedDetailSlot.department}</p>
                   </div>
-                  <button onClick={() => setSelectedDetailSlot(null)} className="p-2 text-slate-400 hover:text-slate-600">
-                    <Icon name="x" className="w-5 h-5" />
-                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {isAdminAuthenticated && !isEditingReqSlot && (
+                      <button
+                        onClick={() => {
+                          setEditReqData({ ...selectedDetailSlot });
+                          setIsEditingReqSlot(true);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs hover:bg-slate-200 transition"
+                      >
+                        ✏️ {lang === 'th' ? 'แก้ไขตำแหน่งงาน' : 'Edit Position'}
+                      </button>
+                    )}
+                    <button onClick={() => { setSelectedDetailSlot(null); setIsEditingReqSlot(false); }} className="p-2 text-slate-400 hover:text-slate-600">
+                      <Icon name="x" className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto text-xs">
+                  {isEditingReqSlot && editReqData ? (
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
+                      <div className="font-bold text-slate-900 dark:text-white text-xs border-b border-slate-200 dark:border-slate-700 pb-2">
+                        ✏️ {lang === 'th' ? 'แก้ไขข้อมูลตำแหน่งงาน (Edit Requisition Position)' : 'Edit Requisition Position Details'}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          ชื่อตำแหน่ง (Job Title)
+                        </label>
+                        <input
+                          type="text"
+                          value={editReqData.jobTitle}
+                          onChange={(e) => setEditReqData({ ...editReqData, jobTitle: e.target.value })}
+                          className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            ฝ่ายงาน (Department)
+                          </label>
+                          <SearchableSelect
+                            value={editReqData.department}
+                            options={departmentOptions.map(d => ({ value: d, label: d }))}
+                            onChange={(selectedDept) => setEditReqData({ ...editReqData, department: selectedDept })}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            ประเภทตำแหน่ง (Position Type)
+                          </label>
+                          <SearchableSelect
+                            value={editReqData.positionType}
+                            options={[
+                              { value: "Replacement", label: "ทดแทนตำแหน่งเดิม (Replacement)" },
+                              { value: "New Headcount", label: "เปิดตำแหน่งใหม่ (New Headcount)" }
+                            ]}
+                            onChange={(selectedType) => setEditReqData({ ...editReqData, positionType: selectedType })}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          วันที่ต้องการ (Target Date)
+                        </label>
+                        <input
+                          type="date"
+                          value={editReqData.targetDate}
+                          onChange={(e) => setEditReqData({ ...editReqData, targetDate: e.target.value })}
+                          className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700"
+                        />
+                      </div>
+
+                      <div className="pt-2 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-700">
+                        <button
+                          onClick={() => setIsEditingReqSlot(false)}
+                          className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEditedRequisition}
+                          className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-600/20"
+                        >
+                          Save Changes
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
                   {(() => {
                     const sla = getSLAInfo(selectedDetailSlot.requestDate, selectedDetailSlot.stage);
                     return (
@@ -3677,11 +3548,11 @@
                   {isAdminAuthenticated ? (
                     <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800 animate-fadeIn">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1">
                           <Icon name="shieldCheck" className="w-3.5 h-3.5" />
                           Admin Candidate Details for Slot #{selectedDetailSlot.slotIndex}
                         </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-bold">
                           Admin Mode
                         </span>
                       </div>
@@ -3690,33 +3561,49 @@
                         <div className="flex items-center justify-between">
                           <h4 className="font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5 text-xs">
                             <Icon name="users" className="w-4 h-4 text-brand-600" />
-                            Candidate Info & CV Link (Slot #{selectedDetailSlot.slotIndex} of {selectedDetailSlot.totalSlots})
+                            Candidate Assigned (Slot #{selectedDetailSlot.slotIndex} of {selectedDetailSlot.totalSlots})
                           </h4>
-                          <span className="text-[10px] text-purple-600 font-semibold bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded-md">
-                            Manage & Edit via Candidate Pool
-                          </span>
                         </div>
 
                         <div className="text-xs space-y-2">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-white dark:bg-slate-800 border border-brand-200 dark:border-brand-800">
                             <div>
-                              <span className="text-[11px] text-slate-500">Candidate Name (Slot #{selectedDetailSlot.slotIndex}): </span>
-                              <span className="font-bold text-slate-900 dark:text-white">
-                                {selectedDetailSlot.candidateName || "No candidate assigned yet for this slot"}
+                              <span className="text-[11px] text-slate-500">Candidate: </span>
+                              <span className="font-bold text-slate-900 dark:text-white text-sm">
+                                {selectedDetailSlot.candidateName || "Unassigned (ยังไม่มีผู้สมัครอยู่ในตำแหน่งนี้)"}
                               </span>
+                              {selectedDetailSlot.resumeUrl && (
+                                <a
+                                  href={selectedDetailSlot.resumeUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block text-[11px] text-emerald-600 hover:underline font-semibold mt-0.5"
+                                >
+                                  Open Candidate CV (Google Drive) 🔗
+                                </a>
+                              )}
                             </div>
-                            {selectedDetailSlot.resumeUrl ? (
-                              <a
-                                href={selectedDetailSlot.resumeUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-semibold text-[11px] hover:bg-emerald-700 shadow-xs transition shrink-0"
-                              >
-                                Open CV (Google Drive) <Icon name="externalLink" className="w-3.5 h-3.5 text-white" />
-                              </a>
-                            ) : (
-                              <span className="text-[11px] italic text-slate-400">No CV Drive Link Attached</span>
-                            )}
+
+                            <div className="flex items-center gap-1.5">
+                              {selectedDetailSlot.candidateName ? (
+                                <button
+                                  onClick={() => handleUnassignSlot(selectedDetailSlot.slotId, selectedDetailSlot.candidateName)}
+                                  className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 font-bold text-xs hover:bg-rose-100 transition border border-rose-200 dark:border-rose-900"
+                                >
+                                  ❌ {lang === 'th' ? 'ถอดผู้สมัคร' : 'Unassign Candidate'}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setSelectedDetailSlot(null);
+                                    setAdminSubTab("candidates");
+                                  }}
+                                  className="px-3.5 py-1.5 rounded-xl bg-brand-600 text-white font-bold text-xs hover:bg-brand-700 shadow-md shadow-brand-600/20 transition"
+                                >
+                                  ➕ {lang === 'th' ? 'เลือกผู้สมัครจาก Pool' : 'Assign Candidate from Pool'}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -3765,7 +3652,7 @@
 
                 <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
                   <button
-                    onClick={() => setSelectedDetailSlot(null)}
+                    onClick={() => { setSelectedDetailSlot(null); setIsEditingReqSlot(false); }}
                     className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                   >
                     Close
@@ -3775,13 +3662,13 @@
             </div>
           )}
 
-          {}
+          {/* Manage Personnel Directory Modal */}
           {showPersonnelModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                   <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Icon name="users" className="w-5 h-5 text-purple-600" />
+                    <Icon name="users" className="w-5 h-5 text-sky-600" />
                     Manage Personnel Directory
                   </h3>
                   <button onClick={() => setShowPersonnelModal(false)} className="p-1.5 text-slate-400 hover:text-slate-600">
@@ -3833,7 +3720,7 @@
             </div>
           )}
 
-          {}
+          {/* Cancellation Reason Modal */}
           {cancelModalSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
@@ -3874,7 +3761,7 @@
             </div>
           )}
 
-          {}
+          {/* Sheets Sync Setup Modal */}
           {showSheetsModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
@@ -3926,7 +3813,7 @@
             </div>
           )}
 
-          {}
+          {/* Admin Login Modal */}
           {showLoginModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
               <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
@@ -3967,7 +3854,7 @@
             </div>
           )}
 
-          {}
+          {/* Toast Notification */}
           {toastMessage && (
             <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xl text-xs font-semibold flex items-center gap-2 animate-bounce">
               <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
