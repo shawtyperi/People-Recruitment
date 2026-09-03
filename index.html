@@ -80,7 +80,7 @@
     const CANDIDATES_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/edit?gid=2139534023#gid=2139534023";
     const DEFAULT_APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc/exec";
 
-    // Candidate status tags configuration
+    // Candidate status tags configuration with exact styling
     const CANDIDATE_STATUS_CONFIG = [
       { id: "not suitable", label: "1. not suitable", bg: "bg-rose-100 dark:bg-rose-950/80", text: "text-rose-800 dark:text-rose-200", border: "border-rose-300 dark:border-rose-800", isInactive: true, hideMapping: true },
       { id: "cancel by candidate", label: "2. cancel by candidate", bg: "bg-rose-100 dark:bg-rose-950/80", text: "text-rose-800 dark:text-rose-200", border: "border-rose-300 dark:border-rose-800", isInactive: true, hideMapping: true },
@@ -97,10 +97,10 @@
     const ONBOARDING_ARRIVAL_STATUSES = [
       { id: "pending_arrival", label: "⏳ รอถึงวันเริ่มงาน", badge: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-300" },
       { id: "arrived_reported", label: "✅ มาเริ่มงานเรียบร้อยแล้ว", badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-100 border-emerald-400 font-extrabold ring-2 ring-emerald-500/20" },
-      { id: "declined_noshow", label: "❌ สละสิทธิ์ / ไม่มาเริ่มงาน", badge: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border-rose-300" }
+      { id: "declined_noshow", label: "❌ สละสิทธิ์ / ไม่มาเริ่มงาน", badge: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border-rose-300 font-extrabold ring-2 ring-rose-500/30" }
     ];
 
-    // Pipeline stages
+    // Pipeline stages (5 Stages)
     const STAGES = [
       { id: "received", label: "Request Received" },
       { id: "interview", label: "Interview Stage" },
@@ -217,7 +217,6 @@
       }
       return lines;
     }
-
     function SearchableSelect({ value, onChange, options, placeholder = "-- เลือกหรือพิมพ์เพื่อค้นหา --", required = false, disabled = false, className = "" }) {
       const [isOpen, setIsOpen] = useState(false);
       const [searchTerm, setSearchTerm] = useState("");
@@ -361,6 +360,8 @@
           return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>;
         case "exclamation":
           return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>;
+        case "building":
+          return <svg className={finalClass} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0v-5a2 2 0 012-2h2a2 2 0 012 2v5m-6 0h6"/></svg>;
         default:
           return null;
       }
@@ -513,7 +514,6 @@
         assignedSlotId: ""
       }
     ];
-
     const INITIAL_RECRUITMENT_DATA = [
       {
         id: "REQ-2026-001",
@@ -543,12 +543,14 @@
           {
             slotId: "REQ-2026-001-1",
             slotIndex: 1,
+            slotStatus: "Recruiting",
             candidateName: "นางสาว ศวิตา กาญจนเวทางค์",
             candidatePhone: "089-486-5918",
             candidateNickname: "สร",
             resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view",
             stage: "interview",
             offerSentDate: "",
+            hireDate: "",
             interviewSchedule: "2026-08-08 14:00 น. (On-site)",
             interviewScore: 0,
             interviewScorePercent: 0,
@@ -587,12 +589,14 @@
           {
             slotId: "REQ-2026-002-1",
             slotIndex: 1,
+            slotStatus: "Recruiting",
             candidateName: "นาย วรวิทย์ พัฒนาพร",
             candidatePhone: "089-876-5432",
             candidateNickname: "วิทย์",
             resumeUrl: "",
             stage: "interview",
             offerSentDate: "",
+            hireDate: "",
             interviewSchedule: "2026-08-16 10:30 น. (Online Meet)",
             interviewScore: 0,
             interviewScorePercent: 0,
@@ -604,12 +608,14 @@
           {
             slotId: "REQ-2026-002-2",
             slotIndex: 2,
+            slotStatus: "Recruiting",
             candidateName: "",
             candidatePhone: "",
             candidateNickname: "",
             resumeUrl: "",
             stage: "received",
             offerSentDate: "",
+            hireDate: "",
             interviewSchedule: "",
             interviewScore: 0,
             interviewScorePercent: 0,
@@ -624,22 +630,22 @@
 
     function App() {
       const [requests, setRequests] = useState(() => {
-        const saved = localStorage.getItem("hr_requests_v51");
+        const saved = localStorage.getItem("hr_requests_v62");
         return saved ? JSON.parse(saved) : INITIAL_RECRUITMENT_DATA;
       });
 
       const [personnelList, setPersonnelList] = useState(() => {
-        const saved = localStorage.getItem("hr_personnel_v51");
+        const saved = localStorage.getItem("hr_personnel_v62");
         return saved ? JSON.parse(saved) : INITIAL_PERSONNEL_LIST;
       });
 
       const [candidatePool, setCandidatePool] = useState(() => {
-        const saved = localStorage.getItem("hr_candidates_v51");
+        const saved = localStorage.getItem("hr_candidates_v62");
         return saved ? JSON.parse(saved) : INITIAL_CANDIDATE_POOL;
       });
 
       const [googleScriptUrl, setGoogleScriptUrl] = useState(() => {
-        return localStorage.getItem("hr_apps_script_url_v51") || DEFAULT_APPS_SCRIPT_WEBAPP_URL;
+        return localStorage.getItem("hr_apps_script_url_v62") || DEFAULT_APPS_SCRIPT_WEBAPP_URL;
       });
 
       const [darkMode, setDarkMode] = useState(() => {
@@ -658,11 +664,11 @@
       }, [darkMode]);
 
       useEffect(() => {
-        localStorage.setItem("hr_requests_v51", JSON.stringify(requests));
+        localStorage.setItem("hr_requests_v62", JSON.stringify(requests));
       }, [requests]);
 
       useEffect(() => {
-        localStorage.setItem("hr_candidates_v51", JSON.stringify(candidatePool));
+        localStorage.setItem("hr_candidates_v62", JSON.stringify(candidatePool));
       }, [candidatePool]);
 
       const [currentView, setCurrentView] = useState("public");
@@ -678,10 +684,19 @@
       const [candidatePositionFilter, setCandidatePositionFilter] = useState("ALL");
       const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");
 
+      // Department Demand Filtering & Modals
+      const [selectedMonthFilter, setSelectedMonthFilter] = useState("ALL");
+      const [selectedYearFilter, setSelectedYearFilter] = useState("ALL");
+      const [selectedDepartmentDetail, setSelectedDepartmentDetail] = useState(null);
+
       const [showRequestModal, setShowRequestModal] = useState(false);
       const [showAddCandidateModal, setShowAddCandidateModal] = useState(false);
       const [selectedDetailSlot, setSelectedDetailSlot] = useState(null);
       const [slotPickerCandidate, setSlotPickerCandidate] = useState(null);
+      
+      // Mandatory Check: Interview Stage assignment for unassigned slots
+      const [unassignedInterviewSlotModal, setUnassignedInterviewSlotModal] = useState(null);
+      
       const [scheduleAssignModalData, setScheduleAssignModalData] = useState(null);
       const [scheduleInterviewDateTime, setScheduleInterviewDateTime] = useState("");
       const [scheduleInterviewFormat, setScheduleInterviewFormat] = useState("On-site (สำนักงาน)");
@@ -690,7 +705,7 @@
       const [onboardModalData, setOnboardModalData] = useState(null);
       const [onboardHireDateInput, setOnboardHireDateInput] = useState("");
 
-      // Rejection / Cancellation Modal
+      // Rejection / Decline Modal (Mandatory Reason)
       const [rejectionModalData, setRejectionModalData] = useState(null);
       const [rejectionReasonInput, setRejectionReasonInput] = useState("");
 
@@ -710,9 +725,68 @@
       const [unassignConfirmTarget, setUnassignConfirmTarget] = useState(null);
       const [toastMessage, setToastMessage] = useState("");
 
+      // Stage Header Multi-Select Clear Modal State
+      const [stageClearModal, setStageClearModal] = useState(null);
+      const [selectedSlotsToClear, setSelectedSlotsToClear] = useState([]);
+
+      const handleOpenStageClearModal = (stageId, stageLabel) => {
+        const slotsInStage = allPositionSlots.filter(s => s.stage === stageId && !s.isArchivedFromKanban);
+        if (slotsInStage.length === 0) {
+          triggerToast("ไม่มีการ์ดในด่านนี้ให้ล้าง");
+          return;
+        }
+        setSelectedSlotsToClear(slotsInStage.map(s => s.slotId));
+        setStageClearModal({ stageId, stageLabel, slots: slotsInStage });
+      };
+
+      const handleConfirmBatchArchive = () => {
+        if (!stageClearModal || selectedSlotsToClear.length === 0) {
+          triggerToast("⚠️ กรุณาเลือกอย่างน้อย 1 รายการเพื่อล้าง");
+          return;
+        }
+        const clearSet = new Set(selectedSlotsToClear);
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          const slots = r.slots.map(s => {
+            if (clearSet.has(s.slotId)) {
+              return { ...s, isArchivedFromKanban: true };
+            }
+            return s;
+          });
+          return { ...r, slots };
+        }));
+        triggerToast(`🧹 ซ่อนการ์ด ${selectedSlotsToClear.length} รายการออกจาก Kanban เรียบร้อย (ข้อมูลยังคงถูกบันทึกใน Manpower Request ครบถ้วน)`);
+        setStageClearModal(null);
+        setSelectedSlotsToClear([]);
+      };
+
+      // Handler to clear / hide card from Kanban while keeping all records in Manpower Request
+      const handleArchiveSlotFromKanban = (slotId) => {
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          const slots = r.slots.map(s => {
+            if (s.slotId === slotId) {
+              return { ...s, isArchivedFromKanban: true };
+            }
+            return s;
+          });
+          return { ...r, slots };
+        }));
+        triggerToast(`ซ่อนการ์ด Slot #${slotId} ออกจาก Kanban เรียบร้อย (ข้อมูลยังคงถูกบันทึกใน Manpower Request ครบถ้วน)`);
+      };
+
+      // Handler to restore all hidden Kanban cards if needed
+      const handleRestoreAllArchivedCards = () => {
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          const slots = r.slots.map(s => ({ ...s, isArchivedFromKanban: false }));
+          return { ...r, slots };
+        }));
+        triggerToast("กู้คืนการ์ดทั้งหมดกลับมาแสดงบน Kanban เรียบร้อย");
+      };
+
       const [draggedSlotId, setDraggedSlotId] = useState(null);
       const [dragOverStage, setDragOverStage] = useState(null);
-
       const handleDragStart = (e, slotId) => {
         setDraggedSlotId(slotId);
         e.dataTransfer.setData("text/plain", slotId);
@@ -792,6 +866,7 @@
       };
       const [newCandidateForm, setNewCandidateForm] = useState(initialCandidateForm);
 
+      // Automated Cascading Sync: If mapped slot is Closed or Onboarded, update candidate status to "Hiring / Offer"
       useEffect(() => {
         let hasChanges = false;
         const updatedPool = candidatePool.map(cand => {
@@ -810,9 +885,9 @@
             }
           }
 
-          if (linkedReq) {
-            const isRequisitionClosed = linkedReq.requestStatus === "Closed" || linkedSlot?.stage === "onboarded";
-            if (isRequisitionClosed && cand.status !== "Hiring / Offer") {
+          if (linkedSlot) {
+            const isSlotClosed = linkedSlot.slotStatus === "Closed" || linkedSlot.stage === "onboarded" || linkedReq?.requestStatus === "Closed";
+            if (isSlotClosed && cand.status !== "Hiring / Offer") {
               hasChanges = true;
               return { ...cand, status: "Hiring / Offer" };
             }
@@ -858,7 +933,7 @@
 
             if (loaded.length > 0) {
               setPersonnelList(loaded);
-              localStorage.setItem("hr_personnel_v51", JSON.stringify(loaded));
+              localStorage.setItem("hr_personnel_v62", JSON.stringify(loaded));
               if (showToast) triggerToast(`ซิงค์รายชื่อบุคลากรสำเร็จ (${loaded.length} คน)`);
             }
           }
@@ -956,7 +1031,7 @@
         });
         return Array.from(set);
       }, [personnelList]);
-
+      // All position slots with individual slotStatus (Recruiting vs Closed)
       const allPositionSlots = useMemo(() => {
         return requests.flatMap(r => {
           const headcount = Math.max(1, Number(r.headcountRequired) || 1);
@@ -965,12 +1040,14 @@
             : Array.from({ length: headcount }, (_, i) => ({
                 slotId: `${r.id}-${i + 1}`,
                 slotIndex: i + 1,
+                slotStatus: r.requestStatus || "Recruiting",
                 candidateName: "",
                 candidatePhone: "",
                 candidateNickname: "",
                 resumeUrl: "",
                 stage: r.stage || "received",
                 offerSentDate: "",
+                hireDate: "",
                 interviewSchedule: "",
                 interviewScore: 0,
                 interviewScorePercent: 0,
@@ -991,11 +1068,19 @@
               ? "declined_noshow"
               : (slot.onboardingArrivalStatus || r.onboardingArrivalStatus || "pending_arrival");
 
+            // Individual slot status: "Closed" if slotStatus is Closed, or slot stage is onboarded/cancelled
+            const slotEffectiveStatus = (slot.slotStatus === "Closed" || slot.stage === "onboarded" || slot.stage === "cancelled")
+              ? "Closed"
+              : (slot.slotStatus || r.requestStatus || "Recruiting");
+
             return {
               ...r,
               slotId: slot.slotId,
               slotIndex: slot.slotIndex,
               totalSlots: headcount,
+              slotStatus: slotEffectiveStatus,
+              requestStatus: slotEffectiveStatus, // Used for tab filtering
+              parentRequestId: r.id,
               candidateName: slot.candidateName || "",
               candidatePhone: slot.candidatePhone || "",
               candidateNickname: slot.candidateNickname || "",
@@ -1011,18 +1096,20 @@
               replacedEmployeeName: r.replacedEmployeeName || "",
               hireDate: matchedCand?.hireDate || slot.hireDate || "",
               onboardingArrivalStatus: arrivalStatus,
-              rejectionReason: slot.rejectionReason || r.rejectionReason || ""
+              rejectionReason: slot.rejectionReason || r.rejectionReason || "",
+              isArchivedFromKanban: !!slot.isArchivedFromKanban
             };
           });
         });
       }, [requests, candidatePool]);
 
+      // Slot-level In Process and Closed lists
       const inProcessSlots = useMemo(() => {
-        return allPositionSlots.filter(s => (s.requestStatus || "Recruiting") === "Recruiting" && s.stage !== "cancelled");
+        return allPositionSlots.filter(s => s.slotStatus === "Recruiting" && s.stage !== "cancelled" && s.stage !== "onboarded");
       }, [allPositionSlots]);
 
       const closedSlots = useMemo(() => {
-        return allPositionSlots.filter(s => s.requestStatus === "Closed" || s.stage === "cancelled");
+        return allPositionSlots.filter(s => s.slotStatus === "Closed" || s.stage === "cancelled" || s.stage === "onboarded");
       }, [allPositionSlots]);
 
       const positionFilterOptions = useMemo(() => {
@@ -1051,9 +1138,53 @@
       }, [candidatePool, candidateSearchQuery, candidatePositionFilter, selectedStatusFilter]);
 
       const availableUnassignedSlots = useMemo(() => {
-        return allPositionSlots.filter(s => !s.candidateName && s.stage !== "cancelled" && s.stage !== "onboarded");
+        return allPositionSlots.filter(s => !s.candidateName && s.stage !== "cancelled" && s.stage !== "onboarded" && s.slotStatus !== "Closed");
       }, [allPositionSlots]);
 
+      const departmentStats = useMemo(() => {
+        const statsMap = {};
+        DEPARTMENTS.forEach(dept => {
+          if (dept !== "-") {
+            statsMap[dept] = { total: 0, open: 0, filled: 0, cancelled: 0 };
+          }
+        });
+
+        allPositionSlots.forEach(s => {
+          const dept = s.department;
+          if (!dept || dept === "-") return;
+          if (!statsMap[dept]) {
+            statsMap[dept] = { total: 0, open: 0, filled: 0, cancelled: 0 };
+          }
+
+          const reqDate = new Date(s.requestDate);
+          const monthStr = String(reqDate.getMonth() + 1).padStart(2, '0');
+          const yearStr = String(reqDate.getFullYear());
+
+          const matchesMonth = selectedMonthFilter === "ALL" || monthStr === selectedMonthFilter;
+          const matchesYear = selectedYearFilter === "ALL" || yearStr === selectedYearFilter;
+
+          if (matchesMonth && matchesYear) {
+            statsMap[dept].total += 1;
+            if (s.stage === "onboarded") {
+              statsMap[dept].filled += 1;
+            } else if (s.stage === "cancelled") {
+              statsMap[dept].cancelled += 1;
+            } else {
+              statsMap[dept].open += 1;
+            }
+          }
+        });
+
+        return Object.entries(statsMap)
+          .map(([department, counts]) => ({ department, ...counts }))
+          .filter(d => d.total > 0)
+          .sort((a, b) => b.total - a.total);
+      }, [allPositionSlots, selectedMonthFilter, selectedYearFilter]);
+
+      const departmentModalSlots = useMemo(() => {
+        if (!selectedDepartmentDetail) return [];
+        return allPositionSlots.filter(s => s.department === selectedDepartmentDetail);
+      }, [allPositionSlots, selectedDepartmentDetail]);
       const handleSaveNewCandidate = async (e) => {
         e.preventDefault();
         if (!newCandidateForm.fullName.trim()) {
@@ -1102,8 +1233,9 @@
         }
       };
 
-      const handleSelectSlotForCandidate = (slot) => {
-        const cand = slotPickerCandidate;
+      const handleSelectSlotForCandidate = (slot, candidateOverride = null) => {
+        const cand = candidateOverride || slotPickerCandidate;
+        if (!cand) return;
         setSlotPickerCandidate(null);
 
         const now = new Date();
@@ -1122,7 +1254,7 @@
       };
 
       const handleConfirmScheduleAssign = () => {
-        if (!scheduleAssignModalData) return;
+        if (!scheduleAssignModalData || !scheduleAssignModalData.candidate || !scheduleAssignModalData.targetSlot) return;
         const { candidate, targetSlot } = scheduleAssignModalData;
         if (!scheduleInterviewDateTime.trim()) {
           triggerToast("⚠️ กรุณาระบุวันและเวลานัดสัมภาษณ์");
@@ -1170,6 +1302,7 @@
         }));
 
         setScheduleAssignModalData(null);
+        setUnassignedInterviewSlotModal(null);
         triggerToast(`แมปคุณ ${candidate.fullName} เข้าสู่ Slot #${targetSlot.slotId} สำเร็จ`);
       };
 
@@ -1271,12 +1404,51 @@
         triggerToast(`บันทึกผลการประเมินของคุณ ${newSubmission.evaluatorName} สำเร็จ!`);
       };
 
-      const handleUpdateRequisitionStatus = (reqId, newStatus) => {
-        setRequests(prev => prev.map(r => r.id === reqId ? { ...r, requestStatus: newStatus } : r));
-        triggerToast(`อัปเดตคำขอเป็น ${newStatus}${newStatus === "Closed" ? " (ปรับสถานะแคนดิเดตเป็น Hiring / Offer อัตโนมัติ)" : ""}`);
+      // Individual Slot Status Update
+      const handleUpdateSlotStatus = (slotId, newStatus) => {
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          let hasSlot = false;
+          const updatedSlots = r.slots.map(s => {
+            if (s.slotId === slotId) {
+              hasSlot = true;
+              return { ...s, slotStatus: newStatus };
+            }
+            return s;
+          });
+
+          if (!hasSlot) return r;
+
+          // If all slots in this request are Closed, close the parent request
+          const allClosed = updatedSlots.every(s => s.slotStatus === "Closed" || s.stage === "onboarded" || s.stage === "cancelled");
+          return {
+            ...r,
+            requestStatus: allClosed ? "Closed" : "Recruiting",
+            slots: updatedSlots,
+            lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
+          };
+        }));
+
+        triggerToast(`อัปเดต Slot #${slotId} เป็น ${newStatus}`);
       };
 
+      // Handling Onboarding Arrival Status Change with Locking
       const handleUpdateOnboardingArrivalStatus = (slotId, newArrivalStatus) => {
+        const slotItem = allPositionSlots.find(s => s.slotId === slotId);
+        
+        // Once locked as declined_noshow, prevent change
+        if (slotItem?.onboardingArrivalStatus === "declined_noshow") {
+          triggerToast("🔒 สถานะนี้ถูกล็อกเป็น 'สละสิทธิ์ / ไม่มาเริ่มงาน' แล้ว ไม่สามารถเปลี่ยนกลับได้");
+          return;
+        }
+
+        // If user selects declined_noshow, trigger mandatory reason modal
+        if (newArrivalStatus === "declined_noshow") {
+          setRejectionModalData({ slotId, slotItem, isArrivalDecline: true });
+          setRejectionReasonInput(slotItem?.rejectionReason || "");
+          return;
+        }
+
         setRequests(prev => prev.map(r => {
           if (!r.slots) return r;
           const updatedSlots = r.slots.map(s => {
@@ -1285,7 +1457,7 @@
             }
             return s;
           });
-          return { ...r, slots: updatedSlots, onboardingArrivalStatus: newArrivalStatus };
+          return { ...r, slots: updatedSlots };
         }));
 
         if (selectedDetailSlot && selectedDetailSlot.slotId === slotId) {
@@ -1295,9 +1467,14 @@
         const label = ONBOARDING_ARRIVAL_STATUSES.find(o => o.id === newArrivalStatus)?.label || newArrivalStatus;
         triggerToast(`อัปเดตสถานะการมารายงานตัว: ${label}`);
       };
-
       const handleInitiateStageChange = (targetSlotId, targetStage) => {
         const slotItem = allPositionSlots.find(s => s.slotId === targetSlotId);
+
+        // Requirement 2: Candidate Check for Interview Stage
+        if (targetStage === "interview" && (!slotItem?.candidateName || !slotItem.candidateName.trim())) {
+          setUnassignedInterviewSlotModal(slotItem);
+          return;
+        }
 
         if (targetStage === "onboarded") {
           const defaultDate = slotItem?.hireDate || new Date().toISOString().split('T')[0];
@@ -1307,7 +1484,7 @@
         }
 
         if (targetStage === "cancelled") {
-          setRejectionModalData({ slotId: targetSlotId, slotItem });
+          setRejectionModalData({ slotId: targetSlotId, slotItem, isArrivalDecline: false });
           setRejectionReasonInput(slotItem?.rejectionReason || "");
           return;
         }
@@ -1315,13 +1492,14 @@
         updateSlotStageDirectly(targetSlotId, targetStage);
       };
 
+      // Individual Slot Onboard Confirmation
       const handleConfirmOnboardAndClose = (e) => {
         e.preventDefault();
         if (!onboardModalData) return;
         const { slotId, slotItem } = onboardModalData;
         const hireDate = onboardHireDateInput || new Date().toISOString().split('T')[0];
 
-        // 1. Update Candidate Pool: set hireDate and status = "Hiring / Offer"
+        // 1. Update Candidate Pool
         setCandidatePool(prev => prev.map(c => {
           if (c.assignedSlotId === slotId || (slotItem?.candidateName && c.fullName === slotItem.candidateName)) {
             return {
@@ -1333,7 +1511,7 @@
           return c;
         }));
 
-        // 2. Update Request & Slot: set stage = "onboarded" AND requestStatus = "Closed"
+        // 2. Update Specific Slot to Closed and Onboarded
         setRequests(prev => prev.map(r => {
           if (!r.slots) return r;
           const targetSlot = r.slots.find(s => s.slotId === slotId);
@@ -1344,6 +1522,7 @@
               return {
                 ...s,
                 stage: "onboarded",
+                slotStatus: "Closed", // Individual slot closed
                 hireDate: hireDate,
                 onboardingArrivalStatus: s.onboardingArrivalStatus || "pending_arrival"
               };
@@ -1351,25 +1530,32 @@
             return s;
           });
 
+          // Check if all slots are closed
+          const allSlotsClosed = updatedSlots.every(s => s.slotStatus === "Closed" || s.stage === "onboarded" || s.stage === "cancelled");
+
           return {
             ...r,
-            stage: "onboarded",
-            requestStatus: "Closed", // Auto-close requisition!
-            hireDate: hireDate,
+            stage: allSlotsClosed ? "onboarded" : r.stage,
+            requestStatus: allSlotsClosed ? "Closed" : "Recruiting",
             slots: updatedSlots,
             lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
           };
         }));
 
         setOnboardModalData(null);
-        triggerToast(`🎉 รับเข้าทำงานเรียบร้อย! ปิดตำแหน่งคำขอเป็น "Closed" และปรับสถานะผู้สมัครเป็น "Hiring / Offer" อัตโนมัติ`);
+        triggerToast(`🎉 รับเข้าทำงาน Slot #${slotId} เรียบร้อย! ย้าย Slot นี้ไป "Closed" และปรับสถานะผู้สมัครเป็น "Hiring / Offer" อัตโนมัติ`);
       };
 
+      // Individual Slot Rejection & Decline Confirmation (Mandatory Reason + Locked Status)
       const handleConfirmRejectionAndSave = (e) => {
         e.preventDefault();
         if (!rejectionModalData) return;
-        const { slotId } = rejectionModalData;
-        const reason = rejectionReasonInput.trim() || "ไม่ระบุเหตุผล";
+        const { slotId, isArrivalDecline } = rejectionModalData;
+        const reason = rejectionReasonInput.trim();
+        if (!reason) {
+          triggerToast("⚠️ กรุณาระบุเหตุผลในการสละสิทธิ์ / ยกเลิกตำแหน่ง");
+          return;
+        }
 
         setRequests(prev => prev.map(r => {
           if (!r.slots) return r;
@@ -1380,31 +1566,40 @@
             if (s.slotId === slotId) {
               return {
                 ...s,
-                stage: "cancelled",
-                onboardingArrivalStatus: "declined_noshow",
+                stage: isArrivalDecline ? s.stage : "cancelled",
+                slotStatus: "Closed", // Individual slot closed!
+                onboardingArrivalStatus: "declined_noshow", // Locked declined
                 rejectionReason: reason
               };
             }
             return s;
           });
 
-          const allCancelled = updatedSlots.every(s => s.stage === "cancelled");
+          const allSlotsClosed = updatedSlots.every(s => s.slotStatus === "Closed" || s.stage === "onboarded" || s.stage === "cancelled");
 
           return {
             ...r,
-            stage: allCancelled ? "cancelled" : r.stage,
-            requestStatus: "Closed",
-            onboardingArrivalStatus: "declined_noshow",
-            rejectionReason: reason,
+            stage: allSlotsClosed ? "cancelled" : r.stage,
+            requestStatus: allSlotsClosed ? "Closed" : "Recruiting",
             slots: updatedSlots,
             lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
           };
         }));
 
+        if (selectedDetailSlot && selectedDetailSlot.slotId === slotId) {
+          setSelectedDetailSlot(prev => ({ 
+            ...prev, 
+            onboardingArrivalStatus: "declined_noshow", 
+            rejectionReason: reason,
+            slotStatus: "Closed"
+          }));
+        }
+
         setRejectionModalData(null);
-        triggerToast(`บันทึกการยกเลิกตำแหน่ง ย้ายไป "Closed" และปรับสถานะเป็น "❌ สละสิทธิ์" สีแดงเรียบร้อย`);
+        triggerToast(`บันทึกเหตุผลเรียบร้อย! ล็อกสถานะเป็น "❌ สละสิทธิ์ / ไม่มาเริ่มงาน" สีแดง และปิด Slot #${slotId}`);
       };
 
+      // Direct Stage Update
       const updateSlotStageDirectly = (targetSlotId, targetStage) => {
         const todayStr = new Date().toISOString().split('T')[0];
 
@@ -1413,6 +1608,7 @@
           let slots = r.slots && r.slots.length === headcount ? [...r.slots] : Array.from({ length: headcount }, (_, i) => ({
             slotId: `${r.id}-${i + 1}`,
             slotIndex: i + 1,
+            slotStatus: r.requestStatus || "Recruiting",
             candidateName: "",
             stage: r.stage || "received",
             offerSentDate: "",
@@ -1433,6 +1629,7 @@
               return {
                 ...s,
                 stage: targetStage,
+                slotStatus: isNowCancelled ? "Closed" : s.slotStatus,
                 offerSentDate: isNowOffer ? (s.offerSentDate || todayStr) : s.offerSentDate,
                 onboardingArrivalStatus: isNowCancelled ? "declined_noshow" : s.onboardingArrivalStatus
               };
@@ -1441,14 +1638,10 @@
           });
 
           if (slotUpdated) {
-            const allOnboarded = slots.every(s => s.stage === "onboarded");
-            const allCancelled = slots.every(s => s.stage === "cancelled");
-            const isTargetCancelled = targetStage === "cancelled";
+            const allSlotsClosed = slots.every(s => s.slotStatus === "Closed" || s.stage === "onboarded" || s.stage === "cancelled");
             return {
               ...r,
-              stage: allOnboarded ? "onboarded" : (allCancelled ? "cancelled" : targetStage),
-              requestStatus: (allOnboarded || allCancelled || isTargetCancelled) ? "Closed" : r.requestStatus,
-              onboardingArrivalStatus: isTargetCancelled ? "declined_noshow" : r.onboardingArrivalStatus,
+              requestStatus: allSlotsClosed ? "Closed" : "Recruiting",
               offerSentDate: targetStage === "offer" ? (r.offerSentDate || todayStr) : r.offerSentDate,
               slots,
               lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
@@ -1457,7 +1650,7 @@
           return r;
         }));
 
-        triggerToast(`อัปเดตสถานะเป็น ${targetStage}`);
+        triggerToast(`อัปเดต Slot #${targetSlotId} เป็น ${targetStage}`);
       };
 
       const handleFormSubmit = (e) => {
@@ -1476,12 +1669,14 @@
         const newSlots = Array.from({ length: headcount }, (_, i) => ({
           slotId: `${newId}-${i + 1}`,
           slotIndex: i + 1,
+          slotStatus: "Recruiting",
           candidateName: "",
           candidatePhone: "",
           candidateNickname: "",
           resumeUrl: "",
           stage: "received",
           offerSentDate: "",
+          hireDate: "",
           interviewScore: 0,
           interviewScorePercent: 0,
           interviewResult: "",
@@ -1537,14 +1732,14 @@
 
       const exportToCSV = () => {
         const headers = [
-          "Slot ID", "Request ID", "Date", "Status", "Job Title", "Position Type", "Replaced Name",
+          "Slot ID", "Request ID", "Date", "Slot Status", "Job Title", "Position Type", "Replaced Name",
           "Department", "Stage", "Working Days Elapsed", "Candidate", "Interview Schedule",
           "Evaluations Count", "Combined Score (1-5)", "Score %", "Result", "Hire Date", "Arrival Status", "Rejection Reason"
         ];
         const rows = allPositionSlots.map(s => {
           const sla = getSLAInfo(s.requestDate, s.stage, s.offerSentDate);
           return [
-            s.slotId, s.id, s.requestDate, s.requestStatus, `"${s.jobTitle}"`, s.positionType,
+            s.slotId, s.id, s.requestDate, s.slotStatus, `"${s.jobTitle}"`, s.positionType,
             `"${s.replacedEmployeeName || ''}"`, `"${s.department}"`, s.stage,
             sla.offerLeadTimeWorkingDays !== null ? sla.offerLeadTimeWorkingDays : sla.workingDaysElapsed,
             `"${s.candidateName || ''}"`, `"${s.interviewSchedule || ''}"`,
@@ -1563,7 +1758,6 @@
         link.click();
         document.body.removeChild(link);
       };
-
       return (
         <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
           
@@ -1651,7 +1845,6 @@
             </div>
           </header>
 
-          {/* Main Container */}
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             
             {/* KPI Cards */}
@@ -1697,9 +1890,10 @@
               </div>
             </div>
 
-            {}
             {currentView === "public" && (
               <div className="space-y-8">
+                
+                {/* 1. Stage Tracker */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
                     <div>
@@ -1733,7 +1927,7 @@
                           s.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           s.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           s.candidateName?.toLowerCase().includes(searchQuery.toLowerCase());
-                        return s.stage === stage.id && matchesQuery;
+                        return s.stage === stage.id && !s.isArchivedFromKanban && matchesQuery;
                       });
 
                       return (
@@ -1786,7 +1980,7 @@
                                     </div>
                                   )}
 
-                                  {item.stage === "cancelled" && item.rejectionReason && (
+                                  {item.rejectionReason && (
                                     <div className="mt-1.5 p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-[10px] text-rose-700 dark:text-rose-300 font-medium">
                                       ❌ เหตุผล: {item.rejectionReason}
                                     </div>
@@ -1848,10 +2042,79 @@
                     })}
                   </div>
                 </div>
+
+                {/* 2. Headcount Demand by Department (Public View) */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Icon name="building" className="w-5 h-5 text-brand-600" />
+                        Headcount Demand by Department
+                      </h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        สรุปภาพรวมจำนวนอัตรากำลังคนที่เปิดรับสมัครจำแนกตามฝ่ายงาน &bull; คลิกที่ฝ่ายงานเพื่อดูตำแหน่งงานที่เปิดรับ
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      <select
+                        value={selectedMonthFilter}
+                        onChange={(e) => setSelectedMonthFilter(e.target.value)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      >
+                        <option value="ALL">All Months</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                      </select>
+                      <select
+                        value={selectedYearFilter}
+                        onChange={(e) => setSelectedYearFilter(e.target.value)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      >
+                        <option value="ALL">All Years</option>
+                        <option value="2026">2026</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[440px] overflow-y-auto pr-1">
+                    {departmentStats.map((item, idx) => {
+                      const maxTotal = departmentStats[0]?.total || 1;
+                      const percent = Math.min(100, Math.round((item.total / maxTotal) * 100));
+
+                      return (
+                        <div 
+                          key={item.department} 
+                          onClick={() => setSelectedDepartmentDetail(item.department)}
+                          className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-brand-600 transition">
+                              <span className="text-brand-500 font-semibold mr-1.5">#{idx + 1}</span>
+                              {item.department}
+                            </span>
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
+                              <span className="text-slate-700 dark:text-slate-300">Total: {item.total}</span>
+                              <span className="text-amber-600">Open: {item.open}</span>
+                              <span className="text-emerald-600">Filled: {item.filled}</span>
+                            </div>
+                          </div>
+
+                          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-brand-500 to-sky-400 rounded-full transition-all duration-500"
+                              style={{ width: `${item.total > 0 ? percent : 0}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
               </div>
             )}
-
-            {}
             {currentView === "admin" && (
               <div className="space-y-6">
                 
@@ -1865,7 +2128,7 @@
                         : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    1. Kanban Pipeline
+                    1. Kanban Pipeline & Demand
                   </button>
 
                   <button
@@ -1882,159 +2145,255 @@
                 </div>
 
                 {adminSubTab === "kanban" ? (
-                  <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
-                      <div>
-                        <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                          <Icon name="grid" className="w-5 h-5 text-brand-600" />
-                          Interactive Kanban Pipeline (5 Stages - Drag & Drop)
-                        </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          ลากการ์ดตำแหน่งงานเปลี่ยนขั้นตอนได้อย่างรวดเร็ว &bull; ย้ายไป "Onboarded" เพื่อระบุวันเริ่มงาน &amp; ปิดคำขออัตโนมัติ &bull; ย้ายไป "Cancelled" เพื่อระบุเหตุผลการปฏิเสธ
-                        </p>
+                  <div className="space-y-8">
+                    
+                    {/* Interactive Kanban Pipeline */}
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+                        <div>
+                          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Icon name="grid" className="w-5 h-5 text-brand-600" />
+                            Interactive Kanban Pipeline (5 Stages - Drag & Drop)
+                          </h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            ลากการ์ดตำแหน่งงานเปลี่ยนขั้นตอนได้อย่างรวดเร็ว &bull; การ์ดที่ Onboarded หรือ Cancelled สามารถกดปุ่มล้างออกจากกระดานได้ โดยข้อมูลยังคงบันทึกใน Manpower Request
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {allPositionSlots.some(s => s.isArchivedFromKanban) && (
+                            <button
+                              onClick={handleRestoreAllArchivedCards}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1 transition"
+                              title="กู้คืนการ์ดที่ถูกซ่อนกลับมาแสดงบนกระดาน"
+                            >
+                              <Icon name="refresh" className="w-3.5 h-3.5 text-brand-600" />
+                              <span>กู้คืนการ์ดที่ซ่อน ({allPositionSlots.filter(s => s.isArchivedFromKanban).length})</span>
+                            </button>
+                          )}
+
+                          <div className="relative w-full sm:w-64">
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                              <Icon name="search" className="w-4 h-4" />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="ค้นหาตำแหน่ง, รหัส, ฝ่ายงาน, ผู้สมัคร..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                            />
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="relative w-full sm:w-72">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                          <Icon name="search" className="w-4 h-4" />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="ค้นหาตำแหน่ง, รหัส, ฝ่ายงาน, ผู้สมัคร..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                        />
+                      <div className="flex gap-4 overflow-x-auto pb-4 snap-x min-w-full">
+                        {STAGES.map(stage => {
+                          const stageItems = allPositionSlots.filter(s => {
+                            const matches = !searchQuery.trim() ||
+                              s.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              s.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              s.candidateName?.toLowerCase().includes(searchQuery.toLowerCase());
+                            return s.stage === stage.id && !s.isArchivedFromKanban && matches;
+                          });
+
+                          return (
+                            <div
+                              key={stage.id}
+                              onDragOver={(e) => handleDragOver(e, stage.id)}
+                              onDragLeave={(e) => handleDragLeave(e, stage.id)}
+                              onDrop={(e) => handleDrop(e, stage.id)}
+                              className={`w-72 shrink-0 snap-start flex flex-col rounded-2xl p-3 border-2 transition-all duration-150 ${
+                                dragOverStage === stage.id
+                                  ? 'border-brand-500 bg-brand-50/70 dark:bg-brand-950/50 ring-2 ring-brand-500/20'
+                                  : draggedSlotId
+                                  ? 'border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/30'
+                                  : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 dark:border-slate-700 gap-1.5">
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{stage.label}</span>
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-2xs">
+                                    {stageItems.length}
+                                  </span>
+                                </div>
+
+                                {(stage.id === "onboarded" || stage.id === "cancelled") && stageItems.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenStageClearModal(stage.id, stage.label);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-600 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-300 border border-slate-200 dark:border-slate-700 transition shadow-2xs shrink-0 active:scale-95"
+                                    title={`ล้างการ์ดในด่าน ${stage.label}`}
+                                  >
+                                    <span>🧹 ล้างการ์ด</span>
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="space-y-3 flex-1 overflow-y-auto max-h-[540px]">
+                                {stageItems.map(item => {
+                                  const isBeingDragged = draggedSlotId === item.slotId;
+
+                                  return (
+                                    <div
+                                      key={item.slotId}
+                                      draggable={true}
+                                      onDragStart={(e) => handleDragStart(e, item.slotId)}
+                                      onDragEnd={() => { setDraggedSlotId(null); setDragOverStage(null); }}
+                                      className={`p-3.5 rounded-xl bg-white dark:bg-slate-800 border shadow-xs transition-all cursor-grab active:cursor-grabbing select-none group ${
+                                        isBeingDragged
+                                          ? 'opacity-40 scale-95 border-brand-400 dark:border-brand-600 ring-2 ring-brand-500/30 shadow-md'
+                                          : item.stage === 'cancelled'
+                                          ? 'border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20'
+                                          : 'border-slate-200/80 dark:border-slate-700 hover:border-brand-400 hover:shadow-md'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between text-[10px] mb-1.5">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-slate-400 font-mono text-xs cursor-grab" title="ลากเพื่อย้ายขั้นตอน">⋮⋮</span>
+                                          <span className="text-brand-600 font-bold bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded">
+                                            Slot #{item.slotIndex}/{item.totalSlots}
+                                          </span>
+                                        </div>
+                                        <span className="text-slate-400">{item.requestDate}</span>
+                                      </div>
+                                      <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2">
+                                        {item.jobTitle}
+                                      </h4>
+                                      <p className="text-[11px] text-slate-500 truncate mt-0.5">{item.department}</p>
+
+                                      {item.candidateName ? (
+                                        <div className="mt-2 p-2 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60 text-xs">
+                                          <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                                            <span className="truncate">👤 {item.candidateName}</span>
+                                            <button 
+                                              onClick={() => setUnassignConfirmTarget(item)}
+                                              className="text-[10px] text-rose-500 hover:text-rose-700 underline font-semibold ml-1 shrink-0"
+                                            >
+                                              ถอด
+                                            </button>
+                                          </div>
+
+                                          {item.stage === "interview" && item.interviewSchedule && (
+                                            <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
+                                              <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
+                                              <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
+                                            </div>
+                                          )}
+
+                                          {item.stage === "onboarded" && item.hireDate && (
+                                            <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-800 dark:text-emerald-200 font-bold flex items-center gap-1">
+                                              <Icon name="badgeCheck" className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                                              <span>เริ่มงาน: {item.hireDate}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className="mt-2 text-[10px] font-medium text-slate-400 italic bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md inline-block">
+                                          👤 ว่าง (Unassigned)
+                                        </div>
+                                      )}
+
+                                      {item.rejectionReason && (
+                                        <div className="mt-2 p-1.5 rounded-lg bg-rose-100/70 dark:bg-rose-950/70 border border-rose-300 dark:border-rose-900 text-[10px] text-rose-800 dark:text-rose-200 font-semibold">
+                                          ❌ เหตุผล: {item.rejectionReason}
+                                        </div>
+                                      )}
+
+                                      {/* Clear / Hide Card Button for Completed / Cancelled Stages */}
+                                      {(item.stage === "onboarded" || item.stage === "cancelled") && (
+                                        <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleArchiveSlotFromKanban(item.slotId);
+                                            }}
+                                            className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-300 bg-slate-100 hover:bg-rose-50 dark:bg-slate-800/80 dark:hover:bg-rose-950/50 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 transition"
+                                            title="ล้างการ์ดนี้ออกจากหน้ากระดาน Kanban (ข้อมูลยังคงถูกบันทึกใน Manpower Request)"
+                                          >
+                                            <Icon name="x" className="w-3 h-3 text-slate-400 group-hover:text-rose-500" />
+                                            <span>ล้างการ์ดออกจาก Kanban</span>
+                                          </button>
+                                          <span className="text-[9px] text-slate-400 italic">บันทึกใน Closed แล้ว</span>
+                                        </div>
+                                      )}
+
+                                      <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                                        <select
+                                          value={item.stage}
+                                          onChange={(e) => handleInitiateStageChange(item.slotId, e.target.value)}
+                                          className="text-[10px] font-semibold px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                                        >
+                                          {STAGES.map(st => (
+                                            <option key={st.id} value={st.id}>{st.label}</option>
+                                          ))}
+                                        </select>
+
+                                        <button 
+                                          onClick={() => setSelectedDetailSlot(item)}
+                                          className="text-[10px] font-bold text-brand-600 hover:underline"
+                                        >
+                                          ดูคำขอ &rarr;
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x min-w-full">
-                      {STAGES.map(stage => {
-                        const stageItems = allPositionSlots.filter(s => {
-                          const matches = !searchQuery.trim() ||
-                            s.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            s.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            s.candidateName?.toLowerCase().includes(searchQuery.toLowerCase());
-                          return s.stage === stage.id && matches;
-                        });
+                    {/* Headcount Demand by Department (Admin View) */}
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
+                        <div>
+                          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Icon name="building" className="w-5 h-5 text-brand-600" />
+                            Headcount Demand by Department (Admin Overview)
+                          </h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            คลิกที่ฝ่ายงานเพื่อเปิดดูรายละเอียดคำขอกำลังคนเชิงลึก (Deep Requisition Details)
+                          </p>
+                        </div>
+                      </div>
 
-                        return (
-                          <div
-                            key={stage.id}
-                            onDragOver={(e) => handleDragOver(e, stage.id)}
-                            onDragLeave={(e) => handleDragLeave(e, stage.id)}
-                            onDrop={(e) => handleDrop(e, stage.id)}
-                            className={`w-72 shrink-0 snap-start flex flex-col rounded-2xl p-3 border-2 transition-all duration-150 ${
-                              dragOverStage === stage.id
-                                ? 'border-brand-500 bg-brand-50/70 dark:bg-brand-950/50 ring-2 ring-brand-500/20'
-                                : draggedSlotId
-                                ? 'border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/30'
-                                : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40'
-                            }`}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[440px] overflow-y-auto pr-1">
+                        {departmentStats.map((item, idx) => (
+                          <div 
+                            key={item.department} 
+                            onClick={() => setSelectedDepartmentDetail(item.department)}
+                            className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
                           >
-                            <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 dark:border-slate-700">
-                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{stage.label}</span>
-                              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                {stageItems.length}
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-brand-600 transition">
+                                <span className="text-brand-500 font-semibold mr-1.5">#{idx + 1}</span>
+                                {item.department}
                               </span>
+                              <div className="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
+                                <span className="text-slate-700 dark:text-slate-300">Total: {item.total}</span>
+                                <span className="text-amber-600">Open: {item.open}</span>
+                                <span className="text-emerald-600">Filled: {item.filled}</span>
+                              </div>
                             </div>
-
-                            <div className="space-y-3 flex-1 overflow-y-auto max-h-[540px]">
-                              {stageItems.map(item => {
-                                const isBeingDragged = draggedSlotId === item.slotId;
-
-                                return (
-                                  <div
-                                    key={item.slotId}
-                                    draggable={true}
-                                    onDragStart={(e) => handleDragStart(e, item.slotId)}
-                                    onDragEnd={() => { setDraggedSlotId(null); setDragOverStage(null); }}
-                                    className={`p-3.5 rounded-xl bg-white dark:bg-slate-800 border shadow-xs transition-all cursor-grab active:cursor-grabbing select-none group ${
-                                      isBeingDragged
-                                        ? 'opacity-40 scale-95 border-brand-400 dark:border-brand-600 ring-2 ring-brand-500/30 shadow-md'
-                                        : item.stage === 'cancelled'
-                                        ? 'border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20'
-                                        : 'border-slate-200/80 dark:border-slate-700 hover:border-brand-400 hover:shadow-md'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between text-[10px] mb-1.5">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-slate-400 font-mono text-xs cursor-grab" title="ลากเพื่อย้ายขั้นตอน">⋮⋮</span>
-                                        <span className="text-brand-600 font-bold bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded">
-                                          Slot #{item.slotIndex}/{item.totalSlots}
-                                        </span>
-                                      </div>
-                                      <span className="text-slate-400">{item.requestDate}</span>
-                                    </div>
-                                    <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2">
-                                      {item.jobTitle}
-                                    </h4>
-                                    <p className="text-[11px] text-slate-500 truncate mt-0.5">{item.department}</p>
-
-                                    {item.candidateName ? (
-                                      <div className="mt-2 p-2 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60 text-xs">
-                                        <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-                                          <span className="truncate">👤 {item.candidateName}</span>
-                                          <button 
-                                            onClick={() => setUnassignConfirmTarget(item)}
-                                            className="text-[10px] text-rose-500 hover:text-rose-700 underline font-semibold ml-1 shrink-0"
-                                          >
-                                            ถอด
-                                          </button>
-                                        </div>
-
-                                        {item.stage === "interview" && item.interviewSchedule && (
-                                          <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
-                                            <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
-                                            <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
-                                          </div>
-                                        )}
-
-                                        {item.stage === "onboarded" && item.hireDate && (
-                                          <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-800 dark:text-emerald-200 font-bold flex items-center gap-1">
-                                            <Icon name="badgeCheck" className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                                            <span>เริ่มงาน: {item.hireDate}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <div className="mt-2 text-[10px] font-medium text-slate-400 italic bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md inline-block">
-                                        👤 ว่าง (Unassigned)
-                                      </div>
-                                    )}
-
-                                    {item.stage === "cancelled" && item.rejectionReason && (
-                                      <div className="mt-2 p-1.5 rounded-lg bg-rose-100/70 dark:bg-rose-950/70 border border-rose-300 dark:border-rose-900 text-[10px] text-rose-800 dark:text-rose-200 font-semibold">
-                                        ❌ เหตุผล: {item.rejectionReason}
-                                      </div>
-                                    )}
-
-                                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                                      <select
-                                        value={item.stage}
-                                        onChange={(e) => handleInitiateStageChange(item.slotId, e.target.value)}
-                                        className="text-[10px] font-semibold px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                                      >
-                                        {STAGES.map(st => (
-                                          <option key={st.id} value={st.id}>{st.label}</option>
-                                        ))}
-                                      </select>
-
-                                      <button 
-                                        onClick={() => setSelectedDetailSlot(item)}
-                                        className="text-[10px] font-bold text-brand-600 hover:underline"
-                                      >
-                                        ดูคำขอ &rarr;
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                            <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                              <div 
+                                className="h-full bg-gradient-to-r from-brand-500 to-sky-400 rounded-full"
+                                style={{ width: `${item.total > 0 ? (item.total / (departmentStats[0]?.total || 1)) * 100 : 0}%` }}
+                              ></div>
                             </div>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
+
                   </div>
                 ) : (
                   <div className="flex flex-col w-full space-y-8">
@@ -2048,7 +2407,7 @@
                             1. Manpower Request
                           </h2>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            ตารางสรุปคำขอกำลังคน แยกสถานะ In Process (กำลังสรรหา) และ Closed (ปิดแล้ว พร้อมสถานะรายงานตัวและไฮไลท์เขียว/แดง)
+                            ตารางสรุปคำขอกำลังคน แยกสถานะ In Process (กำลังสรรหา) และ Closed (ปิดแล้ว พร้อมสถานะรายงานตัวที่ล็อกได้และไฮไลท์เขียว/แดง)
                           </p>
                         </div>
 
@@ -2096,7 +2455,7 @@
                           <thead className="bg-slate-50 dark:bg-slate-800 text-[10px] uppercase tracking-wider text-slate-500 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
                             <tr>
                               <th className="px-3 py-2.5">Slot / Req</th>
-                              <th className="px-3 py-2.5">Status คำขอ</th>
+                              <th className="px-3 py-2.5">Status ของ Slot</th>
                               <th className="px-3 py-2.5">ตำแหน่ง &amp; ประเภท</th>
                               <th className="px-3 py-2.5">ฝ่ายงาน</th>
                               <th className="px-3 py-2.5">Recruitment Stage</th>
@@ -2120,12 +2479,12 @@
                                 const hasEvaluation = s.evaluationsCount > 0;
                                 const isPassingScore = s.interviewScorePercent >= 70;
                                 const isArrivedSuccess = s.onboardingArrivalStatus === "arrived_reported";
-                                const isRejectedOrCancelled = s.stage === "cancelled";
+                                const isDeclinedOrCancelled = s.stage === "cancelled" || s.onboardingArrivalStatus === "declined_noshow";
 
-                                const rowHighlightClass = isArrivedSuccess
-                                  ? "bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100/80 transition"
-                                  : isRejectedOrCancelled
+                                const rowHighlightClass = isDeclinedOrCancelled
                                   ? "bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100/80 transition"
+                                  : isArrivedSuccess
+                                  ? "bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100/80 transition"
                                   : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40";
 
                                 return (
@@ -2137,10 +2496,10 @@
 
                                     <td className="px-3 py-2.5">
                                       <select
-                                        value={s.requestStatus || "Recruiting"}
-                                        onChange={(e) => handleUpdateRequisitionStatus(s.id, e.target.value)}
+                                        value={s.slotStatus || "Recruiting"}
+                                        onChange={(e) => handleUpdateSlotStatus(s.slotId, e.target.value)}
                                         className={`text-[11px] font-bold px-2 py-1 rounded-lg border ${
-                                          s.requestStatus === "Closed"
+                                          s.slotStatus === "Closed"
                                             ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800"
                                             : "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-800"
                                         }`}
@@ -2173,11 +2532,6 @@
                                           <option key={stg.id} value={stg.id}>{stg.label}</option>
                                         ))}
                                       </select>
-                                      {isRejectedOrCancelled && s.rejectionReason && (
-                                        <div className="text-[10px] text-rose-600 font-bold mt-0.5 truncate max-w-[150px]" title={s.rejectionReason}>
-                                          เหตุผล: {s.rejectionReason}
-                                        </div>
-                                      )}
                                     </td>
 
                                     <td className="px-3 py-2.5">
@@ -2194,34 +2548,39 @@
 
                                     <td className="px-3 py-2.5">
                                       {s.candidateName ? (
-                                        <div className="flex items-center gap-2">
-                                          <div>
+                                        <div className="flex flex-col space-y-0.5">
+                                          <div className="flex items-center gap-2">
                                             <span className="font-semibold text-slate-900 dark:text-white">{s.candidateName}</span>
-                                            {s.candidateNickname && <span className="text-[10px] text-slate-400 ml-1">({s.candidateNickname})</span>}
-                                            {s.interviewSchedule && (
-                                              <div className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
-                                                📅 {s.interviewSchedule}
-                                              </div>
-                                            )}
+                                            {s.candidateNickname && <span className="text-[10px] text-slate-400">({s.candidateNickname})</span>}
+                                            <button
+                                              onClick={() => setUnassignConfirmTarget(s)}
+                                              className="p-1 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-[10px] font-bold"
+                                              title="ถอดผู้สมัคร"
+                                            >
+                                              ✕ ถอด
+                                            </button>
                                           </div>
-                                          <button
-                                            onClick={() => setUnassignConfirmTarget(s)}
-                                            className="p-1 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-[10px] font-bold"
-                                            title="ถอดผู้สมัคร"
-                                          >
-                                            ✕ ถอด
-                                          </button>
+                                          {s.interviewSchedule && (
+                                            <div className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
+                                              📅 {s.interviewSchedule}
+                                            </div>
+                                          )}
+                                          {s.rejectionReason && (
+                                            <div className="text-[10px] text-rose-700 dark:text-rose-300 font-bold bg-rose-100 dark:bg-rose-950/80 px-2 py-0.5 rounded-md border border-rose-300 dark:border-rose-900 truncate max-w-[200px]" title={s.rejectionReason}>
+                                              ❌ เหตุผล: {s.rejectionReason}
+                                            </div>
+                                          )}
                                         </div>
                                       ) : (
                                         <span className="text-slate-400 text-[11px] italic">ว่าง (Unassigned)</span>
                                       )}
                                     </td>
 
-                                    {/* Closed-Tab Specific: Hire Date & Arrival Status with Green/Red cues */}
+                                    {/* Closed-Tab Specific: Hire Date & Arrival Status with Locking */}
                                     {manpowerTableTab === "closed" && (
                                       <td className="px-3 py-2.5">
                                         <div className="space-y-1">
-                                          {isRejectedOrCancelled ? (
+                                          {isDeclinedOrCancelled ? (
                                             <div className="text-[11px] font-extrabold text-rose-600 dark:text-rose-400 flex items-center gap-1">
                                               <span>❌ ยกเลิก / สละสิทธิ์</span>
                                             </div>
@@ -2234,21 +2593,27 @@
                                             <div className="text-[10px] text-slate-400 italic">ไม่ระบุวันเริ่มงาน</div>
                                           )}
                                           
-                                          <select
-                                            value={isRejectedOrCancelled ? "declined_noshow" : (s.onboardingArrivalStatus || "pending_arrival")}
-                                            onChange={(e) => handleUpdateOnboardingArrivalStatus(s.slotId, e.target.value)}
-                                            className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition ${
-                                              (isRejectedOrCancelled || s.onboardingArrivalStatus === "declined_noshow")
-                                                ? "bg-rose-600 text-white border-rose-700 shadow-sm ring-2 ring-rose-500/30"
-                                                : s.onboardingArrivalStatus === "arrived_reported"
-                                                ? "bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-500/20"
-                                                : "bg-amber-100 text-amber-800 border-amber-300"
-                                            }`}
-                                          >
-                                            {ONBOARDING_ARRIVAL_STATUSES.map(arr => (
-                                              <option key={arr.id} value={arr.id}>{arr.label}</option>
-                                            ))}
-                                          </select>
+                                          <div className="flex items-center gap-1">
+                                            <select
+                                              disabled={s.onboardingArrivalStatus === "declined_noshow"}
+                                              value={s.onboardingArrivalStatus || "pending_arrival"}
+                                              onChange={(e) => handleUpdateOnboardingArrivalStatus(s.slotId, e.target.value)}
+                                              className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition ${
+                                                s.onboardingArrivalStatus === "declined_noshow"
+                                                  ? "bg-rose-600 text-white border-rose-700 shadow-sm ring-2 ring-rose-500/30 cursor-not-allowed opacity-95"
+                                                  : s.onboardingArrivalStatus === "arrived_reported"
+                                                  ? "bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-500/20"
+                                                  : "bg-amber-100 text-amber-800 border-amber-300"
+                                              }`}
+                                            >
+                                              {ONBOARDING_ARRIVAL_STATUSES.map(arr => (
+                                                <option key={arr.id} value={arr.id}>{arr.label}</option>
+                                              ))}
+                                            </select>
+                                            {s.onboardingArrivalStatus === "declined_noshow" && (
+                                              <span className="text-[10px] text-rose-600 font-bold" title="สถานะนี้ถูกล็อกแล้ว">🔒</span>
+                                            )}
+                                          </div>
                                         </div>
                                       </td>
                                     )}
@@ -2304,7 +2669,6 @@
                       </div>
                     </div>
 
-                    {}
                     {/* SECTION 2: Candidate Pool Directory (Bottom - Full Width, 18 Columns) */}
                     <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -2441,8 +2805,6 @@
 
                               return (
                                 <tr key={cand.candidateId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                                  
-                                  {/* Action Column with Strict Hide-Mapping Rules */}
                                   <td className="px-3 py-2">
                                     {cand.assignedSlotId ? (
                                       <div className="flex items-center gap-1.5">
@@ -2516,8 +2878,206 @@
             )}
 
           </main>
+          {/* Requirement 2: Interview Stage Candidate Check Modal */}
+          {unassignedInterviewSlotModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-amber-300 dark:border-amber-800 p-6 space-y-4">
+                <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2 text-amber-600">
+                    <Icon name="exclamation" className="w-5 h-5 text-amber-600" />
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      ยังไม่มี Candidate จับคู่ในตำแหน่งนี้
+                    </h3>
+                  </div>
+                  <button onClick={() => setUnassignedInterviewSlotModal(null)} className="p-1 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
 
-          {}
+                <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                  <p>
+                    ตำแหน่ง <strong>{unassignedInterviewSlotModal.jobTitle}</strong> (Slot #{unassignedInterviewSlotModal.slotId}) ยังไม่มีผู้สมัครถูกแมป
+                  </p>
+                  <p className="font-semibold text-amber-700 dark:text-amber-300">
+                    ⚠️ หากต้องการเปลี่ยนด่านเป็น "Interview Stage" กรุณาเลือกผู้สมัครจาก Candidate Pool และระบุวันเวลานัดสัมภาษณ์ให้เรียบร้อย
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2 max-h-52 overflow-y-auto pr-1">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase">เลือกผู้สมัครที่พร้อมสัมภาษณ์:</span>
+                  {candidatePool.filter(c => !c.assignedSlotId && c.status !== "not suitable" && c.status !== "cancel by candidate" && c.status !== "Hiring / Offer").length === 0 ? (
+                    <div className="p-3 text-center text-slate-400 italic bg-slate-50 dark:bg-slate-800 rounded-xl text-xs">
+                      ไม่มีแคนดิเดตที่ว่างอยู่ในคลังขณะนี้
+                    </div>
+                  ) : (
+                    candidatePool.filter(c => !c.assignedSlotId && c.status !== "not suitable" && c.status !== "cancel by candidate" && c.status !== "Hiring / Offer").map(c => (
+                      <div
+                        key={c.candidateId}
+                        onClick={() => {
+                          const slot = unassignedInterviewSlotModal;
+                          setUnassignedInterviewSlotModal(null);
+                          handleSelectSlotForCandidate(slot, c);
+                        }}
+                        className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/70 border border-slate-200 dark:border-slate-700 cursor-pointer transition flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="font-bold text-xs text-slate-900 dark:text-white">{c.fullName} {c.nickname ? `(${c.nickname})` : ''}</p>
+                          <p className="text-[10px] text-slate-400">{c.targetJobTitle} &bull; 📞 {c.phone || '-'}</p>
+                        </div>
+                        <span className="text-xs font-bold text-brand-600 hover:underline">เลือก &rarr;</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setUnassignedInterviewSlotModal(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Multi-Select Stage Clear Modal */}
+          {stageClearModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
+                
+                <div className="px-6 py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                      <span>🧹 KANBAN STAGE CLEAR &amp; ARCHIVE</span>
+                    </span>
+                    <h3 className="text-base font-extrabold mt-0.5">
+                      ล้างการ์ดออกจากด่าน: {stageClearModal.stageLabel}
+                    </h3>
+                  </div>
+                  <button onClick={() => setStageClearModal(null)} className="p-1.5 text-slate-400 hover:text-white">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                  <Icon name="exclamation" className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    การล้างการ์ดจะ<strong>ซ่อนการ์ดออกเฉพาะบนหน้ากระดาน Kanban</strong> เพื่อความเรียบร้อย โดยข้อมูลคำขอและประวัติทั้งหมด<strong>ยังคงถูกบันทึกและแสดงใน Manpower Request (แท็บ Closed) ครบ 100%</strong>
+                  </span>
+                </div>
+
+                <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs bg-slate-50/50 dark:bg-slate-800/40">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="selectAllClear"
+                      checked={selectedSlotsToClear.length === stageClearModal.slots.length && stageClearModal.slots.length > 0}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedSlotsToClear(stageClearModal.slots.map(s => s.slotId));
+                        } else {
+                          setSelectedSlotsToClear([]);
+                        }
+                      }}
+                      className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
+                    />
+                    <label htmlFor="selectAllClear" className="font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                      เลือกทั้งหมด ({stageClearModal.slots.length} รายการ)
+                    </label>
+                  </div>
+
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    เลือกแล้ว {selectedSlotsToClear.length} จาก {stageClearModal.slots.length}
+                  </span>
+                </div>
+
+                <div className="p-6 space-y-2.5 overflow-y-auto flex-1 text-xs max-h-[380px]">
+                  {stageClearModal.slots.map(slot => {
+                    const isChecked = selectedSlotsToClear.includes(slot.slotId);
+                    return (
+                      <div
+                        key={slot.slotId}
+                        onClick={() => {
+                          if (isChecked) {
+                            setSelectedSlotsToClear(prev => prev.filter(id => id !== slot.slotId));
+                          } else {
+                            setSelectedSlotsToClear(prev => [...prev, slot.slotId]);
+                          }
+                        }}
+                        className={`p-3 rounded-2xl border transition cursor-pointer flex items-center justify-between select-none ${
+                          isChecked
+                            ? "bg-brand-50/70 dark:bg-brand-950/40 border-brand-300 dark:border-brand-700 shadow-2xs"
+                            : "bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {}}
+                            className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 cursor-pointer shrink-0"
+                          />
+                          <div>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                              <span className="font-bold text-brand-600">{slot.slotId}</span>
+                              <span>&bull;</span>
+                              <span className="truncate max-w-[140px]">{slot.department}</span>
+                            </div>
+                            <h4 className="font-bold text-slate-900 dark:text-white text-xs mt-0.5 line-clamp-1">
+                              {slot.jobTitle}
+                            </h4>
+                            {slot.candidateName && (
+                              <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold mt-0.5 truncate">
+                                👤 {slot.candidateName}
+                              </p>
+                            )}
+                            {slot.rejectionReason && (
+                              <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium mt-0.5 truncate max-w-[260px]">
+                                ❌ {slot.rejectionReason}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            slot.stage === "onboarded"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
+                              : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200"
+                          }`}>
+                            {slot.stage === "onboarded" ? "Onboarded" : "Cancelled"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStageClearModal(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition"
+                  >
+                    ยกเลิก
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={selectedSlotsToClear.length === 0}
+                    onClick={handleConfirmBatchArchive}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center gap-1.5 transition active:scale-95"
+                  >
+                    <span>ล้างตำแหน่งที่เลือก ({selectedSlotsToClear.length} รายการ)</span>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
           {/* Onboarded Hire Date Trigger Modal */}
           {onboardModalData && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
@@ -2530,7 +3090,7 @@
                       Onboarded / Filled Stage Trigger
                     </span>
                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
-                      ระบุวันเริ่มงาน (Hire Date)
+                      ระบุวันเริ่มงาน (Hire Date) สำหรับ Slot นี้
                     </h3>
                   </div>
                   <button onClick={() => setOnboardModalData(null)} className="p-1.5 text-slate-400 hover:text-slate-600">
@@ -2566,8 +3126,9 @@
                     </p>
                     <ul className="list-disc list-inside space-y-0.5 text-[10.5px]">
                       <li>บันทึกวันเริ่มงานลงในข้อมูลผู้สมัคร</li>
-                      <li>ย้ายสถานะคำขอเป็น <strong>"Closed"</strong> อัตโนมัติ</li>
+                      <li>ย้ายสถานะ Slot <strong>#{onboardModalData.slotId}</strong> เป็น <strong>"Closed"</strong></li>
                       <li>ปรับสถานะผู้สมัครใน Candidate Pool เป็น <strong>"Hiring / Offer"</strong></li>
+                      <li>หากคำขอนี้ยังมี Slot อื่นเปิดอยู่ คำขอภาพรวมจะยังคงเปิดสรรหาต่อไป</li>
                     </ul>
                   </div>
 
@@ -2583,7 +3144,7 @@
                       type="submit"
                       className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-md"
                     >
-                      ยืนยันวันเริ่มงาน &amp; ปิดตำแหน่ง
+                      ยืนยันวันเริ่มงาน &amp; ปิด Slot นี้
                     </button>
                   </div>
                 </form>
@@ -2592,20 +3153,19 @@
             </div>
           )}
 
-          {}
-          {/* Rejection / Cancellation Modal */}
+          {/* Rejection / Decline Modal (Mandatory Reason + Lock) */}
           {rejectionModalData && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
-              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-rose-300 dark:border-rose-900 p-6">
                 
                 <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                   <div>
                     <span className="text-[10px] font-bold text-rose-600 uppercase flex items-center gap-1">
                       <Icon name="exclamation" className="w-3.5 h-3.5 text-rose-600" />
-                      Cancelled / Rejected Stage Trigger
+                      {rejectionModalData.isArrivalDecline ? "Onboarding Decline Trigger" : "Cancelled / Rejected Trigger"}
                     </span>
                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
-                      ระบุเหตุผลในการยกเลิก / ปฏิเสธ
+                      ระบุเหตุผลในการสละสิทธิ์ / ยกเลิกตำแหน่ง (บังคับกรอก)
                     </h3>
                   </div>
                   <button onClick={() => setRejectionModalData(null)} className="p-1.5 text-slate-400 hover:text-slate-600">
@@ -2617,20 +3177,27 @@
                   <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 space-y-1">
                     <p><span className="text-slate-400">ตำแหน่ง:</span> <strong className="text-slate-900 dark:text-white">{rejectionModalData.slotItem?.jobTitle}</strong></p>
                     <p><span className="text-slate-400">Slot ID:</span> <strong className="text-brand-600">{rejectionModalData.slotId}</strong></p>
+                    {rejectionModalData.slotItem?.candidateName && (
+                      <p><span className="text-slate-400">ผู้สมัคร:</span> <strong className="text-rose-700 dark:text-rose-300">{rejectionModalData.slotItem.candidateName}</strong></p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      เหตุผลในการยกเลิกหรือปฏิเสธตำแหน่งงาน <span className="text-rose-600">*</span>
+                      เหตุผลในการสละสิทธิ์หรือไม่มาเริ่มงาน <span className="text-rose-600">* (บังคับกรอก)</span>
                     </label>
                     <textarea
                       required
                       rows="3"
-                      placeholder="e.g. แผนกชะลอการจ้างงาน, ปรับโครงสร้างงบประมาณ, ผู้สมัครไม่ผ่านคุณสมบัติขั้นต่ำ..."
+                      placeholder="e.g. ผู้สมัครได้งานที่อื่นใกล้บ้าน, สละสิทธิ์เนื่องจากไม่สะดวกเดินทาง, แผนกชะลอการเปิดรับ..."
                       value={rejectionReasonInput}
                       onChange={(e) => setRejectionReasonInput(e.target.value)}
                       className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-rose-300 dark:border-rose-800 font-medium focus:ring-2 focus:ring-rose-500"
                     ></textarea>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-[11px] text-amber-800 dark:text-amber-200">
+                    ⚠️ เมื่อบันทึกแล้ว ระบบจะล็อกสถานะเป็น <strong>"❌ สละสิทธิ์ / ไม่มาเริ่มงาน"</strong> ทันที และแสดงแถบสีแดงในรายงานเพื่อความถูกต้องของข้อมูล
                   </div>
 
                   <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
@@ -2645,7 +3212,7 @@
                       type="submit"
                       className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md"
                     >
-                      บันทึกการยกเลิกตำแหน่ง
+                      ยืนยันบันทึกเหตุผล &amp; ล็อกสถานะ
                     </button>
                   </div>
                 </form>
@@ -2654,7 +3221,90 @@
             </div>
           )}
 
-          {}
+          {/* Department Position Breakdown Modal */}
+          {selectedDepartmentDetail && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col">
+                
+                <div className="px-6 py-4 bg-gradient-to-r from-brand-600 to-sky-600 text-white flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-200">
+                      DEPARTMENT POSITION BREAKDOWN &bull; {currentView === "admin" ? "ADMIN DETAILED AUDIT" : "OPEN REQUISITIONS"}
+                    </span>
+                    <h3 className="text-base sm:text-lg font-extrabold mt-0.5 flex items-center gap-2">
+                      <Icon name="building" className="w-5 h-5 text-white" />
+                      <span>{selectedDepartmentDetail}</span>
+                    </h3>
+                  </div>
+                  <button onClick={() => setSelectedDepartmentDetail(null)} className="p-2 text-white/80 hover:text-white">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  {departmentModalSlots.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 italic bg-slate-50 dark:bg-slate-800/40 rounded-2xl">
+                      ไม่มีตำแหน่งงานในฝ่ายนี้
+                    </div>
+                  ) : (
+                    departmentModalSlots.map(s => {
+                      const sla = getSLAInfo(s.requestDate, s.stage, s.offerSentDate);
+                      return (
+                        <div key={s.slotId} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 text-[10px] mb-1">
+                              <span className="font-bold text-brand-600">{s.slotId}</span>
+                              <span className="text-slate-400">&bull;</span>
+                              <span className="text-slate-500 font-semibold">{s.positionType}</span>
+                              <span className="text-slate-400">&bull;</span>
+                              <span className={`px-2 py-0.5 rounded font-bold ${s.slotStatus === "Closed" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                                {s.slotStatus}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{s.jobTitle}</h4>
+                            {s.candidateName && (
+                              <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs mt-1">
+                                👤 แคนดิเดต: {s.candidateName} {s.candidateNickname ? `(${s.candidateNickname})` : ''}
+                              </p>
+                            )}
+                            {currentView === "admin" && (
+                              <div className="mt-2 text-[10px] text-slate-400 space-y-0.5">
+                                <p>ผู้ขอ: {s.requesterName} &bull; ผู้อนุมัติ: {s.approverName}</p>
+                                {s.hireDate && <p className="text-emerald-600 font-bold">🎉 วันเริ่มงาน: {s.hireDate}</p>}
+                                {s.evaluationsCount > 0 && (
+                                  <p className="text-brand-600 font-semibold">⭐ ผลประเมิน: {s.interviewScore}/5 ({s.interviewScorePercent}%) - {s.evaluationsCount} ท่าน</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex sm:flex-col items-end gap-1.5 shrink-0">
+                            <span className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-700 font-bold text-[11px]">
+                              Stage: {s.stage}
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              ⏱️ {sla.workingDaysElapsed} วันทำการ
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="pt-3 pb-4 px-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setSelectedDepartmentDetail(null)}
+                    className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
           {/* Blind Evaluation Modal Form */}
           {blindEvalModalSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
@@ -2852,7 +3502,6 @@
             </div>
           )}
 
-          {}
           {/* Admin Audit Modal */}
           {adminAuditSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
@@ -2968,7 +3617,6 @@
             </div>
           )}
 
-          {}
           {/* Add Candidate Modal */}
           {showAddCandidateModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
@@ -3157,7 +3805,6 @@
             </div>
           )}
 
-          {}
           {/* Available Slots Picker Modal */}
           {slotPickerCandidate && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
@@ -3183,7 +3830,7 @@
                     availableUnassignedSlots.map(s => (
                       <div
                         key={s.slotId}
-                        onClick={() => handleSelectSlotForCandidate(s)}
+                        onClick={() => handleSelectSlotForCandidate(s, slotPickerCandidate)}
                         className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/60 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition cursor-pointer flex items-center justify-between group"
                       >
                         <div>
@@ -3207,7 +3854,7 @@
           )}
 
           {/* Schedule Assignment Modal with Native DateTime Picker */}
-          {scheduleAssignModalData && (
+          {scheduleAssignModalData && scheduleAssignModalData.candidate && scheduleAssignModalData.targetSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
               <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
                 <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -3224,8 +3871,8 @@
 
                 <div className="py-4 space-y-3.5 text-xs">
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                    <p><span className="text-slate-400">ผู้สมัคร:</span> <strong className="text-slate-900 dark:text-white">{scheduleAssignModalData.candidate.fullName}</strong></p>
-                    <p><span className="text-slate-400">ตำแหน่ง:</span> <strong className="text-brand-600">{scheduleAssignModalData.targetSlot.slotId} - {scheduleAssignModalData.targetSlot.jobTitle}</strong></p>
+                    <p><span className="text-slate-400">ผู้สมัคร:</span> <strong className="text-slate-900 dark:text-white">{scheduleAssignModalData.candidate?.fullName || "-"}</strong></p>
+                    <p><span className="text-slate-400">ตำแหน่ง:</span> <strong className="text-brand-600">{scheduleAssignModalData.targetSlot?.slotId} - {scheduleAssignModalData.targetSlot?.jobTitle}</strong></p>
                   </div>
 
                   <div>
@@ -3271,7 +3918,6 @@
             </div>
           )}
 
-          {}
           {/* Manpower Request Form Modal */}
           {showRequestModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
@@ -3487,8 +4133,7 @@
             </div>
           )}
 
-          {}
-          {/* Slot Detail Modal with Arrival Status & Rejection banner */}
+          {/* Slot Detail Modal */}
           {selectedDetailSlot && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
               <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
@@ -3505,12 +4150,12 @@
 
                 <div className="py-4 space-y-3 text-xs max-h-[70vh] overflow-y-auto pr-1">
                   
-                  {/* Rejection Highlight banner if cancelled */}
-                  {selectedDetailSlot.stage === "cancelled" && (
+                  {/* Rejection / Decline Highlight banner if cancelled or declined */}
+                  {(selectedDetailSlot.stage === "cancelled" || selectedDetailSlot.onboardingArrivalStatus === "declined_noshow") && (
                     <div className="p-3.5 rounded-2xl bg-rose-100 dark:bg-rose-950/70 border-2 border-rose-400 dark:border-rose-800 text-rose-900 dark:text-rose-200 space-y-1">
                       <div className="font-extrabold flex items-center gap-1.5 text-xs">
                         <Icon name="exclamation" className="w-4 h-4 text-rose-600" />
-                        <span>ตำแหน่งนี้ถูกยกเลิก / ปฏิเสธ (Cancelled &amp; Rejected)</span>
+                        <span>ตำแหน่งนี้ถูกยกเลิก / ผู้สมัครสละสิทธิ์ (Cancelled / Declined)</span>
                       </div>
                       <p className="text-[11px] font-semibold pl-5">
                         เหตุผล: {selectedDetailSlot.rejectionReason || "ไม่ระบุเหตุผล"}
@@ -3527,13 +4172,13 @@
                       )}
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400">Status คำขอ:</span>
-                      <p className="font-bold text-emerald-600">{selectedDetailSlot.requestStatus || "Recruiting"}</p>
+                      <span className="text-[10px] text-slate-400">Status ของ Slot:</span>
+                      <p className="font-bold text-emerald-600">{selectedDetailSlot.slotStatus || "Recruiting"}</p>
                     </div>
                   </div>
 
                   {/* Arrival Status & Inspection in Closed state */}
-                  {(selectedDetailSlot.requestStatus === "Closed" || selectedDetailSlot.stage === "cancelled") && (
+                  {(selectedDetailSlot.slotStatus === "Closed" || selectedDetailSlot.stage === "cancelled") && (
                     <div className={`p-3.5 rounded-2xl border ${
                       (selectedDetailSlot.stage === "cancelled" || selectedDetailSlot.onboardingArrivalStatus === "declined_noshow")
                         ? "bg-rose-50 dark:bg-rose-950/50 border-rose-400 ring-2 ring-rose-500/20"
@@ -3551,28 +4196,34 @@
                               🎉 วันเริ่มงาน: {selectedDetailSlot.hireDate}
                             </p>
                           )}
-                          {selectedDetailSlot.stage === "cancelled" && (
+                          {(selectedDetailSlot.stage === "cancelled" || selectedDetailSlot.onboardingArrivalStatus === "declined_noshow") && (
                             <p className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">
                               ❌ ตำแหน่งถูกยกเลิก / ผู้สมัครสละสิทธิ์
                             </p>
                           )}
                         </div>
 
-                        <select
-                          value={selectedDetailSlot.stage === "cancelled" ? "declined_noshow" : (selectedDetailSlot.onboardingArrivalStatus || "pending_arrival")}
-                          onChange={(e) => handleUpdateOnboardingArrivalStatus(selectedDetailSlot.slotId, e.target.value)}
-                          className={`text-xs font-extrabold px-3 py-1.5 rounded-xl border transition ${
-                            (selectedDetailSlot.stage === "cancelled" || selectedDetailSlot.onboardingArrivalStatus === "declined_noshow")
-                              ? "bg-rose-600 text-white border-rose-700 shadow-sm ring-2 ring-rose-500/20"
-                              : selectedDetailSlot.onboardingArrivalStatus === "arrived_reported"
-                              ? "bg-emerald-600 text-white border-emerald-700"
-                              : "bg-amber-100 text-amber-900 border-amber-300"
-                          }`}
-                        >
-                          {ONBOARDING_ARRIVAL_STATUSES.map(arr => (
-                            <option key={arr.id} value={arr.id}>{arr.label}</option>
-                          ))}
-                        </select>
+                        <div className="flex items-center gap-1">
+                          <select
+                            disabled={selectedDetailSlot.onboardingArrivalStatus === "declined_noshow"}
+                            value={selectedDetailSlot.onboardingArrivalStatus || "pending_arrival"}
+                            onChange={(e) => handleUpdateOnboardingArrivalStatus(selectedDetailSlot.slotId, e.target.value)}
+                            className={`text-xs font-extrabold px-3 py-1.5 rounded-xl border transition ${
+                              selectedDetailSlot.onboardingArrivalStatus === "declined_noshow"
+                                ? "bg-rose-600 text-white border-rose-700 shadow-sm ring-2 ring-rose-500/20 cursor-not-allowed opacity-95"
+                                : selectedDetailSlot.onboardingArrivalStatus === "arrived_reported"
+                                ? "bg-emerald-600 text-white border-emerald-700"
+                                : "bg-amber-100 text-amber-900 border-amber-300"
+                            }`}
+                          >
+                            {ONBOARDING_ARRIVAL_STATUSES.map(arr => (
+                              <option key={arr.id} value={arr.id}>{arr.label}</option>
+                            ))}
+                          </select>
+                          {selectedDetailSlot.onboardingArrivalStatus === "declined_noshow" && (
+                            <span className="text-xs text-rose-600 font-bold" title="สถานะถูกล็อกแล้ว">🔒</span>
+                          )}
+                        </div>
                       </div>
 
                       {selectedDetailSlot.onboardingArrivalStatus === "arrived_reported" && selectedDetailSlot.stage !== "cancelled" && (
@@ -3585,7 +4236,7 @@
                       {(selectedDetailSlot.stage === "cancelled" || selectedDetailSlot.onboardingArrivalStatus === "declined_noshow") && (
                         <div className="mt-2 text-[11px] font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
                           <Icon name="exclamation" className="w-4 h-4 text-rose-600" />
-                          <span>สละสิทธิ์ / ไม่มาเริ่มงาน (ตำแหน่งถูกปิดเป็น Rejected/Cancelled)</span>
+                          <span>สละสิทธิ์ / ไม่มาเริ่มงาน (ตำแหน่งถูกปิดเป็น Rejected/Cancelled พร้อมล็อกสถานะ)</span>
                         </div>
                       )}
                     </div>
@@ -3637,24 +4288,10 @@
                           )}
                         </div>
                       )}
-
-                      <div className="pt-2 flex justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            const slot = selectedDetailSlot;
-                            setSelectedDetailSlot(null);
-                            handleOpenBlindEvaluationModal(slot);
-                          }}
-                          className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 flex items-center gap-1"
-                        >
-                          <Icon name="clipboardCheck" className="w-3.5 h-3.5" />
-                          <span>+ บันทึกผลประเมินสัมภาษณ์</span>
-                        </button>
-                      </div>
                     </div>
                   ) : (
                     <div className="p-3 text-center bg-slate-50 dark:bg-slate-800 rounded-xl">
-                      <p className="text-slate-400 italic mb-2">ยังไม่มีผู้สมัครจับคู่ในตำแหน่งนี้</p>
+                      <p className="text-slate-400 italic">ยังไม่มีผู้สมัครจับคู่ในตำแหน่งนี้</p>
                     </div>
                   )}
                 </div>
@@ -3668,7 +4305,6 @@
             </div>
           )}
 
-          {}
           {/* Unassign Confirmation Modal */}
           {unassignConfirmTarget && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
