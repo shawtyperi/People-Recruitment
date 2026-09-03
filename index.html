@@ -712,6 +712,10 @@
       const [selectedDetailSlot, setSelectedDetailSlot] = useState(null);
       const [slotPickerCandidate, setSlotPickerCandidate] = useState(null);
       
+      // Candidate Detail Modal & Candidate Delete Modal states
+      const [selectedCandidateDetail, setSelectedCandidateDetail] = useState(null);
+      const [candidateToDelete, setCandidateToDelete] = useState(null);
+      
       // Mandatory Check: Interview Stage assignment for unassigned slots
       const [unassignedInterviewSlotModal, setUnassignedInterviewSlotModal] = useState(null);
       
@@ -1371,6 +1375,40 @@
 
         setUnassignConfirmTarget(null);
         triggerToast(`ถอดรายชื่อผู้สมัครออกจาก Slot #${targetSlotId} เรียบร้อยแล้ว`);
+      };
+
+      // Handler to delete candidate with slot detachment
+      const handleConfirmDeleteCandidate = () => {
+        if (!candidateToDelete) return;
+        const targetId = candidateToDelete.candidateId;
+        const targetName = candidateToDelete.fullName;
+        const linkedSlotId = candidateToDelete.assignedSlotId;
+
+        // If candidate was assigned to a slot, detach from that slot
+        if (linkedSlotId) {
+          setRequests(prev => prev.map(r => {
+            if (!r.slots) return r;
+            const slots = r.slots.map(s => {
+              if (s.slotId === linkedSlotId) {
+                return {
+                  ...s,
+                  candidateName: "",
+                  candidatePhone: "",
+                  candidateNickname: "",
+                  resumeUrl: "",
+                  interviewSchedule: "",
+                  evaluations: []
+                };
+              }
+              return s;
+            });
+            return { ...r, slots };
+          }));
+        }
+
+        setCandidatePool(prev => prev.filter(c => c.candidateId !== targetId));
+        triggerToast(`ลบข้อมูลคุณ ${targetName} ออกจากระบบเรียบร้อย`);
+        setCandidateToDelete(null);
       };
 
       const handleOpenBlindEvaluationModal = (slot) => {
@@ -2843,124 +2881,119 @@
                         <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           <thead className="bg-slate-100 dark:bg-slate-800 text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                              <th className="px-3 py-2.5 font-bold">2-Way Assignment</th>
-                              <th className="px-3 py-2.5 font-bold">A: No.</th>
-                              <th className="px-3 py-2.5 font-bold">B: Year</th>
-                              <th className="px-3 py-2.5 font-bold">C: Month</th>
-                              <th className="px-3 py-2.5 font-bold">D: Name (ชื่อ-นามสกุล)</th>
-                              <th className="px-3 py-2.5 font-bold">E: Nick (ชื่อเล่น)</th>
-                              <th className="px-3 py-2.5 font-bold">F: Phone</th>
-                              <th className="px-3 py-2.5 font-bold">G: Position (ตำแหน่ง)</th>
-                              <th className="px-3 py-2.5 font-bold">H: Level</th>
-                              <th className="px-3 py-2.5 font-bold">I: Branch</th>
-                              <th className="px-3 py-2.5 font-bold">J: Type</th>
-                              <th className="px-3 py-2.5 font-bold">K: MBTI</th>
-                              <th className="px-3 py-2.5 font-bold">L: Prescreen date</th>
-                              <th className="px-3 py-2.5 font-bold">M: Resume Confirmation</th>
-                              <th className="px-3 py-2.5 font-bold">N: Interview Date &amp; Time</th>
-                              <th className="px-3 py-2.5 font-bold">O: Hire date</th>
-                              <th className="px-3 py-2.5 font-bold">P: Status</th>
-                              <th className="px-3 py-2.5 font-bold">Q: Recruit Channel</th>
-                              <th className="px-3 py-2.5 font-bold">R: Remark (หมายเหตุ)</th>
+                              <th className="px-3 py-2.5 font-bold">การแมปตำแหน่ง (2-Way)</th>
+                              <th className="px-3 py-2.5 font-bold">No.</th>
+                              <th className="px-3 py-2.5 font-bold">ชื่อ-นามสกุล</th>
+                              <th className="px-3 py-2.5 font-bold">ชื่อเล่น</th>
+                              <th className="px-3 py-2.5 font-bold">Phone</th>
+                              <th className="px-3 py-2.5 font-bold">Position (ตำแหน่ง)</th>
+                              <th className="px-3 py-2.5 font-bold">Level</th>
+                              <th className="px-3 py-2.5 font-bold">Status</th>
+                              <th className="px-3 py-2.5 font-bold text-center">Action</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {filteredCandidates.map((cand, idx) => {
-                              const statusCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === cand.status) || CANDIDATE_STATUS_CONFIG[3];
-                              const shouldHideMapping = statusCfg.hideMapping;
+                            {filteredCandidates.length === 0 ? (
+                              <tr>
+                                <td colSpan="9" className="text-center py-8 text-slate-400 italic">
+                                  ไม่พบข้อมูลผู้สมัครตามเงื่อนไขที่ค้นหา
+                                </td>
+                              </tr>
+                            ) : (
+                              filteredCandidates.map((cand, idx) => {
+                                const statusCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === cand.status) || CANDIDATE_STATUS_CONFIG[3];
+                                const shouldHideMapping = statusCfg.hideMapping;
 
-                              return (
-                                <tr key={cand.candidateId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                                  <td className="px-3 py-2">
-                                    {cand.assignedSlotId ? (
+                                return (
+                                  <tr key={cand.candidateId} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                                    <td className="px-3 py-2">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 font-extrabold text-[10px] border border-emerald-300">
-                                          ✓ Selected ({cand.assignedSlotId})
-                                        </span>
+                                        {/* 1. ปุ่มแมปตำแหน่ง (+) */}
+                                        {cand.assignedSlotId ? (
+                                          <div className="flex items-center gap-1">
+                                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 font-extrabold text-[10px] border border-emerald-300">
+                                              ✓ {cand.assignedSlotId}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleUnassignCandidate(cand.assignedSlotId, cand.fullName)}
+                                              className="text-[10px] text-rose-600 hover:text-rose-800 underline font-semibold shrink-0"
+                                              title="ถอดการแมปตำแหน่ง"
+                                            >
+                                              ถอด
+                                            </button>
+                                          </div>
+                                        ) : shouldHideMapping ? (
+                                          <span className="text-[10px] font-semibold italic text-slate-400 dark:text-slate-500">
+                                            {cand.status === "Hiring / Offer" ? "✓ บรรจุแล้ว" : "(พ้นขั้นตอน)"}
+                                          </span>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() => setSlotPickerCandidate(cand)}
+                                            className="p-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition shadow-2xs active:scale-95 flex items-center justify-center shrink-0"
+                                            title="แมปตำแหน่ง (+)"
+                                          >
+                                            <Icon name="plus" className="w-3.5 h-3.5 text-white" />
+                                          </button>
+                                        )}
+
+                                        {/* 2. ปุ่มดูรายละเอียด (👁️) */}
                                         <button
-                                          onClick={() => handleUnassignCandidate(cand.assignedSlotId, cand.fullName)}
-                                          className="text-[10px] text-rose-600 hover:text-rose-800 underline font-semibold"
-                                          title="Unassign"
+                                          type="button"
+                                          onClick={() => setSelectedCandidateDetail(cand)}
+                                          className="p-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 transition active:scale-95 shadow-2xs shrink-0"
+                                          title="ดูรายละเอียดผู้สมัครครบ 18 คอลัมน์"
                                         >
-                                          ถอด
+                                          <Icon name="eye" className="w-3.5 h-3.5" />
                                         </button>
                                       </div>
-                                    ) : shouldHideMapping ? (
-                                      <span className="text-[10px] font-semibold italic text-slate-400 dark:text-slate-500">
-                                        {cand.status === "Hiring / Offer" ? "✓ บรรจุงานแล้ว" : "(พ้นกระบวนการ)"}
+                                    </td>
+
+                                    <td className="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">{cand.no || idx + 1}</td>
+                                    <td className="px-3 py-2 font-bold text-slate-900 dark:text-white">
+                                      <div className="flex items-center gap-1.5">
+                                        <span>{cand.fullName}</span>
+                                        {cand.resumeUrl && (
+                                          <a
+                                            href={cand.resumeUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-sky-50 dark:bg-sky-950/70 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800 text-[9px] font-semibold hover:bg-sky-100 transition shadow-2xs"
+                                            title="เปิดดู Google Drive CV / Resume"
+                                          >
+                                            <Icon name="link" className="w-2.5 h-2.5 text-sky-500" />
+                                            <span>CV</span>
+                                          </a>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="px-3 py-2">{cand.nickname || "-"}</td>
+                                    <td className="px-3 py-2">{cand.phone || "-"}</td>
+                                    <td className="px-3 py-2 font-semibold text-brand-600 dark:text-brand-400">{cand.targetJobTitle}</td>
+                                    <td className="px-3 py-2">{cand.level || "-"}</td>
+                                    
+                                    <td className="px-3 py-2">
+                                      <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-lg border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+                                        {statusCfg.label}
                                       </span>
-                                    ) : (
+                                    </td>
+
+                                    {/* คอลัมน์ Action ขวาสุด: แสดงเฉพาะปุ่มลบ (🗑️) */}
+                                    <td className="px-3 py-2 text-center">
                                       <button
-                                        onClick={() => setSlotPickerCandidate(cand)}
-                                        className="px-2 py-1 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold text-[10px] flex items-center gap-1 transition shadow-2xs"
+                                        type="button"
+                                        onClick={() => setCandidateToDelete(cand)}
+                                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 hover:text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition active:scale-95 shadow-2xs cursor-pointer inline-flex items-center justify-center"
+                                        title="ลบข้อมูลผู้สมัครรายนี้"
                                       >
-                                        <Icon name="plus" className="w-3 h-3 text-white" />
-                                        <span>แมปตำแหน่ง</span>
+                                        <span className="text-xs">🗑️</span>
                                       </button>
-                                    )}
-                                  </td>
-
-                                  <td className="px-3 py-2 font-bold text-slate-800 dark:text-slate-200">{cand.no || idx + 1}</td>
-                                  <td className="px-3 py-2">{cand.year || "2026"}</td>
-                                  <td className="px-3 py-2">{cand.month || "08"}</td>
-                                  <td className="px-3 py-2 font-bold text-slate-900 dark:text-white">
-                                    <div className="flex items-center gap-1.5">
-                                      <span>{cand.fullName}</span>
-                                      {cand.resumeUrl && (
-                                        <a
-                                          href={cand.resumeUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/70 text-sky-600 dark:text-sky-300 border border-sky-200 dark:border-sky-800 text-[10px] font-semibold hover:bg-sky-100 transition shadow-2xs"
-                                          title="เปิดดู Google Drive CV / Resume"
-                                        >
-                                          <Icon name="link" className="w-2.5 h-2.5 text-sky-500" />
-                                          <span>CV</span>
-                                        </a>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-2">{cand.nickname || "-"}</td>
-                                  <td className="px-3 py-2">{cand.phone || "-"}</td>
-                                  <td className="px-3 py-2 font-semibold text-brand-600 dark:text-brand-400">{cand.targetJobTitle}</td>
-                                  <td className="px-3 py-2">{cand.level || "-"}</td>
-                                  <td className="px-3 py-2">{cand.branch || "-"}</td>
-                                  <td className="px-3 py-2">{cand.type || "Full-Time"}</td>
-                                  <td className="px-3 py-2 font-mono font-bold text-slate-700 dark:text-slate-300">{cand.mbti || "-"}</td>
-                                  <td className="px-3 py-2">{cand.prescreenDate || "-"}</td>
-                                  <td className="px-3 py-2">
-                                    <div className="flex items-center gap-1">
-                                      <span>{cand.resumeConfirmDate || "-"}</span>
-                                      {cand.resumeUrl && (
-                                        <a
-                                          href={cand.resumeUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-sky-600 hover:text-sky-700 underline text-[10px] font-bold"
-                                        >
-                                          (Drive)
-                                        </a>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-2 font-semibold text-amber-700 dark:text-amber-300">
-                                    {cand.interviewDate || "-"}
-                                  </td>
-                                  <td className="px-3 py-2 text-emerald-600 font-semibold">{cand.hireDate || "-"}</td>
-                                  
-                                  <td className="px-3 py-2">
-                                    <span className={`inline-block text-[11px] font-bold px-2.5 py-1 rounded-lg border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
-                                      {statusCfg.label}
-                                    </span>
-                                  </td>
-
-                                  <td className="px-3 py-2">{cand.source || "-"}</td>
-                                  <td className="px-3 py-2 max-w-[180px] truncate text-slate-500" title={cand.remark}>
-                                    {cand.remark || "-"}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -4820,6 +4853,277 @@
                     className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700"
                   >
                     ยืนยันถอดออก
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Candidate Full 18-Column Details Modal */}
+          {selectedCandidateDetail && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92vh] flex flex-col">
+                
+                {/* Modal Header */}
+                <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 text-white flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-sky-500/20 text-sky-300 flex items-center justify-center text-lg font-bold border border-sky-400/30 shadow-inner">
+                      👤
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-400">
+                          {selectedCandidateDetail.candidateId || `CAND-2026-${String(selectedCandidateDetail.no || 1).padStart(3, '0')}`}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-semibold">&bull; ลำดับที่ (No.) #{selectedCandidateDetail.no || '-'}</span>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-extrabold text-white leading-tight">
+                        {selectedCandidateDetail.fullName} {selectedCandidateDetail.nickname ? `(${selectedCandidateDetail.nickname})` : ''}
+                      </h3>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setSelectedCandidateDetail(null)} 
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                  >
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Body: 18 Columns Grid & Details */}
+                <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  
+                  {/* Status & 2-Way Mapping Banner */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">สถานะปัจจุบัน (Status):</span>
+                      <div className="mt-1">
+                        {(() => {
+                          const stCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === selectedCandidateDetail.status) || CANDIDATE_STATUS_CONFIG[3];
+                          return (
+                            <span className={`inline-block text-xs font-bold px-3 py-1 rounded-xl border shadow-2xs ${stCfg.bg} ${stCfg.text} ${stCfg.border}`}>
+                              {stCfg.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <div className="sm:text-right">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">การแมปตำแหน่ง (2-Way Mapping):</span>
+                      <div className="mt-1">
+                        {selectedCandidateDetail.assignedSlotId ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 font-bold text-xs">
+                            <span>✓ ผูกอยู่กับ Slot #{selectedCandidateDetail.assignedSlotId}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-block px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs border border-slate-200 dark:border-slate-700">
+                            ว่าง (Available / Not Assigned)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 18 Columns (A-R) Structured Grid */}
+                  <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                        <span>📋 ข้อมูลผู้สมัครครบ 18 คอลัมน์ (Columns A - R)</span>
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-mono">Google Sheet GID: 546067727</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 text-[11px]">
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">A: ลำดับ / B: ปี / C: เดือน</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          No. {selectedCandidateDetail.no || '-'} ({selectedCandidateDetail.month || '08'}/{selectedCandidateDetail.year || '2026'})
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">D: ชื่อ - นามสกุล</span>
+                        <strong className="text-slate-900 dark:text-white text-xs mt-0.5 block truncate" title={selectedCandidateDetail.fullName}>
+                          {selectedCandidateDetail.fullName}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">E: ชื่อเล่น (Nickname)</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          {selectedCandidateDetail.nickname || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">F: เบอร์โทรศัพท์ (Phone)</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          {selectedCandidateDetail.phone || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 sm:col-span-2">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">G: ตำแหน่งที่สมัคร (Position)</span>
+                        <strong className="text-brand-600 dark:text-brand-400 text-xs mt-0.5 block truncate" title={selectedCandidateDetail.targetJobTitle}>
+                          {selectedCandidateDetail.targetJobTitle}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">H: ระดับ (Level)</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          {selectedCandidateDetail.level || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">I: สาขา (Branch)</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block truncate" title={selectedCandidateDetail.branch}>
+                          {selectedCandidateDetail.branch || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">J: ประเภทสัญญาจ้าง (Type)</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          {selectedCandidateDetail.type || 'Full-Time'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">K: MBTI</span>
+                        <strong className="text-slate-800 dark:text-slate-200 font-mono text-xs mt-0.5 block">
+                          {selectedCandidateDetail.mbti || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">L: Prescreen Date</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          {selectedCandidateDetail.prescreenDate || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">M: Resume Confirm Date</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          {selectedCandidateDetail.resumeConfirmDate || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">N: วันนัดสัมภาษณ์ (Interview Date)</span>
+                        <strong className="text-amber-700 dark:text-amber-300 text-xs mt-0.5 block font-semibold">
+                          {selectedCandidateDetail.interviewDate ? selectedCandidateDetail.interviewDate.replace('T', ' ') : '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">O: วันเริ่มงาน (Hire Date)</span>
+                        <strong className="text-emerald-700 dark:text-emerald-300 text-xs mt-0.5 block font-bold">
+                          {selectedCandidateDetail.hireDate || '-'}
+                        </strong>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Q: แหล่งที่มา (Channel / Source)</span>
+                        <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                          {selectedCandidateDetail.source || '-'}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Google Drive Link Box */}
+                    <div className="p-3 rounded-xl bg-sky-50/70 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 space-y-1.5">
+                      <span className="text-[10px] font-bold text-sky-900 dark:text-sky-300 uppercase block">
+                        🔗 ลิงก์ Google Drive CV / Resume:
+                      </span>
+                      {selectedCandidateDetail.resumeUrl ? (
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={selectedCandidateDetail.resumeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                          >
+                            <Icon name="link" className="w-3.5 h-3.5" />
+                            <span>เปิดดูเรซูเม่ใน Google Drive (คลิก)</span>
+                          </a>
+                          <span className="text-[10px] text-slate-400 font-mono truncate max-w-[280px]" title={selectedCandidateDetail.resumeUrl}>
+                            {selectedCandidateDetail.resumeUrl}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic text-xs block">ไม่ได้ระบุลิงก์ Google Drive</span>
+                      )}
+                    </div>
+
+                    {/* Remark Box */}
+                    <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                        R: หมายเหตุ (Remark):
+                      </span>
+                      <p className="text-slate-700 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-wrap">
+                        {selectedCandidateDetail.remark || '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCandidateDetail(null)}
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition cursor-pointer active:scale-95 shadow-2xs"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* Delete Candidate Confirmation Modal */}
+          {candidateToDelete && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-rose-300 dark:border-rose-900 p-6 text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 flex items-center justify-center mx-auto text-xl">
+                  🗑️
+                </div>
+
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                    ยืนยันการลบข้อมูลผู้สมัคร
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    คุณต้องการลบข้อมูลคุณ <strong>"{candidateToDelete.fullName}"</strong> ({candidateToDelete.candidateId || `#${candidateToDelete.no}`}) ออกจากระบบใช่หรือไม่?
+                  </p>
+                  {candidateToDelete.assignedSlotId && (
+                    <p className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold bg-amber-50 dark:bg-amber-950/40 p-2 rounded-xl mt-2">
+                      ⚠️ ผู้สมัครนี้กำลังผูกอยู่กับ Slot #{candidateToDelete.assignedSlotId} ระบบจะปลดการผูกตำแหน่งออกให้อัตโนมัติ
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCandidateToDelete(null)}
+                    className="w-1/2 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDeleteCandidate}
+                    className="w-1/2 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/30 transition active:scale-95"
+                  >
+                    ยืนยันการลบ
                   </button>
                 </div>
               </div>
