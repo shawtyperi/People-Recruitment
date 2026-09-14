@@ -3577,6 +3577,39 @@
                                         </div>
                                       )}
 
+                                      {/* Interview Evaluation Action for Admin Kanban Card */}
+                                      {(item.candidateName || item.stage === "interview") && (
+                                        <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between gap-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleOpenBlindEvaluationModal(item);
+                                            }}
+                                            className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800/80 transition shadow-2xs active:scale-95"
+                                            title="เปิดแบบฟอร์มประเมินสัมภาษณ์"
+                                          >
+                                            <Icon name="clipboardCheck" className="w-3 h-3 text-brand-600" />
+                                            <span>+ ประเมินสัมภาษณ์</span>
+                                          </button>
+                                          {item.evaluationsCount > 0 ? (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setAdminAuditSlot(item);
+                                              }}
+                                              className="text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 underline truncate"
+                                              title="คลิกเพื่อดู Audit Breakdown คะแนนประเมิน"
+                                            >
+                                              ⭐ {item.interviewScore}/5 ({item.evaluationsCount} ท่าน)
+                                            </button>
+                                          ) : (
+                                            <span className="text-[10px] text-slate-400 italic">รอผลประเมิน</span>
+                                          )}
+                                        </div>
+                                      )}
+
                                       {(item.stage === "onboarded" || item.stage === "cancelled") && (
                                         <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
                                           <button
@@ -7327,6 +7360,23 @@
                               🔍 เปิดดู Audit Breakdown รายชื่อและคะแนนกรรมการทุกคน &rarr;
                             </button>
                           )}
+                        </div>
+                      )}
+
+                      {/* Add Interview Evaluation Button in Slot Detail Modal */}
+                      {(selectedDetailSlot.candidateName || selectedDetailSlot.stage === "interview") && (
+                        <div className="mt-3 pt-2.5 border-t border-emerald-200/70 dark:border-emerald-800/70 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBlindEvaluationModal(selectedDetailSlot)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                          >
+                            <Icon name="clipboardCheck" className="w-3.5 h-3.5 text-white" />
+                            <span>+ บันทึกผลประเมินสัมภาษณ์</span>
+                          </button>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {selectedDetailSlot.evaluationsCount > 0 ? `ประเมินแล้ว ${selectedDetailSlot.evaluationsCount} ท่าน` : "ยังไม่มีผู้ประเมิน"}
+                          </span>
                         </div>
                       )}
                     </div>
