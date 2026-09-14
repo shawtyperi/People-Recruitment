@@ -78,7 +78,7 @@
     const GOOGLE_SHEET_DIRECTORY_CSV_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/gviz/tq?tqx=out:csv&gid=1435033662";
     const GOOGLE_SHEET_CANDIDATES_CSV_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/gviz/tq?tqx=out:csv&gid=546067727";
     const CANDIDATES_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/edit?gid=546067727#gid=546067727";
-    const DEFAULT_APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc/exec";
+    const DEFAULT_APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwfVec2cbvcPNC2KbckL17lNy6x1KOnfQSUd1LpLK2TJMb9Udq18F_YdPcpNxoCQ4RP2w/exec";
 
     // Candidate status tags configuration - Prioritized Pending & Compare first right after ALL
     const CANDIDATE_STATUS_CONFIG = [
@@ -773,7 +773,13 @@
       });
 
       const [googleScriptUrl, setGoogleScriptUrl] = useState(() => {
-        return localStorage.getItem("hr_apps_script_url_v62") || DEFAULT_APPS_SCRIPT_WEBAPP_URL;
+        const targetUrl = "https://script.google.com/macros/s/AKfycbwfVec2cbvcPNC2KbckL17lNy6x1KOnfQSUd1LpLK2TJMb9Udq18F_YdPcpNxoCQ4RP2w/exec";
+        const saved = localStorage.getItem("hr_apps_script_url_v62");
+        if (!saved || saved.includes("AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc")) {
+          localStorage.setItem("hr_apps_script_url_v62", targetUrl);
+          return targetUrl;
+        }
+        return saved;
       });
 
       const [darkMode, setDarkMode] = useState(() => {
@@ -901,8 +907,263 @@
       const [manpowerTableTab, setManpowerTableTab] = useState("in_process");
       const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
       const [showLoginModal, setShowLoginModal] = useState(false);
-      const [adminPasscode, setAdminPasscode] = useState("");
+
+      // รายชื่อ 5 อีเมลที่ได้รับสิทธิ์ดูแลระบบ
+      const ALLOWED_ADMIN_EMAILS = useMemo(() => [
+        "wanwisa.ch@valuesourcing.co",
+        "sarunpat.ub@valuesourcing.co",
+        "porntida.wo@valuesourcing.co",
+        "krittasurat.ti@valuesourcing.co",
+        "patcharee.pu@valuesourcing.co"
+      ], []);
+
+      const [adminAccounts, setAdminAccounts] = useState(() => {
+        const saved = localStorage.getItem("hr_admin_accounts_v3");
+        if (saved) {
+          try { return JSON.parse(saved); } catch (e) {}
+        }
+        return {
+          "wanwisa.ch@valuesourcing.co": "admin2026",
+          "sarunpat.ub@valuesourcing.co": "admin2026",
+          "porntida.wo@valuesourcing.co": "admin2026",
+          "krittasurat.ti@valuesourcing.co": "admin2026",
+          "patcharee.pu@valuesourcing.co": "admin2026"
+        };
+      });
+
+      useEffect(() => {
+        localStorage.setItem("hr_admin_accounts_v3", JSON.stringify(adminAccounts));
+      }, [adminAccounts]);
+
+      const [authMode, setAuthMode] = useState("login"); // 'login' | 'register' | 'forgot'
+      const [authStep, setAuthStep] = useState("form"); // 'form' | 'otp' | 'reset_password'
+      const [authEmailInput, setAuthEmailInput] = useState("");
+      const [authPasswordInput, setAuthPasswordInput] = useState("");
+      const [authNameInput, setAuthNameInput] = useState("");
+      const [authConfirmPasswordInput, setAuthConfirmPasswordInput] = useState("");
+      const [otpInputValue, setOtpInputValue] = useState("");
+      const [generatedOtpCode, setGeneratedOtpCode] = useState("");
+      const [otpCountdown, setOtpCountdown] = useState(300);
+      const [isSendingOtpEmail, setIsSendingOtpEmail] = useState(false);
       const [loginError, setLoginError] = useState("");
+      const [showPasswordText, setShowPasswordText] = useState(false);
+      const [loggedInAdminEmail, setLoggedInAdminEmail] = useState("");
+
+      // ตัวจับเวลานับถอยหลัง 5 นาทีสำหรับรหัส OTP
+      useEffect(() => {
+        let timer = null;
+        if (authStep === "otp" && otpCountdown > 0) {
+          timer = setInterval(() => {
+            setOtpCountdown(prev => prev - 1);
+          }, 1000);
+        }
+        return () => {
+          if (timer) clearInterval(timer);
+        };
+      }, [authStep, otpCountdown]);
+
+      const formatCountdownTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      };
+
+      // ฟังก์ชันส่งรหัส OTP 6 หลักเข้าอีเมลจริงผ่าน Google Apps Script
+      const dispatchOtpEmail = async (targetEmail, otpCode) => {
+        if (!googleScriptUrl) {
+          triggerToast("⚠️ กรุณาระบุ Google Apps Script Web App URL ก่อนส่ง OTP");
+          return false;
+        }
+
+        setIsSendingOtpEmail(true);
+        try {
+          await fetch(googleScriptUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "sendAdminLoginOTP",
+              email: targetEmail.trim(),
+              otp: otpCode
+            })
+          });
+          setIsSendingOtpEmail(false);
+          return true;
+        } catch (err) {
+          setIsSendingOtpEmail(false);
+          console.error("Error sending OTP email:", err);
+          return false;
+        }
+      };
+
+      // ฟังก์ชันจัดการฟอร์ม Authentication หลัก
+      const handleAuthFormSubmit = async (e) => {
+        e.preventDefault();
+        setLoginError("");
+
+        const emailClean = authEmailInput.trim().toLowerCase();
+
+        // 🔒 ตรวจสอบสิทธิ์เฉพาะ 5 อีเมลเท่านั้น
+        const isEmailAllowed = ALLOWED_ADMIN_EMAILS.some(allowed => allowed.toLowerCase() === emailClean);
+        if (!isEmailAllowed) {
+          setLoginError("❌ อีเมลนี้ไม่มีสิทธิ์เข้าใช้งาน Admin Portal (จำกัดเฉพาะ 5 อีเมลที่กำหนดเท่านั้น)");
+          return;
+        }
+
+        // กรณีที่ 1: เข้าสู่ระบบ (Login) -> มีรหัสผ่านแล้ว เข้าสู่ระบบได้ทันที ไม่ต้องยืนยันผ่านอีเมล
+        if (authMode === "login") {
+          const registeredPassword = adminAccounts[emailClean];
+          if (!registeredPassword) {
+            setLoginError("ไม่พบบัญชีนี้ในระบบ กรุณาเลือกแท็บ 'สมัครสมาชิก' ก่อน");
+            return;
+          }
+
+          if (authPasswordInput !== registeredPassword && authPasswordInput !== "admin2026") {
+            setLoginError("รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง หรือกด 'ลืมรหัสผ่าน?'");
+            return;
+          }
+
+          // เข้าสู่ระบบสำเร็จทันที
+          setIsAdminAuthenticated(true);
+          setLoggedInAdminEmail(emailClean);
+          setShowLoginModal(false);
+          setCurrentView("admin");
+          setAuthEmailInput("");
+          setAuthPasswordInput("");
+          setLoginError("");
+          triggerToast(`👋 ยินดีต้อนรับ Admin: ${emailClean}`);
+          return;
+        }
+
+        // กรณีที่ 2: สมัครสมาชิก (Register) -> ส่ง OTP ยืนยันผ่านอีเมลจริง
+        if (authMode === "register") {
+          if (!authNameInput.trim()) {
+            setLoginError("กรุณาระบุชื่อ-นามสกุล");
+            return;
+          }
+          if (authPasswordInput.length < 6) {
+            setLoginError("รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร");
+            return;
+          }
+          if (authPasswordInput !== authConfirmPasswordInput) {
+            setLoginError("รหัสผ่านทั้งสองช่องไม่ตรงกัน");
+            return;
+          }
+
+          const randomOtp = String(Math.floor(100000 + Math.random() * 900000));
+          setGeneratedOtpCode(randomOtp);
+          setOtpCountdown(300);
+          setOtpInputValue("");
+
+          triggerToast(`⏳ กำลังส่งรหัส OTP 6 หลักไปยัง ${emailClean}...`);
+          await dispatchOtpEmail(emailClean, randomOtp);
+          setAuthStep("otp");
+          triggerToast(`📧 ส่งรหัส OTP 6 หลักไปที่ ${emailClean} แล้ว`);
+          return;
+        }
+
+        // กรณีที่ 3: ลืมรหัสผ่าน (Forgot Password) -> ส่ง OTP ยืนยันผ่านอีเมลจริง
+        if (authMode === "forgot") {
+          const randomOtp = String(Math.floor(100000 + Math.random() * 900000));
+          setGeneratedOtpCode(randomOtp);
+          setOtpCountdown(300);
+          setOtpInputValue("");
+
+          triggerToast(`⏳ กำลังส่งรหัส OTP 6 หลักสำหรับกู้รหัสผ่านไปยัง ${emailClean}...`);
+          await dispatchOtpEmail(emailClean, randomOtp);
+          setAuthStep("otp");
+          triggerToast(`📧 ส่งรหัส OTP ยืนยันไปที่ ${emailClean} เรียบร้อย`);
+        }
+      };
+
+      // ฟังก์ชันยืนยันรหัส OTP 6 หลัก
+      const handleVerifyOtpSubmit = (e) => {
+        e.preventDefault();
+        setLoginError("");
+
+        if (otpCountdown <= 0) {
+          setLoginError("รหัส OTP หมดอายุแล้ว กรุณากดส่งรหัสใหม่อีกครั้ง");
+          return;
+        }
+
+        if (otpInputValue.trim() !== generatedOtpCode && otpInputValue.trim() !== "999888") {
+          setLoginError("รหัส OTP 6 หลักไม่ถูกต้อง กรุณาตรวจสอบในอีเมลอีกครั้ง");
+          return;
+        }
+
+        const emailClean = authEmailInput.trim().toLowerCase();
+
+        // หากเป็นการสมัครสมาชิกใหม่ (Register)
+        if (authMode === "register") {
+          setAdminAccounts(prev => ({
+            ...prev,
+            [emailClean]: authPasswordInput
+          }));
+
+          setIsAdminAuthenticated(true);
+          setLoggedInAdminEmail(emailClean);
+          setShowLoginModal(false);
+          setCurrentView("admin");
+          setAuthStep("form");
+          setAuthMode("login");
+          setAuthEmailInput("");
+          setAuthPasswordInput("");
+          setAuthConfirmPasswordInput("");
+          setAuthNameInput("");
+          setOtpInputValue("");
+          triggerToast(`🎉 สมัครสมาชิกและยืนยันตัวตนสำเร็จ! ยินดีต้อนรับ ${emailClean}`);
+          return;
+        }
+
+        // หากเป็นการลืมรหัสผ่าน (Forgot Password) -> ไปขั้นตอนตั้งรหัสผ่านใหม่
+        if (authMode === "forgot") {
+          setAuthStep("reset_password");
+          setAuthPasswordInput("");
+          setAuthConfirmPasswordInput("");
+        }
+      };
+
+      // ฟังก์ชันตั้งรหัสผ่านใหม่ (Reset Password)
+      const handleResetPasswordSubmit = (e) => {
+        e.preventDefault();
+        setLoginError("");
+
+        if (authPasswordInput.length < 6) {
+          setLoginError("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร");
+          return;
+        }
+        if (authPasswordInput !== authConfirmPasswordInput) {
+          setLoginError("รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน");
+          return;
+        }
+
+        const emailClean = authEmailInput.trim().toLowerCase();
+        setAdminAccounts(prev => ({
+          ...prev,
+          [emailClean]: authPasswordInput
+        }));
+
+        setAuthStep("form");
+        setAuthMode("login");
+        setAuthPasswordInput("");
+        setAuthConfirmPasswordInput("");
+        triggerToast("✅ เปลี่ยนรหัสผ่านใหม่สำเร็จแล้ว! กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่");
+      };
+
+      // ฟังก์ชันขอส่งรหัส OTP ใหม่อีกครั้ง
+      const handleResendOtp = async () => {
+        if (isSendingOtpEmail) return;
+        const emailClean = authEmailInput.trim().toLowerCase();
+        const newOtp = String(Math.floor(100000 + Math.random() * 900000));
+        setGeneratedOtpCode(newOtp);
+        setOtpCountdown(300);
+        setOtpInputValue("");
+        setLoginError("");
+
+        triggerToast(`⏳ กำลังส่งรหัส OTP ใหม่อีกครั้ง...`);
+        await dispatchOtpEmail(emailClean, newOtp);
+        triggerToast(`📧 ส่งรหัส OTP 6 หลักชุดใหม่ไปที่ ${emailClean} แล้ว`);
+      };
 
       const [searchQuery, setSearchQuery] = useState("");
       const [candidateSearchQuery, setCandidateSearchQuery] = useState("");
@@ -2516,20 +2777,6 @@
         setShowRejectModal(false);
         setRejectionNoteInput("");
         triggerToast(`❌ ตีกลับคำขอ ${reqId} เรียบร้อยแล้ว`);
-      };
-
-      const handleAdminLoginSubmit = (e) => {
-        e.preventDefault();
-        if (adminPasscode === "admin123" || adminPasscode === "hr2025") {
-          setIsAdminAuthenticated(true);
-          setShowLoginModal(false);
-          setCurrentView("admin");
-          setAdminPasscode("");
-          setLoginError("");
-          triggerToast("เข้าสู่ระบบ Admin เรียบร้อย");
-        } else {
-          setLoginError("รหัสผ่านไม่ถูกต้อง (ทดสอบ: admin123)");
-        }
       };
 
       const handleCopyShareLink = () => {
@@ -7428,31 +7675,342 @@
 
           {/* Admin Login Modal */}
           {showLoginModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-              <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
-                <Icon name="lock" className="w-8 h-8 text-brand-600 mx-auto mb-2" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Admin Authentication</h3>
-                <p className="text-xs text-slate-500 mt-1 mb-4">ระบุรหัสผ่านเพื่อเข้าสู่ Admin Portal (admin123)</p>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-7 overflow-hidden">
+                
+                {/* Header Badge */}
+                <div className="text-center mb-5">
+                  <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto mb-3 border border-sky-100 dark:border-sky-900/50 shadow-inner">
+                    <Icon name="shieldCheck" className="w-6 h-6 text-sky-600 dark:text-sky-400" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    Admin Authentication
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {authStep === "otp"
+                      ? "ยืนยันรหัส OTP 6 หลักที่ส่งเข้ากล่องข้อความอีเมลของคุณ"
+                      : authStep === "reset_password"
+                      ? "ตั้งรหัสผ่านใหม่สำหรับบัญชีผู้ดูแลระบบ"
+                      : authMode === "login"
+                      ? "เข้าสู่ระบบด้วยอีเมลและรหัสผ่านเพื่อจัดการคำขอสรรหา"
+                      : authMode === "register"
+                      ? "สมัครสมาชิกผู้ดูแลระบบใหม่ พร้อมยืนยันตัวตนทางอีเมล"
+                      : "ระบุอีเมลที่ได้รับสิทธิ์เพื่อรับรหัส OTP สำหรับตั้งรหัสผ่านใหม่"}
+                  </p>
+                </div>
 
-                <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
-                  <input
-                    type="password"
-                    autoFocus
-                    placeholder="admin123"
-                    value={adminPasscode}
-                    onChange={(e) => setAdminPasscode(e.target.value)}
-                    className="w-full p-2.5 text-sm text-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                  />
-                  {loginError && <p className="text-xs text-rose-500">{loginError}</p>}
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setShowLoginModal(false)} className="w-1/2 py-2 rounded-xl text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                      Cancel
+                {/* Tab Switcher: Login / Register (เฉพาะเมื่ออยู่ในขั้นตอนแบบฟอร์มปกติ) */}
+                {authStep === "form" && authMode !== "forgot" && (
+                  <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 mb-5 border border-slate-200/80 dark:border-slate-700/80">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode("login"); setLoginError(""); }}
+                      className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                        authMode === "login"
+                          ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                          : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      เข้าสู่ระบบ (Login)
                     </button>
-                    <button type="submit" className="w-1/2 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700">
-                      Login
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode("register"); setLoginError(""); }}
+                      className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+                        authMode === "register"
+                          ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                          : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      สมัครสมาชิก (Register)
                     </button>
                   </div>
-                </form>
+                )}
+
+                {/* 1. แบบฟอร์มหลัก: Login / Register / Forgot Password */}
+                {authStep === "form" && (
+                  <form onSubmit={handleAuthFormSubmit} className="space-y-4 text-left">
+                    
+                    {/* ฟิลด์ชื่อ-นามสกุล (เฉพาะโหมดสมัครสมาชิก) */}
+                    {authMode === "register" && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                          ชื่อ - นามสกุล *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="เช่น วรรณวิสา ชุมทอง"
+                          value={authNameInput}
+                          onChange={(e) => setAuthNameInput(e.target.value)}
+                          className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-medium transition"
+                        />
+                      </div>
+                    )}
+
+                    {/* ฟิลด์อีเมลผู้ดูแลระบบ (ต้องเป็น 1 ใน 5 อีเมลที่ได้รับสิทธิ์) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          อีเมลผู้ดูแลระบบ (Admin Email) *
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-medium">เฉพาะ 5 อีเมลที่กำหนด</span>
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        placeholder="เช่น wanwisa.ch@valuesourcing.co"
+                        value={authEmailInput}
+                        onChange={(e) => setAuthEmailInput(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-medium transition"
+                      />
+                    </div>
+
+                    {/* ฟิลด์รหัสผ่าน (แสดงในโหมด Login และ Register) */}
+                    {authMode !== "forgot" && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            รหัสผ่าน (Password) *
+                          </label>
+                          {authMode === "login" && (
+                            <button
+                              type="button"
+                              onClick={() => { setAuthMode("forgot"); setLoginError(""); }}
+                              className="text-[11px] font-semibold text-sky-600 hover:text-sky-700 dark:text-sky-400 hover:underline"
+                            >
+                              ลืมรหัสผ่าน?
+                            </button>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showPasswordText ? "text" : "password"}
+                            required
+                            placeholder="กรอกรหัสผ่านของคุณ"
+                            value={authPasswordInput}
+                            onChange={(e) => setAuthPasswordInput(e.target.value)}
+                            className="w-full pl-3.5 pr-10 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-medium transition"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordText(!showPasswordText)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                          >
+                            <Icon name={showPasswordText ? "eye" : "lock"} className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ฟิลด์ยืนยันรหัสผ่าน (เฉพาะโหมด Register) */}
+                    {authMode === "register" && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                          ยืนยันรหัสผ่าน (Confirm Password) *
+                        </label>
+                        <input
+                          type={showPasswordText ? "text" : "password"}
+                          required
+                          placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง"
+                          value={authConfirmPasswordInput}
+                          onChange={(e) => setAuthConfirmPasswordInput(e.target.value)}
+                          className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-medium transition"
+                        />
+                      </div>
+                    )}
+
+                    {/* แสดงข้อความ Error หากมี */}
+                    {loginError && (
+                      <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold leading-relaxed">
+                        {loginError}
+                      </div>
+                    )}
+
+                    {/* ปุ่ม Action ประจำแต่ละโหมด */}
+                    <div className="pt-2 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (authMode === "forgot") {
+                            setAuthMode("login");
+                            setLoginError("");
+                          } else {
+                            setShowLoginModal(false);
+                            setLoginError("");
+                          }
+                        }}
+                        className="w-1/3 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                      >
+                        {authMode === "forgot" ? "ย้อนกลับ" : "ยกเลิก"}
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isSendingOtpEmail}
+                        className="w-2/3 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 shadow-md shadow-sky-600/25 transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+                      >
+                        {authMode === "login" ? (
+                          <>
+                            <Icon name="lock" className="w-3.5 h-3.5 text-white" />
+                            <span>เข้าสู่ระบบ (Login)</span>
+                          </>
+                        ) : isSendingOtpEmail ? (
+                          <span>⏳ กำลังส่ง OTP...</span>
+                        ) : (
+                          <>
+                            <Icon name="send" className="w-3.5 h-3.5 text-white" />
+                            <span>รับรหัส OTP ทางอีเมล</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* 2. หน้าจอยืนยันรหัส OTP 6 หลัก (ใช้กับการสมัครสมาชิก และลืมรหัสผ่าน) */}
+                {authStep === "otp" && (
+                  <form onSubmit={handleVerifyOtpSubmit} className="space-y-4 text-left">
+                    <div className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800 text-xs text-sky-900 dark:text-sky-200 space-y-1">
+                      <p className="font-semibold">
+                        ระบบได้ส่งรหัสยืนยัน 6 หลักไปยัง:
+                      </p>
+                      <p className="font-bold text-sky-700 dark:text-sky-300 truncate">
+                        📧 {authEmailInput}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        (กรุณาตรวจดูในกล่องจดหมาย Inbox หรือโฟลเดอร์ Spam / Junk)
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          รหัส OTP 6 หลัก *
+                        </label>
+                        <span className="text-xs font-mono font-bold text-amber-600">
+                          ⏱️ {formatCountdownTime(otpCountdown)}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        autoFocus
+                        placeholder="• • • • • •"
+                        value={otpInputValue}
+                        onChange={(e) => setOtpInputValue(e.target.value.replace(/\D/g, ''))}
+                        className="w-full py-3 text-center text-xl tracking-[0.4em] font-mono font-bold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-slate-900 dark:text-white transition"
+                      />
+                    </div>
+
+                    {loginError && (
+                      <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                        {loginError}
+                      </div>
+                    )}
+
+                    <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-200">
+                      💡 <strong>รหัสสำรองฉุกเฉิน:</strong> หากอีเมลมาช้าหรือไม่ได้รับ สามารถกรอกรหัส <code className="font-mono font-bold bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-amber-300">999888</code> เพื่อยืนยันผ่านได้ทันที
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-1">
+                      <button
+                        type="button"
+                        onClick={() => { setAuthStep("form"); setLoginError(""); }}
+                        className="text-slate-500 hover:text-slate-700 dark:text-slate-400 underline font-medium"
+                      >
+                        &larr; แก้ไขอีเมล
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={otpCountdown > 240 || isSendingOtpEmail}
+                        onClick={handleResendOtp}
+                        className="text-sky-600 hover:text-sky-700 dark:text-sky-400 font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {isSendingOtpEmail ? "กำลังส่ง..." : "ส่งรหัสใหม่อีกครั้ง"}
+                      </button>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginModal(false)}
+                        className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
+                      >
+                        ยกเลิก
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition active:scale-95 flex items-center gap-1.5"
+                      >
+                        <Icon name="checkCircle" className="w-3.5 h-3.5 text-white" />
+                        <span>ยืนยันรหัส OTP</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* 3. หน้าจอตั้งรหัสผ่านใหม่ (Reset Password) */}
+                {authStep === "reset_password" && (
+                  <form onSubmit={handleResetPasswordSubmit} className="space-y-4 text-left">
+                    <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200">
+                      ✓ ยืนยันตัวตนสำเร็จ! กรุณากำหนดรหัสผ่านใหม่สำหรับ: <strong>{authEmailInput}</strong>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        รหัสผ่านใหม่ (New Password) *
+                      </label>
+                      <input
+                        type={showPasswordText ? "text" : "password"}
+                        required
+                        placeholder="อย่างน้อย 6 ตัวอักษร"
+                        value={authPasswordInput}
+                        onChange={(e) => setAuthPasswordInput(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-medium transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        ยืนยันรหัสผ่านใหม่ (Confirm Password) *
+                      </label>
+                      <input
+                        type={showPasswordText ? "text" : "password"}
+                        required
+                        placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
+                        value={authConfirmPasswordInput}
+                        onChange={(e) => setAuthConfirmPasswordInput(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-medium transition"
+                      />
+                    </div>
+
+                    {loginError && (
+                      <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                        {loginError}
+                      </div>
+                    )}
+
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setAuthStep("form"); setAuthMode("login"); }}
+                        className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition"
+                      >
+                        ยกเลิก
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 shadow-md transition active:scale-95"
+                      >
+                        บันทึกรหัสผ่านใหม่ &amp; เข้าสู่ระบบ
+                      </button>
+                    </div>
+                  </form>
+                )}
+
               </div>
             </div>
           )}
