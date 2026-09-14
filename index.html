@@ -291,6 +291,30 @@
       }
     };
 
+    // Helper function to extract and normalize Google Meet URLs
+    const extractGoogleMeetUrl = (item) => {
+      if (!item) return "";
+      if (item.googleMeetUrl && typeof item.googleMeetUrl === 'string' && item.googleMeetUrl.trim()) {
+        let url = item.googleMeetUrl.trim();
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          url = 'https://' + url;
+        }
+        return url;
+      }
+      const scheduleStr = item.interviewSchedule || (typeof item === 'string' ? item : "");
+      if (typeof scheduleStr === 'string') {
+        const match = scheduleStr.match(/(https?:\/\/meet\.google\.com\/[a-zA-Z0-9_\-]+|meet\.google\.com\/[a-zA-Z0-9_\-]+)/);
+        if (match) {
+          let url = match[0];
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+          }
+          return url;
+        }
+      }
+      return "";
+    };
+
     const calculateOverallScore = (evaluations = []) => {
       if (!evaluations || evaluations.length === 0) {
         return { count: 0, combinedAvg: 0, combinedPct: 0, result: "" };
@@ -974,7 +998,7 @@
           await fetch(googleScriptUrl, {
             method: "POST",
             mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               action: "sendAdminLoginOTP",
               email: targetEmail.trim(),
@@ -1263,8 +1287,10 @@
       const [unassignedInterviewSlotModal, setUnassignedInterviewSlotModal] = useState(null);
       
       const [scheduleAssignModalData, setScheduleAssignModalData] = useState(null);
-      const [scheduleInterviewDateTime, setScheduleInterviewDateTime] = useState("");
-      const [scheduleInterviewFormat, setScheduleInterviewFormat] = useState("On-site (สำนักงาน)");
+      const [scheduleInterviewDate, setScheduleInterviewDate] = useState("");
+      const [scheduleInterviewTime, setScheduleInterviewTime] = useState("10:00");
+      const [scheduleInterviewFormat, setScheduleInterviewFormat] = useState("Online (google Meet)");
+      const [scheduleGoogleMeetUrl, setScheduleGoogleMeetUrl] = useState("");
 
       // Onboarded Hire Date Trigger Modal
       const [onboardModalData, setOnboardModalData] = useState(null);
@@ -1982,36 +2008,47 @@
 
         const now = new Date();
         now.setDate(now.getDate() + 3);
-        now.setHours(10, 0, 0, 0);
         const yyyy = now.getFullYear();
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
-        const hh = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        const defaultDateTimeStr = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        const defaultDate = `${yyyy}-${mm}-${dd}`;
+
+        let initDate = defaultDate;
+        let initTime = "10:00";
+        if (cand.interviewDate) {
+          const parts = cand.interviewDate.split(/[T ]/);
+          if (parts[0]) initDate = parts[0];
+          if (parts[1]) initTime = parts[1].substring(0, 5);
+        }
 
         setScheduleAssignModalData({ candidate: cand, targetSlot: slot });
-        setScheduleInterviewDateTime(cand.interviewDate ? cand.interviewDate.replace(' ', 'T').substring(0, 16) : defaultDateTimeStr);
-        setScheduleInterviewFormat("On-site (สำนักงาน)");
+        setScheduleInterviewDate(initDate);
+        setScheduleInterviewTime(initTime || "10:00");
+        setScheduleInterviewFormat("Online (google Meet)");
+        setScheduleGoogleMeetUrl(cand.googleMeetUrl || "");
       };
 
       const handleConfirmScheduleAssign = () => {
         if (!scheduleAssignModalData || !scheduleAssignModalData.candidate || !scheduleAssignModalData.targetSlot) return;
         const { candidate, targetSlot } = scheduleAssignModalData;
-        if (!scheduleInterviewDateTime.trim()) {
-          triggerToast("⚠️ กรุณาระบุวันและเวลานัดสัมภาษณ์");
+        if (!scheduleInterviewDate) {
+          triggerToast("⚠️ กรุณาระบุวันที่นัดสัมภาษณ์");
           return;
         }
 
-        const dtDisplay = scheduleInterviewDateTime.replace('T', ' ') + " น.";
-        const scheduledInfo = `${dtDisplay} (${scheduleInterviewFormat})`;
+        const dtDisplay = `${scheduleInterviewDate} ${scheduleInterviewTime || "10:00"} น.`;
+        const meetUrlClean = scheduleGoogleMeetUrl ? scheduleGoogleMeetUrl.trim() : "";
+        const meetSuffix = (scheduleInterviewFormat === "Online (google Meet)" && meetUrlClean) ? ` (${meetUrlClean})` : "";
+        const scheduledInfo = `${dtDisplay} (${scheduleInterviewFormat})${meetSuffix}`;
+        const combinedIso = `${scheduleInterviewDate}T${scheduleInterviewTime || "10:00"}`;
 
         setCandidatePool(prev => prev.map(c => {
           if (c.candidateId === candidate.candidateId) {
             return {
               ...c,
               assignedSlotId: targetSlot.slotId,
-              interviewDate: scheduleInterviewDateTime
+              interviewDate: combinedIso,
+              googleMeetUrl: meetUrlClean
             };
           }
           if (c.assignedSlotId === targetSlot.slotId) {
@@ -2032,6 +2069,7 @@
                 resumeUrl: candidate.resumeUrl,
                 stage: "interview",
                 interviewSchedule: scheduledInfo,
+                googleMeetUrl: meetUrlClean,
                 interviewScore: 0,
                 interviewScorePercent: 0,
                 interviewResult: "",
@@ -3119,12 +3157,29 @@
 
                                   {item.stage === "interview" && item.interviewSchedule && (() => {
                                     const relTime = getInterviewRelativeTimeInfo(item.interviewSchedule);
+                                    const googleMeetUrl = extractGoogleMeetUrl(item);
+
                                     return (
-                                      <div className="mt-1.5 space-y-1">
+                                      <div className="mt-1.5 space-y-1.5">
                                         <div className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
                                           <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
                                           <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
                                         </div>
+                                        {googleMeetUrl && (
+                                          <div className="pt-0.5">
+                                            <a
+                                              href={googleMeetUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-bold transition shadow-xs cursor-pointer"
+                                              title="คลิกเพื่อเข้าห้องประชุม Google Meet ทันที"
+                                            >
+                                              <Icon name="link" className="w-3 h-3 text-white" />
+                                              <span>เข้าห้องประชุม Google Meet &rarr;</span>
+                                            </a>
+                                          </div>
+                                        )}
                                         {relTime && (
                                           <div className="flex items-center gap-1.5">
                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
@@ -3729,12 +3784,28 @@
 
                                           {item.stage === "interview" && item.interviewSchedule && (() => {
                                             const relTime = getInterviewRelativeTimeInfo(item.interviewSchedule);
+                                            const googleMeetUrl = extractGoogleMeetUrl(item);
                                             return (
-                                              <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 space-y-1">
+                                              <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 space-y-1.5">
                                                 <div className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
                                                   <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
                                                   <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
                                                 </div>
+                                                {googleMeetUrl && (
+                                                  <div className="pt-0.5">
+                                                    <a
+                                                      href={googleMeetUrl}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-bold transition shadow-xs cursor-pointer"
+                                                      title="คลิกเพื่อเข้าห้องประชุม Google Meet ทันที"
+                                                    >
+                                                      <Icon name="link" className="w-3 h-3 text-white" />
+                                                      <span>เข้าห้องประชุม Google Meet &rarr;</span>
+                                                    </a>
+                                                  </div>
+                                                )}
                                                 {relTime && (
                                                   <div className="flex items-center gap-1.5">
                                                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
@@ -4127,21 +4198,39 @@
                                           </div>
                                           {s.interviewSchedule && (() => {
                                             const relTime = getInterviewRelativeTimeInfo(s.interviewSchedule);
+                                            const googleMeetUrl = extractGoogleMeetUrl(s);
                                             return (
-                                              <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
-                                                <span className="text-amber-700 dark:text-amber-300 font-medium">
-                                                  📅 {s.interviewSchedule}
-                                                </span>
-                                                {relTime && s.stage === "interview" && (
-                                                  <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9.5px] border ${relTime.badge}`}>
-                                                    {relTime.ping && (
-                                                      <span className="relative flex h-1.5 w-1.5">
-                                                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
-                                                        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${relTime.dotBg}`}></span>
-                                                      </span>
-                                                    )}
-                                                    <span>{relTime.text}</span>
+                                              <div className="flex flex-col space-y-1 text-[10px] mt-0.5">
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                  <span className="text-amber-700 dark:text-amber-300 font-medium">
+                                                    📅 {s.interviewSchedule}
                                                   </span>
+                                                  {relTime && s.stage === "interview" && (
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9.5px] border ${relTime.badge}`}>
+                                                      {relTime.ping && (
+                                                        <span className="relative flex h-1.5 w-1.5">
+                                                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
+                                                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${relTime.dotBg}`}></span>
+                                                        </span>
+                                                      )}
+                                                      <span>{relTime.text}</span>
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                {googleMeetUrl && (
+                                                  <div>
+                                                    <a
+                                                      href={googleMeetUrl}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 text-[10px] font-bold transition border border-emerald-300 dark:border-emerald-800"
+                                                      title="คลิกเพื่อเข้า Google Meet ทันที"
+                                                    >
+                                                      <Icon name="link" className="w-2.5 h-2.5 text-emerald-600" />
+                                                      <span>เข้า Google Meet &rarr;</span>
+                                                    </a>
+                                                  </div>
                                                 )}
                                               </div>
                                             );
@@ -6064,13 +6153,14 @@
             </div>
           )}
 
-          {/* Schedule Assignment Modal with Native DateTime Picker */}
+          {}
+          {/* Schedule Assignment Modal with Simplified Date, Time, 5 Formats & Google Meet URL */}
           {scheduleAssignModalData && scheduleAssignModalData.candidate && scheduleAssignModalData.targetSlot && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-8">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 my-6 overflow-hidden">
                 <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                   <div>
-                    <span className="text-[10px] font-bold text-brand-600 uppercase">Assignment &amp; Scheduling</span>
+                    <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider">ASSIGNMENT &amp; SCHEDULING</span>
                     <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
                       ระบุวันเวลานัดสัมภาษณ์ &amp; แมปตำแหน่ง
                     </h3>
@@ -6081,48 +6171,147 @@
                 </div>
 
                 <div className="py-4 space-y-3.5 text-xs">
-                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                  {/* Candidate & Position Details Card */}
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
                     <p><span className="text-slate-400">ผู้สมัคร:</span> <strong className="text-slate-900 dark:text-white">{scheduleAssignModalData.candidate?.fullName || "-"}</strong></p>
                     <p><span className="text-slate-400">ตำแหน่ง:</span> <strong className="text-brand-600">{scheduleAssignModalData.targetSlot?.slotId} - {scheduleAssignModalData.targetSlot?.jobTitle}</strong></p>
                   </div>
 
+                  {/* 1. Date Picker with Quick Date Shortcut Pills */}
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      วันและเวลานัดสัมภาษณ์ (Native DateTime Picker) <span className="text-rose-600">*</span>
+                      วันที่นัดสัมภาษณ์ <span className="text-rose-600">*</span>
                     </label>
                     <input
-                      type="datetime-local"
+                      type="date"
                       required
-                      value={scheduleInterviewDateTime}
-                      onChange={(e) => setScheduleInterviewDateTime(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-brand-300 dark:border-brand-700 font-bold focus:ring-2 focus:ring-brand-500"
+                      value={scheduleInterviewDate}
+                      onChange={(e) => setScheduleInterviewDate(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-brand-300 dark:border-brand-700 font-semibold focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white"
                     />
+
+                    {/* Quick Date Selectors */}
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {[
+                        { label: "วันนี้", days: 0 },
+                        { label: "พรุ่งนี้", days: 1 },
+                        { label: "อีก 2 วัน", days: 2 },
+                        { label: "อีก 3 วัน", days: 3 },
+                        { label: "สัปดาห์หน้า (+7 วัน)", days: 7 }
+                      ].map((item) => {
+                        const target = new Date();
+                        target.setDate(target.getDate() + item.days);
+                        const yyyy = target.getFullYear();
+                        const mm = String(target.getMonth() + 1).padStart(2, '0');
+                        const dd = String(target.getDate()).padStart(2, '0');
+                        const dateStr = `${yyyy}-${mm}-${dd}`;
+                        const isSelected = scheduleInterviewDate === dateStr;
+
+                        return (
+                          <button
+                            key={item.label}
+                            type="button"
+                            onClick={() => setScheduleInterviewDate(dateStr)}
+                            className={`px-2 py-0.5 rounded-lg text-[10.5px] font-semibold transition border ${
+                              isSelected
+                                ? "bg-brand-600 text-white border-brand-600 shadow-2xs"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200"
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
+                  {/* 2. Time Picker with Standard Working Hour Slots */}
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">รูปแบบการสัมภาษณ์</label>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      เวลาสัมภาษณ์ <span className="text-rose-600">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        value={scheduleInterviewTime}
+                        onChange={(e) => setScheduleInterviewTime(e.target.value)}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200"
+                      >
+                        {[
+                          "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+                          "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+                          "16:00", "16:30", "17:00"
+                        ].map(t => (
+                          <option key={t} value={t}>{t} น.</option>
+                        ))}
+                      </select>
+                      <input
+                        type="time"
+                        value={scheduleInterviewTime}
+                        onChange={(e) => setScheduleInterviewTime(e.target.value)}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-center text-slate-800 dark:text-slate-200"
+                        title="กำหนดเวลาเอง"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3. 5 Specific Interview Formats */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      รูปแบบการสัมภาษณ์ <span className="text-rose-600">*</span>
+                    </label>
                     <select
                       value={scheduleInterviewFormat}
                       onChange={(e) => setScheduleInterviewFormat(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-brand-700 dark:text-brand-300"
                     >
-                      <option value="On-site (สำนักงาน)">On-site (สำนักงาน)</option>
-                      <option value="Online (Google Meet)">Online (Google Meet)</option>
-                      <option value="Online (MS Teams)">Online (MS Teams)</option>
+                      <option value="On-site (Factory)">On-site (Factory)</option>
+                      <option value="On-site (headquarter)">On-site (headquarter)</option>
+                      <option value="On-site (Dusit Central Park)">On-site (Dusit Central Park)</option>
                       <option value="Phone Interview">Phone Interview</option>
+                      <option value="Online (google Meet)">Online (google Meet)</option>
                     </select>
                   </div>
+
+                  {/* 4. Google Meet Link Input (Visible when format is Online (google Meet)) */}
+                  {scheduleInterviewFormat === "Online (google Meet)" && (
+                    <div className="p-3 rounded-2xl bg-sky-50/80 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800 space-y-1.5 animate-fadeIn">
+                      <label className="block text-[11px] font-bold text-sky-900 dark:text-sky-200">
+                        🔗 ลิงก์ Google Meet (Google Meet URL)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="url"
+                          placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                          value={scheduleGoogleMeetUrl}
+                          onChange={(e) => setScheduleGoogleMeetUrl(e.target.value)}
+                          className="w-full p-2.5 pl-8 rounded-xl bg-white dark:bg-slate-800 border border-sky-300 dark:border-sky-700 text-xs font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-sky-500"
+                        />
+                        <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sky-500">
+                          <Icon name="link" className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        วางลิงก์ Google Meet เพื่อให้กรรมการและผู้สมัครคลิกเข้าประชุมได้โดยตรงจากการ์ดนัดหมาย
+                      </p>
+                    </div>
+                  )}
                 </div>
 
+                {/* Modal Footer Buttons */}
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
-                  <button onClick={() => setScheduleAssignModalData(null)} className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setScheduleAssignModalData(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+                  >
                     ยกเลิก
                   </button>
                   <button
+                    type="button"
                     onClick={handleConfirmScheduleAssign}
-                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md"
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md transition active:scale-95 flex items-center gap-1.5"
                   >
-                    ยืนยันการแมป &amp; บันทึกนัดหมาย
+                    <span>ยืนยันการแมป &amp; บันทึกนัดหมาย</span>
                   </button>
                 </div>
               </div>
@@ -7611,19 +7800,37 @@
                       <p className="text-emerald-700 dark:text-emerald-300">📞 {selectedDetailSlot.candidatePhone || "-"}</p>
                       {selectedDetailSlot.interviewSchedule && (() => {
                         const relTime = getInterviewRelativeTimeInfo(selectedDetailSlot.interviewSchedule);
+                        const googleMeetUrl = extractGoogleMeetUrl(selectedDetailSlot);
                         return (
-                          <div className="mt-1 flex flex-wrap items-center justify-between gap-1.5">
-                            <p className="text-amber-800 dark:text-amber-300 font-semibold">📅 วันเวลานัดสัมภาษณ์: {selectedDetailSlot.interviewSchedule}</p>
-                            {relTime && selectedDetailSlot.stage === "interview" && (
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
-                                {relTime.ping && (
-                                  <span className="relative flex h-2 w-2">
-                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
-                                    <span className={`relative inline-flex rounded-full h-2 w-2 ${relTime.dotBg}`}></span>
-                                  </span>
-                                )}
-                                <span>{relTime.text}</span>
-                              </span>
+                          <div className="mt-1 space-y-1.5">
+                            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                              <p className="text-amber-800 dark:text-amber-300 font-semibold">📅 วันเวลานัดสัมภาษณ์: {selectedDetailSlot.interviewSchedule}</p>
+                              {relTime && selectedDetailSlot.stage === "interview" && (
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
+                                  {relTime.ping && (
+                                    <span className="relative flex h-2 w-2">
+                                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
+                                      <span className={`relative inline-flex rounded-full h-2 w-2 ${relTime.dotBg}`}></span>
+                                    </span>
+                                  )}
+                                  <span>{relTime.text}</span>
+                                </span>
+                              )}
+                            </div>
+                            {googleMeetUrl && (
+                              <div className="pt-1">
+                                <a
+                                  href={googleMeetUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                  title="คลิกเพื่อเปิดห้องประชุม Google Meet ทันที"
+                                >
+                                  <Icon name="link" className="w-3.5 h-3.5 text-white" />
+                                  <span>เปิดเข้าห้องประชุม Google Meet ทันที &rarr;</span>
+                                </a>
+                              </div>
                             )}
                           </div>
                         );
