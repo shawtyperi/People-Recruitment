@@ -225,6 +225,72 @@
       return { rangeText, totalDays, workingDays, closeDateStr };
     };
 
+    // คำนวณสถานะกำหนดการสัมภาษณ์เทียบกับวันปัจจุบัน (วันนี้, พรุ่งนี้, อีก 2-3 วันข้างหน้า)
+    const getInterviewRelativeTimeInfo = (scheduleStr) => {
+      if (!scheduleStr) return null;
+      const match = String(scheduleStr).match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return null;
+      const [_, y, m, d] = match;
+      const interviewDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+      interviewDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffTime = interviewDate.getTime() - today.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        const absDays = Math.abs(diffDays);
+        return {
+          text: absDays === 1 ? "ผ่านมาเมื่อวาน" : `ผ่านมา ${absDays} วันแล้ว`,
+          badge: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-300 dark:border-slate-700",
+          dotBg: "bg-slate-400",
+          ping: false
+        };
+      } else if (diffDays === 0) {
+        return {
+          text: "⚡ วันนี้ (Today)",
+          badge: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border-rose-300 dark:border-rose-700 font-extrabold ring-1 ring-rose-500/30",
+          dotBg: "bg-rose-500",
+          ping: true
+        };
+      } else if (diffDays === 1) {
+        return {
+          text: "🔔 พรุ่งนี้ (Tomorrow)",
+          badge: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-700 font-bold",
+          dotBg: "bg-amber-500",
+          ping: true
+        };
+      } else if (diffDays === 2) {
+        return {
+          text: "🗓️ อีก 2 วันข้างหน้า",
+          badge: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200 border-sky-300 dark:border-sky-700 font-bold",
+          dotBg: "bg-sky-500",
+          ping: false
+        };
+      } else if (diffDays === 3) {
+        return {
+          text: "🗓️ อีก 3 วันข้างหน้า",
+          badge: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200 border-sky-300 dark:border-sky-700 font-bold",
+          dotBg: "bg-sky-500",
+          ping: false
+        };
+      } else if (diffDays <= 7) {
+        return {
+          text: `🗓️ อีก ${diffDays} วันข้างหน้า`,
+          badge: "bg-blue-50 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border-blue-200 dark:border-blue-800 font-semibold",
+          dotBg: "bg-blue-500",
+          ping: false
+        };
+      } else {
+        return {
+          text: `🗓️ อีก ${diffDays} วัน`,
+          badge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700 font-medium",
+          dotBg: "bg-slate-400",
+          ping: false
+        };
+      }
+    };
+
     const calculateOverallScore = (evaluations = []) => {
       if (!evaluations || evaluations.length === 0) {
         return { count: 0, combinedAvg: 0, combinedPct: 0, result: "" };
@@ -2648,9 +2714,20 @@
                               const priorityInfo = getPositionPriorityInfo(item);
                               const hasEvaluation = item.evaluationsCount > 0;
                               const isPassingScore = item.interviewScorePercent >= 70;
+                              const isArrived = item.stage === "onboarded" && (item.hasAttendedFirstDayTraining || item.onboardingArrivalStatus === "arrived_reported");
+                              const isPendingArrival = item.stage === "onboarded" && !isArrived;
 
                               return (
-                                <div key={item.slotId} className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs hover:border-brand-500 transition group">
+                                <div 
+                                  key={item.slotId} 
+                                  className={`p-3.5 rounded-xl border shadow-xs transition group ${
+                                    isArrived
+                                      ? "bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-600 ring-2 ring-emerald-500/25 shadow-emerald-500/10"
+                                      : isPendingArrival
+                                      ? "bg-amber-50/70 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 ring-1 ring-amber-400/30"
+                                      : "bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 hover:border-brand-500"
+                                  }`}
+                                >
                                   {/* Priority Header with Blinking Dot */}
                                   <div className="flex items-center justify-between text-[10px] mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-700/60">
                                     <div className="flex items-center gap-1.5">
@@ -2712,22 +2789,58 @@
                                   )}
 
                                   {item.candidateName && (
-                                    <div className="mt-2 p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60 text-[11px] text-emerald-800 dark:text-emerald-300 font-semibold truncate">
+                                    <div className={`mt-2 p-1.5 rounded-lg border text-[11px] font-semibold truncate ${
+                                      isArrived 
+                                        ? "bg-emerald-100 dark:bg-emerald-900/60 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100" 
+                                        : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300"
+                                    }`}>
                                       👤 {item.candidateName}
                                     </div>
                                   )}
 
-                                  {item.stage === "interview" && item.interviewSchedule && (
-                                    <div className="mt-1.5 text-[10px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
-                                      <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
-                                      <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
-                                    </div>
-                                  )}
+                                  {item.stage === "interview" && item.interviewSchedule && (() => {
+                                    const relTime = getInterviewRelativeTimeInfo(item.interviewSchedule);
+                                    return (
+                                      <div className="mt-1.5 space-y-1">
+                                        <div className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
+                                          <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
+                                          <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
+                                        </div>
+                                        {relTime && (
+                                          <div className="flex items-center gap-1.5">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
+                                              {relTime.ping && (
+                                                <span className="relative flex h-2 w-2">
+                                                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
+                                                  <span className={`relative inline-flex rounded-full h-2 w-2 ${relTime.dotBg}`}></span>
+                                                </span>
+                                              )}
+                                              <span>{relTime.text}</span>
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
 
-                                  {item.stage === "onboarded" && item.hireDate && (
-                                    <div className="mt-1.5 text-[10px] text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-1">
-                                      <Icon name="badgeCheck" className="w-3.5 h-3.5 shrink-0" />
-                                      <span>วันเริ่มงาน: {item.hireDate}</span>
+                                  {/* Onboarded status badge in Public View */}
+                                  {item.stage === "onboarded" && (
+                                    <div className="mt-1.5 space-y-1">
+                                      {item.hireDate && (
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1">
+                                          <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
+                                          <span>วันเริ่มงาน: {item.hireDate}</span>
+                                        </div>
+                                      )}
+                                      <div className={`p-1.5 rounded-lg text-[10px] font-extrabold flex items-center justify-between border ${
+                                        isArrived
+                                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-100 border-emerald-300 dark:border-emerald-700 shadow-2xs"
+                                          : "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border-amber-300 dark:border-amber-700 animate-pulse"
+                                      }`}>
+                                        <span className="flex items-center gap-1">
+                                          {isArrived ? "✅ มาเริ่มงานเรียบร้อยแล้ว" : "⏳ รอถึงวันเริ่มงาน (ยังไม่มา)"}
+                                        </span>
+                                      </div>
                                     </div>
                                   )}
 
@@ -3275,6 +3388,8 @@
                                 {stageItems.map(item => {
                                   const isBeingDragged = draggedSlotId === item.slotId;
                                   const priorityInfo = getPositionPriorityInfo(item);
+                                  const isArrived = item.stage === "onboarded" && (item.hasAttendedFirstDayTraining || item.onboardingArrivalStatus === "arrived_reported");
+                                  const isPendingArrival = item.stage === "onboarded" && !isArrived;
 
                                   return (
                                     <div
@@ -3282,14 +3397,18 @@
                                       draggable={true}
                                       onDragStart={(e) => handleDragStart(e, item.slotId)}
                                       onDragEnd={() => { setDraggedSlotId(null); setDragOverStage(null); }}
-                                      className={`p-3.5 rounded-xl bg-white dark:bg-slate-800 border shadow-xs transition-all cursor-grab active:cursor-grabbing select-none group ${
+                                      className={`p-3.5 rounded-xl border shadow-xs transition-all cursor-grab active:cursor-grabbing select-none group ${
                                         isBeingDragged
                                           ? 'opacity-40 scale-95 border-brand-400 dark:border-brand-600 ring-2 ring-brand-500/30 shadow-md'
                                           : item.stage === 'cancelled'
                                           ? 'border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20'
+                                          : isArrived
+                                          ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/90 dark:bg-emerald-950/50 ring-2 ring-emerald-500/25 shadow-xs'
+                                          : isPendingArrival
+                                          ? 'border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/30 ring-1 ring-amber-400/30'
                                           : priorityInfo.id === 'URGENT'
-                                          ? 'border-rose-300 dark:border-rose-900/80 ring-1 ring-rose-400/30 hover:border-rose-500'
-                                          : 'border-slate-200/80 dark:border-slate-700 hover:border-brand-400 hover:shadow-md'
+                                          ? 'border-rose-300 dark:border-rose-900/80 ring-1 ring-rose-400/30 hover:border-rose-500 bg-white dark:bg-slate-800'
+                                          : 'border-slate-200/80 dark:border-slate-700 hover:border-brand-400 hover:shadow-md bg-white dark:bg-slate-800'
                                       }`}
                                     >
                                       {/* Priority Blinking Bar */}
@@ -3354,8 +3473,12 @@
                                       )}
 
                                       {item.candidateName ? (
-                                        <div className="mt-2 p-2 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60 text-xs">
-                                          <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                                        <div className={`mt-2 p-2 rounded-lg border text-xs ${
+                                          isArrived
+                                            ? "bg-emerald-100/80 dark:bg-emerald-900/50 border-emerald-300 dark:border-emerald-700"
+                                            : "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/60"
+                                        }`}>
+                                          <div className="font-bold text-emerald-800 dark:text-emerald-200 flex items-center justify-between">
                                             <span className="truncate">👤 {item.candidateName}</span>
                                             <button 
                                               onClick={() => setUnassignConfirmTarget(item)}
@@ -3365,17 +3488,49 @@
                                             </button>
                                           </div>
 
-                                          {item.stage === "interview" && item.interviewSchedule && (
-                                            <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
-                                              <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
-                                              <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
-                                            </div>
-                                          )}
+                                          {item.stage === "interview" && item.interviewSchedule && (() => {
+                                            const relTime = getInterviewRelativeTimeInfo(item.interviewSchedule);
+                                            return (
+                                              <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 space-y-1">
+                                                <div className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold flex items-center gap-1">
+                                                  <Icon name="calendar" className="w-3.5 h-3.5 shrink-0" />
+                                                  <span className="truncate">นัดหมาย: {item.interviewSchedule}</span>
+                                                </div>
+                                                {relTime && (
+                                                  <div className="flex items-center gap-1.5">
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
+                                                      {relTime.ping && (
+                                                        <span className="relative flex h-2 w-2">
+                                                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
+                                                          <span className={`relative inline-flex rounded-full h-2 w-2 ${relTime.dotBg}`}></span>
+                                                        </span>
+                                                      )}
+                                                      <span>{relTime.text}</span>
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
 
-                                          {item.stage === "onboarded" && item.hireDate && (
-                                            <div className="mt-1.5 pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-800 dark:text-emerald-200 font-bold flex items-center gap-1">
-                                              <Icon name="badgeCheck" className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                                              <span>เริ่มงาน: {item.hireDate}</span>
+                                          {/* Onboarded Status inside Candidate Card Box */}
+                                          {item.stage === "onboarded" && (
+                                            <div className="mt-1.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1">
+                                              {item.hireDate && (
+                                                <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                                                  <Icon name="calendar" className="w-3.5 h-3.5 shrink-0 text-brand-600" />
+                                                  <span>เริ่มงาน: {item.hireDate}</span>
+                                                </div>
+                                              )}
+                                              <div className={`p-1.5 rounded-lg text-[10.5px] font-extrabold flex items-center justify-between border ${
+                                                isArrived
+                                                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/70 dark:text-emerald-100 border-emerald-300 dark:border-emerald-700 shadow-2xs"
+                                                  : "bg-amber-100 text-amber-800 dark:bg-amber-900/70 dark:text-amber-200 border-amber-300 dark:border-amber-700 animate-pulse"
+                                              }`}>
+                                                <span className="flex items-center gap-1">
+                                                  {isArrived ? "✅ มาเริ่มงานแล้ว (Closed)" : "⏳ รอถึงวันเริ่มงาน (ยังไม่มา)"}
+                                                </span>
+                                              </div>
                                             </div>
                                           )}
                                         </div>
@@ -3383,6 +3538,21 @@
                                         <div className="mt-2 text-[10px] font-medium text-slate-400 italic bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md inline-block">
                                           👤 ว่าง (Unassigned)
                                         </div>
+                                      )}
+
+                                      {/* Quick Confirm Arrival Button on Card for Pending Arrival */}
+                                      {isPendingArrival && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleConfirmFirstDayTraining(item.slotId);
+                                          }}
+                                          className="w-full mt-2 py-1.5 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-[11px] shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                          title="คลิกเมื่อพนักงานมารายงานตัวและเริ่มงานแล้ว"
+                                        >
+                                          <span>✓ กดยืนยันมาเริ่มงานแล้ว</span>
+                                        </button>
                                       )}
 
                                       {item.rejectionReason && (
@@ -3675,11 +3845,27 @@
                                               ✕ ถอด
                                             </button>
                                           </div>
-                                          {s.interviewSchedule && (
-                                            <div className="text-[10px] text-amber-700 dark:text-amber-300 font-medium">
-                                              📅 {s.interviewSchedule}
-                                            </div>
-                                          )}
+                                          {s.interviewSchedule && (() => {
+                                            const relTime = getInterviewRelativeTimeInfo(s.interviewSchedule);
+                                            return (
+                                              <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                                                <span className="text-amber-700 dark:text-amber-300 font-medium">
+                                                  📅 {s.interviewSchedule}
+                                                </span>
+                                                {relTime && s.stage === "interview" && (
+                                                  <span className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9.5px] border ${relTime.badge}`}>
+                                                    {relTime.ping && (
+                                                      <span className="relative flex h-1.5 w-1.5">
+                                                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
+                                                        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${relTime.dotBg}`}></span>
+                                                      </span>
+                                                    )}
+                                                    <span>{relTime.text}</span>
+                                                  </span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
                                           {s.rejectionReason && (
                                             <div className="text-[10px] text-rose-700 dark:text-rose-300 font-bold bg-rose-100 dark:bg-rose-950/80 px-2 py-0.5 rounded-md border border-rose-300 dark:border-rose-900 truncate max-w-[200px]" title={s.rejectionReason}>
                                               ❌ เหตุผล: {s.rejectionReason}
@@ -7083,9 +7269,25 @@
                         )}
                       </div>
                       <p className="text-emerald-700 dark:text-emerald-300">📞 {selectedDetailSlot.candidatePhone || "-"}</p>
-                      {selectedDetailSlot.interviewSchedule && (
-                        <p className="text-amber-800 dark:text-amber-300 font-semibold">📅 วันเวลานัดสัมภาษณ์: {selectedDetailSlot.interviewSchedule}</p>
-                      )}
+                      {selectedDetailSlot.interviewSchedule && (() => {
+                        const relTime = getInterviewRelativeTimeInfo(selectedDetailSlot.interviewSchedule);
+                        return (
+                          <div className="mt-1 flex flex-wrap items-center justify-between gap-1.5">
+                            <p className="text-amber-800 dark:text-amber-300 font-semibold">📅 วันเวลานัดสัมภาษณ์: {selectedDetailSlot.interviewSchedule}</p>
+                            {relTime && selectedDetailSlot.stage === "interview" && (
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
+                                {relTime.ping && (
+                                  <span className="relative flex h-2 w-2">
+                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
+                                    <span className={`relative inline-flex rounded-full h-2 w-2 ${relTime.dotBg}`}></span>
+                                  </span>
+                                )}
+                                <span>{relTime.text}</span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {selectedDetailSlot.evaluationsCount > 0 && (
                         <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800/80 space-y-1.5">
@@ -7244,4 +7446,3 @@
   </script>
 </body>
 </html>
-  
