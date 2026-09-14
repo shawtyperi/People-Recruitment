@@ -78,7 +78,7 @@
     const GOOGLE_SHEET_DIRECTORY_CSV_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/gviz/tq?tqx=out:csv&gid=1435033662";
     const GOOGLE_SHEET_CANDIDATES_CSV_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/gviz/tq?tqx=out:csv&gid=546067727";
     const CANDIDATES_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/edit?gid=546067727#gid=546067727";
-    const DEFAULT_APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwfVec2cbvcPNC2KbckL17lNy6x1KOnfQSUd1LpLK2TJMb9Udq18F_YdPcpNxoCQ4RP2w/exec";
+    const DEFAULT_APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc/exec";
 
     // Candidate status tags configuration - Prioritized Pending & Compare first right after ALL
     const CANDIDATE_STATUS_CONFIG = [
@@ -104,25 +104,6 @@
       { id: "arrived_reported", label: "✅ มาเริ่มงานเรียบร้อยแล้ว", badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-100 border-emerald-400 font-extrabold ring-2 ring-emerald-500/20" },
       { id: "declined_noshow", label: "❌ สละสิทธิ์ / ไม่มาเริ่มงาน", badge: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border-rose-300 font-extrabold ring-2 ring-rose-500/30" }
     ];
-
-    // รายชื่ออีเมลที่ได้รับอนุญาตให้เข้าใช้งานและสมัครสมาชิก Admin Portal (จำกัดเฉพาะ 5 อีเมล)
-    const ALLOWED_ADMIN_EMAILS = [
-      "wanwisa.ch@valuesourcing.co",
-      "sarunpat.ub@valuesourcing.co",
-      "porntida.wo@valuesourcing.co",
-      "krittasurat.ti@valuesourcing.co",
-      "patcharee.pu@valuesourcing.co"
-    ];
-
-    // รหัสผ่านสำหรับยืนยันสิทธิ์เข้าใช้งาน Admin Portal
-    const ADMIN_CREDENTIALS = {
-      "wanwisa.ch@valuesourcing.co": "admin2026",
-      "sarunpat.ub@valuesourcing.co": "admin2026",
-      "porntida.wo@valuesourcing.co": "admin2026",
-      "krittasurat.ti@valuesourcing.co": "admin2026",
-      "patcharee.pu@valuesourcing.co": "admin2026"
-    };
-    const MASTER_ADMIN_PASSWORD = "admin2026"; // รหัสผ่านกลางที่ใช้เข้าสู่ระบบได้
 
     // คำนวณ Priority อัตโนมัติตามระยะเวลา SLA / วันที่เป้าหมาย หรือการตั้งค่า
     const getPositionPriorityInfo = (slot) => {
@@ -544,30 +525,255 @@
       "Wealth Creation Department"
     ];
 
-    // ข้อมูลเริ่มต้นว่าง เพื่อพร้อมเริ่มใช้งานจริง (จะซิงค์ข้อมูลจริงจาก Google Sheet อัตโนมัติ)
-    const INITIAL_CANDIDATE_POOL = [];
-    const INITIAL_RECRUITMENT_DATA = [];
+    const INITIAL_CANDIDATE_POOL = [
+      {
+        no: 1,
+        year: "2026",
+        month: "08",
+        candidateId: "CAND-2026-001",
+        fullName: "นางสาว ศวิตา กาญจนเวทางค์",
+        nickname: "สร",
+        phone: "089-486-5918",
+        targetJobTitle: "Corporate Finance & Accounting Senior Specialist",
+        level: "Senior Specialist",
+        branch: "Headquarter Site L3",
+        type: "Full-Time",
+        mbti: "INTJ",
+        prescreenDate: "2026-08-02",
+        resumeConfirmDate: "2026-08-03",
+        interviewDate: "2026-08-08T14:00",
+        hireDate: "2026-09-01",
+        status: "Compare",
+        source: "LinkedIn",
+        remark: "ผ่านสัมภาษณ์รอบแรก มีประสบการณ์ด้านภาษีองค์กร",
+        resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view",
+        assignedSlotId: "REQ-2026-001-1"
+      },
+      {
+        no: 2,
+        year: "2026",
+        month: "08",
+        candidateId: "CAND-2026-002",
+        fullName: "นาย วรวิทย์ พัฒนาพร",
+        nickname: "วิทย์",
+        phone: "089-876-5432",
+        targetJobTitle: "Senior Full-Stack AI Engineer",
+        level: "Senior",
+        branch: "AI & Digital Hub",
+        type: "Full-Time",
+        mbti: "ENTP",
+        prescreenDate: "2026-08-11",
+        resumeConfirmDate: "2026-08-12",
+        interviewDate: "2026-08-16T10:30",
+        hireDate: "2026-09-15",
+        status: "Compare",
+        source: "JobsDB",
+        remark: "ผ่านแบบทดสอบทางเทคนิค กำลังเทียบข้อเสนอกับอีก 1 ท่าน",
+        resumeUrl: "",
+        assignedSlotId: "REQ-2026-002-1"
+      },
+      {
+        no: 3,
+        year: "2026",
+        month: "08",
+        candidateId: "CAND-2026-003",
+        fullName: "นางสาว กานดา อรุณรัตน์",
+        nickname: "กานต์",
+        phone: "086-555-4321",
+        targetJobTitle: "Senior Full-Stack AI Engineer",
+        level: "Senior",
+        branch: "Headquarter Office",
+        type: "Full-Time",
+        mbti: "INFJ",
+        prescreenDate: "2026-08-12",
+        resumeConfirmDate: "2026-08-13",
+        interviewDate: "2026-08-18T15:00",
+        hireDate: "",
+        status: "Pending",
+        source: "JobThai",
+        remark: "รอผลตรวจสุขภาพและประเมินรอบสอง",
+        resumeUrl: "",
+        assignedSlotId: ""
+      },
+      {
+        no: 4,
+        year: "2026",
+        month: "08",
+        candidateId: "CAND-2026-004",
+        fullName: "นาย ธีรเดช เจริญผล",
+        nickname: "ธีร์",
+        phone: "092-333-8899",
+        targetJobTitle: "Logistics & Inventory Officer",
+        level: "Officer",
+        branch: "Warehouse Bangna",
+        type: "Contract",
+        mbti: "ISTJ",
+        prescreenDate: "2026-08-14",
+        resumeConfirmDate: "2026-08-15",
+        interviewDate: "2026-08-20T13:30",
+        hireDate: "",
+        status: "not suitable",
+        source: "Facebook Page",
+        remark: "ประสบการณ์ไม่ตรงกับระบบคลังสินค้าอัตโนมัติ",
+        resumeUrl: "",
+        assignedSlotId: ""
+      },
+      {
+        no: 5,
+        year: "2026",
+        month: "08",
+        candidateId: "CAND-2026-005",
+        fullName: "นาย พงษ์ศิริ มงคลกุล",
+        nickname: "กอล์ฟ",
+        phone: "081-999-1234",
+        targetJobTitle: "Maintenance Technician",
+        level: "Technician",
+        branch: "Factory Site",
+        type: "Full-Time",
+        mbti: "ESTP",
+        prescreenDate: "2026-08-15",
+        resumeConfirmDate: "2026-08-16",
+        interviewDate: "2026-08-22T09:30",
+        hireDate: "",
+        status: "cancel by candidate",
+        source: "Direct Email",
+        remark: "ผู้สมัครขอสละสิทธิ์เนื่องจากได้งานใกล้ที่พัก",
+        resumeUrl: "",
+        assignedSlotId: ""
+      }
+    ];
+    const INITIAL_RECRUITMENT_DATA = [
+      {
+        id: "REQ-2026-001",
+        requestDate: "2026-08-01",
+        requestStatus: "Recruiting",
+        requesterName: "นางสาว พรธิดา วนเวียน",
+        requesterPosition: "People Business Partner Team Lead",
+        requesterEmail: "porntida.wo@valuesourcing.co",
+        approverName: "นางสาววรีรัตน์ รุจอุฬาร",
+        approverEmail: "wareerat.ru@valuesourcing.co",
+        forwardTo: "นางสาววรีรัตน์ รุจอุฬาร",
+        forwardEmail: "wareerat.ru@valuesourcing.co",
+        lastUpdated: "2026-08-01 09:21:20",
+        headcountRequired: 1,
+        positionType: "Replacement",
+        replacedEmployeeName: "นาย สมเจตน์ ประเสริฐสุข",
+        targetDate: "2026-08-30",
+        buddy: "ชณา วสุวัต",
+        jobTitle: "Corporate Finance & Accounting Senior Specialist",
+        department: "Production Department",
+        jobDescription: "ดูแลงานตรวจสอบบัญชีและต้นทุนการผลิต",
+        stage: "interview",
+        offerSentDate: "",
+        onboardingArrivalStatus: "pending_arrival",
+        rejectionReason: "",
+        slots: [
+          {
+            slotId: "REQ-2026-001-1",
+            slotIndex: 1,
+            slotStatus: "Recruiting",
+            candidateName: "นางสาว ศวิตา กาญจนเวทางค์",
+            candidatePhone: "089-486-5918",
+            candidateNickname: "สร",
+            resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view",
+            stage: "interview",
+            offerSentDate: "",
+            hireDate: "",
+            interviewSchedule: "2026-08-08 14:00 น. (On-site)",
+            interviewScore: 0,
+            interviewScorePercent: 0,
+            interviewResult: "",
+            onboardingArrivalStatus: "pending_arrival",
+            rejectionReason: "",
+            evaluations: []
+          }
+        ]
+      },
+      {
+        id: "REQ-2026-002",
+        requestDate: "2026-08-10",
+        requestStatus: "Recruiting",
+        requesterName: "ณพสิทธิ์ โชติวนิช",
+        requesterPosition: "AI & Digital Specialist",
+        requesterEmail: "nopparsit.ch@gmail.com",
+        approverName: "สายชล วสุวัต",
+        approverEmail: "saichon.va@valuesourcing.co",
+        forwardTo: "สายชล วสุวัต",
+        forwardEmail: "saichon.va@valuesourcing.co",
+        lastUpdated: "2026-08-10 14:10:00",
+        headcountRequired: 2,
+        positionType: "New Headcount",
+        replacedEmployeeName: "",
+        targetDate: "2026-09-09",
+        buddy: "ณพสิทธิ์ โชติวนิช",
+        jobTitle: "Senior Full-Stack AI Engineer",
+        department: "AI & Digital Integration Department",
+        jobDescription: "พัฒนาและเชื่อมต่อ AI Models กับระบบสารสนเทศองค์กร",
+        stage: "interview",
+        offerSentDate: "",
+        onboardingArrivalStatus: "pending_arrival",
+        rejectionReason: "",
+        slots: [
+          {
+            slotId: "REQ-2026-002-1",
+            slotIndex: 1,
+            slotStatus: "Recruiting",
+            candidateName: "นาย วรวิทย์ พัฒนาพร",
+            candidatePhone: "089-876-5432",
+            candidateNickname: "วิทย์",
+            resumeUrl: "",
+            stage: "interview",
+            offerSentDate: "",
+            hireDate: "",
+            interviewSchedule: "2026-08-16 10:30 น. (Online Meet)",
+            interviewScore: 0,
+            interviewScorePercent: 0,
+            interviewResult: "",
+            onboardingArrivalStatus: "pending_arrival",
+            rejectionReason: "",
+            evaluations: []
+          },
+          {
+            slotId: "REQ-2026-002-2",
+            slotIndex: 2,
+            slotStatus: "Recruiting",
+            candidateName: "",
+            candidatePhone: "",
+            candidateNickname: "",
+            resumeUrl: "",
+            stage: "received",
+            offerSentDate: "",
+            hireDate: "",
+            interviewSchedule: "",
+            interviewScore: 0,
+            interviewScorePercent: 0,
+            interviewResult: "",
+            onboardingArrivalStatus: "pending_arrival",
+            rejectionReason: "",
+            evaluations: []
+          }
+        ]
+      }
+    ];
 
     function App() {
-      // ปรับเปลี่ยนเวอร์ชัน storage key เพื่อเคลียร์แคชข้อมูลทดสอบเดิมในเบราว์เซอร์ออกทั้งหมด
       const [requests, setRequests] = useState(() => {
-        const saved = localStorage.getItem("hr_requests_clean_v1");
+        const saved = localStorage.getItem("hr_requests_v62");
         return saved ? JSON.parse(saved) : INITIAL_RECRUITMENT_DATA;
       });
 
       const [personnelList, setPersonnelList] = useState(() => {
-        const saved = localStorage.getItem("hr_personnel_clean_v1");
+        const saved = localStorage.getItem("hr_personnel_v62");
         return saved ? JSON.parse(saved) : INITIAL_PERSONNEL_LIST;
       });
 
       const [candidatePool, setCandidatePool] = useState(() => {
-        const saved = localStorage.getItem("hr_candidates_clean_v1");
+        const saved = localStorage.getItem("hr_candidates_v62");
         return saved ? JSON.parse(saved) : INITIAL_CANDIDATE_POOL;
       });
 
       const [googleScriptUrl, setGoogleScriptUrl] = useState(() => {
-        return localStorage.getItem("hr_apps_script_url_clean_v1") || 
-               DEFAULT_APPS_SCRIPT_WEBAPP_URL;
+        return localStorage.getItem("hr_apps_script_url_v62") || DEFAULT_APPS_SCRIPT_WEBAPP_URL;
       });
 
       const [darkMode, setDarkMode] = useState(() => {
@@ -586,11 +792,11 @@
       }, [darkMode]);
 
       useEffect(() => {
-        localStorage.setItem("hr_requests_clean_v1", JSON.stringify(requests));
+        localStorage.setItem("hr_requests_v62", JSON.stringify(requests));
       }, [requests]);
 
       useEffect(() => {
-        localStorage.setItem("hr_candidates_clean_v1", JSON.stringify(candidatePool));
+        localStorage.setItem("hr_candidates_v62", JSON.stringify(candidatePool));
       }, [candidatePool]);
 
       // 🔄 Real-time Background Polling & Manual Sync Function
@@ -693,305 +899,10 @@
       const [currentView, setCurrentView] = useState("public");
       const [adminSubTab, setAdminSubTab] = useState("kanban");
       const [manpowerTableTab, setManpowerTableTab] = useState("in_process");
-      const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
-        const saved = localStorage.getItem("hr_admin_email");
-        return Boolean(saved);
-      });
-      const [adminEmail, setAdminEmail] = useState(() => localStorage.getItem("hr_admin_email") || "");
+      const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
       const [showLoginModal, setShowLoginModal] = useState(false);
-
-      // Authentication State Machine: "login" | "register" | "forgot" | "otp" | "reset_password"
-      const [authMode, setAuthMode] = useState("login");
-      const [authStep, setAuthStep] = useState("form"); // "form" | "otp" | "reset"
-      const [authForm, setAuthForm] = useState({
-        fullName: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        newPassword: "",
-        confirmNewPassword: ""
-      });
-
-      // Registered Accounts Store (Local storage with defaults)
-      const [adminAccounts, setAdminAccounts] = useState(() => {
-        const saved = localStorage.getItem("hr_registered_admins_v1");
-        if (saved) {
-          try { return JSON.parse(saved); } catch (e) {}
-        }
-        return {
-          "wanwisa.ch@valuesourcing.co": { password: "admin", name: "วรรณวิษา ชื่นตา" },
-          "sarunpat.ub@valuesourcing.co": { password: "admin", name: "ศรัณย์ภัทธ อุบล" },
-          "porntida.wo@valuesourcing.co": { password: "admin", name: "พรธิดา วนเวียน" },
-          "krittasurat.ti@valuesourcing.co": { password: "admin", name: "กฤตสุรัตน์ ติยะพัฒน์พงศ์" },
-          "patcharee.pu@valuesourcing.co": { password: "admin", name: "พัชรี พุ่มเพ็ชร" }
-        };
-      });
-
-      useEffect(() => {
-        localStorage.setItem("hr_registered_admins_v1", JSON.stringify(adminAccounts));
-      }, [adminAccounts]);
-
-      const [showPassword, setShowPassword] = useState(false);
+      const [adminPasscode, setAdminPasscode] = useState("");
       const [loginError, setLoginError] = useState("");
-      const [generatedOtp, setGeneratedOtp] = useState("");
-      const [otpInput, setOtpInput] = useState("");
-      const [isSendingOtp, setIsSendingOtp] = useState(false);
-      const [otpCountdown, setOtpCountdown] = useState(0);
-
-      // ตัวนับเวลานับถอยหลังอายุของ OTP (5 นาที = 300 วินาที)
-      useEffect(() => {
-        let timer = null;
-        if (authStep === "otp" && otpCountdown > 0) {
-          timer = setInterval(() => {
-            setOtpCountdown(prev => {
-              if (prev <= 1) {
-                clearInterval(timer);
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        }
-        return () => {
-          if (timer) clearInterval(timer);
-        };
-      }, [authStep, otpCountdown]);
-
-      // ฟังก์ชันส่งรหัสยืนยัน OTP ไปยังอีเมล
-      const dispatchOtpEmail = async (targetEmail, otpCode) => {
-        setIsSendingOtp(true);
-        try {
-          if (googleScriptUrl) {
-            await fetch(googleScriptUrl, {
-              method: "POST",
-              mode: "no-cors",
-              headers: { "Content-Type": "text/plain" },
-              body: JSON.stringify({
-                action: "sendAdminLoginOTP",
-                email: targetEmail,
-                otp: otpCode
-              })
-            });
-          }
-          triggerToast(`📧 ส่งรหัสยืนยัน OTP ไปที่ ${targetEmail} แล้ว`);
-        } catch (err) {
-          triggerToast(`ส่งรหัสไปที่ ${targetEmail} แล้ว (ตรวจสอบกล่องข้อความ)`);
-        } finally {
-          setIsSendingOtp(false);
-        }
-      };
-
-      // จัดการส่งฟอร์มตาม authMode (login / register / forgot)
-      const handleAuthFormSubmit = (e) => {
-        e.preventDefault();
-        setLoginError("");
-        const cleanEmail = authForm.email.trim().toLowerCase();
-
-        if (!cleanEmail || !cleanEmail.includes("@")) {
-          setLoginError("กรุณาระบุอีเมลที่ถูกต้อง");
-          return;
-        }
-
-        if (authMode === "login") {
-          let userAccount = adminAccounts[cleanEmail];
-          
-          // ตรวจสอบสิทธิ์เฉพาะ 5 อีเมลที่กำหนดเท่านั้น
-          if (!ALLOWED_ADMIN_EMAILS.includes(cleanEmail)) {
-            setLoginError("อีเมลนี้ไม่ได้รับอนุญาตให้เข้าใช้งาน Admin Portal");
-            return;
-          }
-
-          // ตรวจสอบรหัสผ่านกับบัญชีที่ลงทะเบียนไว้ หรือรหัสผ่านเริ่มต้นในระบบ
-          const validPasswords = [
-            userAccount?.password,
-            ADMIN_CREDENTIALS[cleanEmail],
-            MASTER_ADMIN_PASSWORD,
-            "admin"
-          ].filter(Boolean);
-
-          const isPasswordValid = validPasswords.includes(authForm.password);
-
-          if (!userAccount && !ALLOWED_ADMIN_EMAILS.includes(cleanEmail)) {
-            setLoginError("ไม่พบบัญชีผู้ใช้นี้ในระบบ กรุณาตรวจสอบอีเมลหรือสมัครสมาชิก");
-            return;
-          }
-
-          if (!isPasswordValid) {
-            setLoginError("รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง หรือกดลืมรหัสผ่าน");
-            return;
-          }
-
-          // ถ้ามีรหัสผ่านถูกต้อง เข้าสู่ระบบได้ทันทีโดยไม่ต้องยืนยัน OTP ทางอีเมล
-          if (!userAccount && ALLOWED_ADMIN_EMAILS.includes(cleanEmail)) {
-            setAdminAccounts(prev => ({
-              ...prev,
-              [cleanEmail]: { password: authForm.password, name: cleanEmail.split('@')[0] }
-            }));
-          }
-
-          setIsAdminAuthenticated(true);
-          setAdminEmail(cleanEmail);
-          localStorage.setItem("hr_admin_email", cleanEmail);
-          setShowLoginModal(false);
-          setCurrentView("admin");
-          setAuthStep("form");
-          setAuthMode("login");
-          setLoginError("");
-          setAuthForm({
-            fullName: "",
-            email: "",
-            password: "",
-            confirmPassword: "",
-            newPassword: "",
-            confirmNewPassword: ""
-          });
-          triggerToast(`🎉 เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ Admin (${cleanEmail})`);
-          return;
-        } 
-        else if (authMode === "register") {
-          // ตรวจสอบสิทธิ์ว่าอีเมลอยู่ใน 5 อีเมลที่ได้รับอนุญาตหรือไม่
-          if (!ALLOWED_ADMIN_EMAILS.includes(cleanEmail)) {
-            setLoginError("อีเมลนี้ไม่ได้รับอนุญาตให้สมัครสมาชิก Admin Portal");
-            return;
-          }
-          if (!authForm.fullName.trim()) {
-            setLoginError("กรุณากรอกชื่อ-นามสกุล");
-            return;
-          }
-          if (!authForm.password || authForm.password.length < 4) {
-            setLoginError("รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร");
-            return;
-          }
-          if (authForm.password !== authForm.confirmPassword) {
-            setLoginError("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน");
-            return;
-          }
-          if (adminAccounts[cleanEmail]) {
-            setLoginError("อีเมลนี้ถูกลงทะเบียนไว้แล้ว สามารถเข้าสู่ระบบได้ทันที");
-            return;
-          }
-          // สุ่ม OTP เพื่อยืนยันการสมัครทางอีเมล
-          const newOtp = String(Math.floor(100000 + Math.random() * 900000));
-          setGeneratedOtp(newOtp);
-          setOtpInput("");
-          setOtpCountdown(300);
-          setAuthStep("otp");
-          dispatchOtpEmail(cleanEmail, newOtp);
-        } 
-        else if (authMode === "forgot") {
-          // ตรวจสอบสิทธิ์ก่อนส่ง OTP สำหรับลืมรหัสผ่าน
-          if (!ALLOWED_ADMIN_EMAILS.includes(cleanEmail)) {
-            setLoginError("อีเมลนี้ไม่ได้รับอนุญาตให้ใช้งานในระบบ Admin Portal");
-            return;
-          }
-          // สุ่ม OTP เพื่อขอรีเซ็ตรหัสผ่านทางอีเมล
-          const newOtp = String(Math.floor(100000 + Math.random() * 900000));
-          setGeneratedOtp(newOtp);
-          setOtpInput("");
-          setOtpCountdown(300);
-          setAuthStep("otp");
-          dispatchOtpEmail(cleanEmail, newOtp);
-        }
-      };
-
-      // ยืนยันรหัส OTP 6 หลัก
-      const handleVerifyOtpSubmit = (e) => {
-        e.preventDefault();
-        const cleanInput = otpInput.trim();
-
-        if (!cleanInput) {
-          setLoginError("กรุณากรอกรหัสยืนยัน OTP 6 หลัก");
-          return;
-        }
-
-        if (otpCountdown <= 0) {
-          setLoginError("รหัสยืนยัน OTP นี้หมดอายุแล้ว กรุณากดขอรับรหัสใหม่");
-          return;
-        }
-
-        if (cleanInput !== generatedOtp) {
-          setLoginError("รหัสยืนยัน OTP ไม่ถูกต้อง กรุณาตรวจสอบอีเมลอีกครั้ง");
-          return;
-        }
-
-        const cleanEmail = authForm.email.trim().toLowerCase();
-
-        if (authMode === "login") {
-          setIsAdminAuthenticated(true);
-          setAdminEmail(cleanEmail);
-          localStorage.setItem("hr_admin_email", cleanEmail);
-          setShowLoginModal(false);
-          setCurrentView("admin");
-          setAuthStep("form");
-          setAuthMode("login");
-          setLoginError("");
-          triggerToast(`🎉 ยืนยันตัวตนสำเร็จ! ยินดีต้อนรับ Admin (${cleanEmail})`);
-        } 
-        else if (authMode === "register") {
-          // บันทึกบัญชีใหม่
-          setAdminAccounts(prev => ({
-            ...prev,
-            [cleanEmail]: {
-              password: authForm.password,
-              name: authForm.fullName.trim()
-            }
-          }));
-          setIsAdminAuthenticated(true);
-          setAdminEmail(cleanEmail);
-          localStorage.setItem("hr_admin_email", cleanEmail);
-          setShowLoginModal(false);
-          setCurrentView("admin");
-          setAuthStep("form");
-          setAuthMode("login");
-          setLoginError("");
-          triggerToast(`🎉 สมัครสมาชิกและยืนยันตัวตนสำเร็จ! ยินดีต้อนรับ Admin (${cleanEmail})`);
-        } 
-        else if (authMode === "forgot") {
-          // สลับไปหน้าตั้งรหัสผ่านใหม่
-          setAuthStep("reset");
-          setLoginError("");
-        }
-      };
-
-      // บันทึกรหัสผ่านใหม่
-      const handleResetPasswordSubmit = (e) => {
-        e.preventDefault();
-        if (!authForm.newPassword || authForm.newPassword.length < 4) {
-          setLoginError("รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 4 ตัวอักษร");
-          return;
-        }
-        if (authForm.newPassword !== authForm.confirmNewPassword) {
-          setLoginError("รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน");
-          return;
-        }
-
-        const cleanEmail = authForm.email.trim().toLowerCase();
-        setAdminAccounts(prev => ({
-          ...prev,
-          [cleanEmail]: {
-            ...prev[cleanEmail],
-            password: authForm.newPassword
-          }
-        }));
-
-        setAuthMode("login");
-        setAuthStep("form");
-        setLoginError("");
-        triggerToast("🎉 ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่");
-      };
-
-      // ขอรหัส OTP ใหม่อีกครั้ง
-      const handleResendOtp = () => {
-        if (otpCountdown > 240) {
-          triggerToast("กรุณารอ 1 นาทีก่อนกดขอรหัสใหม่");
-          return;
-        }
-        const newOtp = String(Math.floor(100000 + Math.random() * 900000));
-        setGeneratedOtp(newOtp);
-        setOtpCountdown(300);
-        setLoginError("");
-        dispatchOtpEmail(authForm.email.trim().toLowerCase(), newOtp);
-      };
 
       const [searchQuery, setSearchQuery] = useState("");
       const [candidateSearchQuery, setCandidateSearchQuery] = useState("");
@@ -2607,6 +2518,20 @@
         triggerToast(`❌ ตีกลับคำขอ ${reqId} เรียบร้อยแล้ว`);
       };
 
+      const handleAdminLoginSubmit = (e) => {
+        e.preventDefault();
+        if (adminPasscode === "admin123" || adminPasscode === "hr2025") {
+          setIsAdminAuthenticated(true);
+          setShowLoginModal(false);
+          setCurrentView("admin");
+          setAdminPasscode("");
+          setLoginError("");
+          triggerToast("เข้าสู่ระบบ Admin เรียบร้อย");
+        } else {
+          setLoginError("รหัสผ่านไม่ถูกต้อง (ทดสอบ: admin123)");
+        }
+      };
+
       const handleCopyShareLink = () => {
         const baseUrl = window.location.href.split('?')[0];
         const textArea = document.createElement("textarea");
@@ -2691,10 +2616,6 @@
                     </button>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-[11px] font-semibold text-brand-700 dark:text-brand-300">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="truncate max-w-[180px]">{adminEmail}</span>
-                      </div>
                       <button
                         onClick={() => setCurrentView("public")}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition"
@@ -2705,8 +2626,6 @@
                       <button
                         onClick={() => {
                           setIsAdminAuthenticated(false);
-                          setAdminEmail("");
-                          localStorage.removeItem("hr_admin_email");
                           setCurrentView("public");
                           triggerToast("ออกจากระบบ Admin เรียบร้อย");
                         }}
@@ -3044,39 +2963,45 @@
                       >
                         <option value="ALL">All Years</option>
                         <option value="2026">2026</option>
-                        <option value="2025">2025</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[440px] overflow-y-auto pr-1">
-                    {departmentStats.map((item, idx) => (
-                      <div 
-                        key={item.department} 
-                        onClick={() => setSelectedDepartmentDetail(item.department)}
-                        className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
-                      >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-brand-600 transition">
-                            <span className="text-brand-500 font-semibold mr-1.5">#{idx + 1}</span>
-                            {item.department}
-                          </span>
-                          <div className="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
-                            <span className="text-slate-700 dark:text-slate-300">Total: {item.total}</span>
-                            <span className="text-amber-600">Open: {item.open}</span>
-                            <span className="text-emerald-600">Filled: {item.filled}</span>
+                    {departmentStats.map((item, idx) => {
+                      const maxTotal = departmentStats[0]?.total || 1;
+                      const percent = Math.min(100, Math.round((item.total / maxTotal) * 100));
+
+                      return (
+                        <div 
+                          key={item.department} 
+                          onClick={() => setSelectedDepartmentDetail(item.department)}
+                          className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-brand-600 transition">
+                              <span className="text-brand-500 font-semibold mr-1.5">#{idx + 1}</span>
+                              {item.department}
+                            </span>
+                            <div className="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
+                              <span className="text-slate-700 dark:text-slate-300">Total: {item.total}</span>
+                              <span className="text-amber-600">Open: {item.open}</span>
+                              <span className="text-emerald-600">Filled: {item.filled}</span>
+                            </div>
+                          </div>
+
+                          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-brand-500 to-sky-400 rounded-full transition-all duration-500"
+                              style={{ width: `${item.total > 0 ? percent : 0}%` }}
+                            ></div>
                           </div>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-brand-500 to-sky-400 rounded-full"
-                            style={{ width: `${item.total > 0 ? (item.total / (departmentStats[0]?.total || 1)) * 100 : 0}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
+
               </div>
             )}
             {currentView === "admin" && (
@@ -4398,44 +4323,1415 @@
                   </div>
                 </div>
 
-                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center gap-2">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (window.confirm("ยืนยันที่จะล้างข้อมูลคำขอทั้งหมดเพื่อเริ่มต้นใช้งานจริงใหม่ใช่หรือไม่? (ข้อมูลใน Google Sheet จะไม่ถูกลบ)")) {
-                        setRequests([]);
-                        localStorage.setItem("hr_requests_clean_v1", JSON.stringify([]));
-                        syncCandidatesFromGoogleSheet(true);
-                        triggerToast("🧹 ล้างข้อมูลคำขอทั้งหมดเรียบร้อย พร้อมเริ่มใช้งานจริง!");
-                        setShowSheetsModal(false);
-                      }
-                    }}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-900 transition"
+                    onClick={() => setStageClearModal(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200"
                   >
-                    ล้างคำขอเพื่อเริ่มใหม่ (Reset All)
+                    ยกเลิก
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmBatchArchive}
+                    disabled={selectedSlotsToClear.length === 0}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition"
+                  >
+                    ล้างตำแหน่งที่เลือก ({selectedSlotsToClear.length} รายการ)
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Unassigned Interview Slot Alert & Picker Modal */}
+          {unassignedInterviewSlotModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-amber-300 dark:border-amber-700 p-6 space-y-4">
+                <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold shrink-0">
+                      ⚠️
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-amber-600 uppercase">
+                        INTERVIEW STAGE CANDIDATE CHECK
+                      </span>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
+                        ตำแหน่งนี้ยังไม่มีผู้สมัครจับคู่ (Unassigned)
+                      </h3>
+                    </div>
+                  </div>
+                  <button onClick={() => setUnassignedInterviewSlotModal(null)} className="p-1 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-1">
+                  <p><span className="text-slate-400">ตำแหน่ง:</span> <strong className="text-slate-900 dark:text-white">{unassignedInterviewSlotModal.jobTitle}</strong></p>
+                  <p><span className="text-slate-400">Slot ID:</span> <strong className="text-brand-600">#{unassignedInterviewSlotModal.slotId}</strong></p>
+                  <p><span className="text-slate-400">ฝ่ายงาน:</span> <strong className="text-slate-700 dark:text-slate-300">{unassignedInterviewSlotModal.department}</strong></p>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                  ก่อนจะย้ายตำแหน่งเข้าสู่ด่าน <strong>Interview Stage</strong> กรุณาเลือกผู้สมัครจาก Candidate Pool เพื่อนำมาจับคู่และกำหนดวันเวลานัดสัมภาษณ์:
+                </p>
+
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                  {candidatePool.filter(c => !c.assignedSlotId && c.status !== "not suitable" && c.status !== "cancel by candidate" && c.status !== "Hiring / Offer").length === 0 ? (
+                    <div className="p-4 text-center text-slate-400 italic bg-slate-50 dark:bg-slate-800/40 rounded-xl text-xs">
+                      ไม่มีผู้สมัครที่พร้อมแมปใน Candidate Pool (กรุณาเพิ่มผู้สมัครก่อน)
+                    </div>
+                  ) : (
+                    candidatePool
+                      .filter(c => !c.assignedSlotId && c.status !== "not suitable" && c.status !== "cancel by candidate" && c.status !== "Hiring / Offer")
+                      .map(cand => (
+                        <div
+                          key={cand.candidateId}
+                          onClick={() => handleSelectSlotForCandidate(unassignedInterviewSlotModal, cand)}
+                          className="p-3 rounded-xl bg-slate-50 hover:bg-brand-50 dark:bg-slate-800 dark:hover:bg-brand-950/60 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition cursor-pointer flex items-center justify-between group"
+                        >
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-white text-xs">{cand.fullName}</div>
+                            <div className="text-[11px] text-slate-500">{cand.targetJobTitle} &bull; {cand.phone}</div>
+                          </div>
+                          <span className="text-xs font-bold text-brand-600 group-hover:underline">เลือก &rarr;</span>
+                        </div>
+                      ))
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setUnassignedInterviewSlotModal(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Candidate Full 18-Column Details & Edit Modal */}
+          {selectedCandidateDetail && candidateEditForm && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92vh] flex flex-col">
+                
+                {/* Modal Header */}
+                <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 text-white flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-sky-500/20 text-sky-300 flex items-center justify-center text-lg font-bold border border-sky-400/30 shadow-inner">
+                      👤
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-400">
+                          {selectedCandidateDetail.candidateId || `CAND-2026-${String(selectedCandidateDetail.no || 1).padStart(3, '0')}`}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-semibold">&bull; ลำดับที่ (No.) #{selectedCandidateDetail.no || '-'}</span>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-extrabold text-white leading-tight">
+                        {isEditingCandidate ? "แก้ไขข้อมูลผู้สมัคร" : `${selectedCandidateDetail.fullName} ${selectedCandidateDetail.nickname ? `(${selectedCandidateDetail.nickname})` : ''}`}
+                      </h3>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setShowSheetsModal(false)}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200"
+                      onClick={() => setIsEditingCandidate(!isEditingCandidate)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                        isEditingCandidate 
+                          ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md"
+                          : "bg-white/10 hover:bg-white/20 text-sky-300 border border-sky-400/30"
+                      }`}
+                    >
+                      <span>{isEditingCandidate ? "👁️ โหมดดูข้อมูล" : "✏️ แก้ไขข้อมูล"}</span>
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => { setSelectedCandidateDetail(null); setIsEditingCandidate(false); }} 
+                      className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                    >
+                      <Icon name="x" className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  {isEditingCandidate ? (
+                    /* Edit Form */
+                    <form id="candidateEditForm" onSubmit={handleSaveCandidateEdit} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-semibold mb-1">ชื่อ - นามสกุล *</label>
+                          <input
+                            type="text"
+                            required
+                            value={candidateEditForm.fullName}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, fullName: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">ชื่อเล่น</label>
+                          <input
+                            type="text"
+                            value={candidateEditForm.nickname || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, nickname: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">เบอร์โทรศัพท์</label>
+                          <input
+                            type="tel"
+                            value={candidateEditForm.phone || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, phone: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">ตำแหน่งที่สนใจ (Target Role) *</label>
+                          <input
+                            type="text"
+                            required
+                            value={candidateEditForm.targetJobTitle}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, targetJobTitle: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">ระดับ (Level)</label>
+                          <input
+                            type="text"
+                            value={candidateEditForm.level || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, level: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">สาขา / Branch</label>
+                          <input
+                            type="text"
+                            value={candidateEditForm.branch || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, branch: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">ประเภท (Type)</label>
+                          <select
+                            value={candidateEditForm.type || "Full-Time"}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, type: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          >
+                            <option value="Full-Time">Full-Time</option>
+                            <option value="Contract">Contract</option>
+                            <option value="Internship">Internship</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">MBTI</label>
+                          <input
+                            type="text"
+                            value={candidateEditForm.mbti || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, mbti: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">สถานะ (Status)</label>
+                          <select
+                            value={candidateEditForm.status}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, status: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                          >
+                            {CANDIDATE_STATUS_CONFIG.map(st => (
+                              <option key={st.id} value={st.id}>{st.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Prescreen Date</label>
+                          <input
+                            type="date"
+                            value={candidateEditForm.prescreenDate || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, prescreenDate: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Resume Confirm Date</label>
+                          <input
+                            type="date"
+                            value={candidateEditForm.resumeConfirmDate || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, resumeConfirmDate: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">วันเริ่มงาน (Hire Date)</label>
+                          <input
+                            type="date"
+                            value={candidateEditForm.hireDate || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, hireDate: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">แหล่งที่มา (Channel)</label>
+                          <select
+                            value={candidateEditForm.source || "LinkedIn"}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, source: e.target.value })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          >
+                            <option value="LinkedIn">LinkedIn</option>
+                            <option value="JobsDB">JobsDB</option>
+                            <option value="JobThai">JobThai</option>
+                            <option value="Facebook Page">Facebook Page</option>
+                            <option value="Employee Referral">Employee Referral</option>
+                            <option value="Direct Email">Direct Email</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold mb-1">ลิงก์ Google Drive (CV / Resume Link)</label>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            placeholder="https://drive.google.com/file/d/.../view"
+                            value={candidateEditForm.resumeUrl || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, resumeUrl: e.target.value })}
+                            className="w-full p-2.5 pl-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono"
+                          />
+                          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <Icon name="link" className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold mb-1">หมายเหตุ (Remark)</label>
+                        <textarea
+                          rows="2"
+                          value={candidateEditForm.remark || ""}
+                          onChange={(e) => setCandidateEditForm({ ...candidateEditForm, remark: e.target.value })}
+                          className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                        ></textarea>
+                      </div>
+                    </form>
+                  ) : (
+                    /* Read-Only 18 Columns View */
+                    <>
+                      {/* Status & 2-Way Mapping Banner */}
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">สถานะปัจจุบัน (Status):</span>
+                          <div className="mt-1">
+                            {(() => {
+                              const stCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === selectedCandidateDetail.status) || CANDIDATE_STATUS_CONFIG[0];
+                              return (
+                                <span className={`inline-block text-xs font-bold px-3 py-1 rounded-xl border shadow-2xs ${stCfg.bg} ${stCfg.text} ${stCfg.border}`}>
+                                  {stCfg.label}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                        </div>
+
+                        <div className="sm:text-right">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">การแมปตำแหน่ง (2-Way Mapping):</span>
+                          <div className="mt-1">
+                            {selectedCandidateDetail.assignedSlotId ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 border border-emerald-300 font-bold text-xs">
+                                <span>✓ ผูกอยู่กับ Slot #{selectedCandidateDetail.assignedSlotId}</span>
+                              </span>
+                            ) : (
+                              <span className="inline-block px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs border border-slate-200 dark:border-slate-700">
+                                ว่าง (Available / Not Assigned)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 18 Columns (A-R) Structured Grid */}
+                      <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                            <span>📋 ข้อมูลผู้สมัครครบ 18 คอลัมน์ (Columns A - R)</span>
+                          </h4>
+                          <span className="text-[10px] text-slate-400 font-mono">Google Sheet GID: 546067727</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 text-[11px]">
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/70">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">A: ลำดับ / B: ปี / C: เดือน</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              No. {selectedCandidateDetail.no || '-'} ({selectedCandidateDetail.month || '08'}/{selectedCandidateDetail.year || '2026'})
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">D: ชื่อ - นามสกุล</span>
+                            <strong className="text-slate-900 dark:text-white text-xs mt-0.5 block truncate" title={selectedCandidateDetail.fullName}>
+                              {selectedCandidateDetail.fullName}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">E: ชื่อเล่น (Nickname)</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              {selectedCandidateDetail.nickname || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">F: เบอร์โทรศัพท์ (Phone)</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              {selectedCandidateDetail.phone || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 sm:col-span-2">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">G: ตำแหน่งที่สมัคร (Position)</span>
+                            <strong className="text-brand-600 dark:text-brand-400 text-xs mt-0.5 block truncate" title={selectedCandidateDetail.targetJobTitle}>
+                              {selectedCandidateDetail.targetJobTitle}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">H: ระดับ (Level)</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              {selectedCandidateDetail.level || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">I: สาขา (Branch)</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block truncate" title={selectedCandidateDetail.branch}>
+                              {selectedCandidateDetail.branch || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">J: ประเภทสัญญาจ้าง (Type)</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              {selectedCandidateDetail.type || 'Full-Time'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">K: MBTI</span>
+                            <strong className="text-slate-800 dark:text-slate-200 font-mono text-xs mt-0.5 block">
+                              {selectedCandidateDetail.mbti || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">L: Prescreen Date</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              {selectedCandidateDetail.prescreenDate || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">M: Resume Confirm Date</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              {selectedCandidateDetail.resumeConfirmDate || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">N: วันนัดสัมภาษณ์ (Interview Date)</span>
+                            <strong className="text-amber-700 dark:text-amber-300 text-xs mt-0.5 block font-semibold">
+                              {selectedCandidateDetail.interviewDate ? selectedCandidateDetail.interviewDate.replace('T', ' ') : '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">O: วันเริ่มงาน (Hire Date)</span>
+                            <strong className="text-emerald-700 dark:text-emerald-300 text-xs mt-0.5 block font-bold">
+                              {selectedCandidateDetail.hireDate || '-'}
+                            </strong>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <span className="text-slate-400 block text-[10px] font-bold uppercase">Q: แหล่งที่มา (Channel / Source)</span>
+                            <strong className="text-slate-800 dark:text-slate-200 text-xs mt-0.5 block">
+                              {selectedCandidateDetail.source || '-'}
+                            </strong>
+                          </div>
+                        </div>
+
+                        {/* Google Drive Link Box */}
+                        <div className="p-3 rounded-xl bg-sky-50/70 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 space-y-1.5">
+                          <span className="text-[10px] font-bold text-sky-900 dark:text-sky-300 uppercase block">
+                            🔗 ลิงก์ Google Drive CV / Resume:
+                          </span>
+                          {selectedCandidateDetail.resumeUrl ? (
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={selectedCandidateDetail.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                              >
+                                <Icon name="link" className="w-3.5 h-3.5" />
+                                <span>เปิดดูเรซูเม่ใน Google Drive (คลิก)</span>
+                              </a>
+                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[280px]" title={selectedCandidateDetail.resumeUrl}>
+                                {selectedCandidateDetail.resumeUrl}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic text-xs block">ไม่ได้ระบุลิงก์ Google Drive</span>
+                          )}
+                        </div>
+
+                        {/* Remark Box */}
+                        <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                            R: หมายเหตุ (Remark):
+                          </span>
+                          <p className="text-slate-700 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-wrap">
+                            {selectedCandidateDetail.remark || '-'}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <div className="text-[11px] text-slate-400 italic">
+                    {isEditingCandidate ? "แก้ไขข้อมูลแล้วกดบันทึกเพื่อซิงค์ไปยัง Google Sheet" : "คลิกปุ่ม 'แก้ไขข้อมูล' ด้านบนขวาเพื่อแก้ไข"}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {isEditingCandidate ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => { setCandidateEditForm({ ...selectedCandidateDetail }); setIsEditingCandidate(false); }}
+                          className="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition"
+                        >
+                          ยกเลิก
+                        </button>
+                        <button
+                          type="submit"
+                          form="candidateEditForm"
+                          className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition active:scale-95 flex items-center gap-1.5"
+                        >
+                          <span>💾 บันทึกการเปลี่ยนแปลง</span>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedCandidateDetail(null); setIsEditingCandidate(false); }}
+                        className="px-5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition cursor-pointer active:scale-95 shadow-2xs"
+                      >
+                        ปิดหน้าต่าง
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* Onboarded Hire Date Trigger Modal */}
+          {onboardModalData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6">
+                
+                <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1">
+                      <Icon name="badgeCheck" className="w-3.5 h-3.5 text-emerald-600" />
+                      Onboarded / Filled Stage Trigger
+                    </span>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      ระบุวันเริ่มงาน (Hire Date) สำหรับ Slot นี้
+                    </h3>
+                  </div>
+                  <button onClick={() => setOnboardModalData(null)} className="p-1.5 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleConfirmOnboardAndClose} className="py-4 space-y-4 text-xs">
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-1.5">
+                    <p><span className="text-slate-400">ตำแหน่ง:</span> <strong className="text-slate-900 dark:text-white">{onboardModalData.slotItem?.jobTitle}</strong></p>
+                    <p><span className="text-slate-400">Slot ID:</span> <strong className="text-brand-600">{onboardModalData.slotId}</strong></p>
+                    {onboardModalData.slotItem?.candidateName && (
+                      <p><span className="text-slate-400">ผู้สมัคร:</span> <strong className="text-emerald-700 dark:text-emerald-300 font-bold">{onboardModalData.slotItem.candidateName}</strong></p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      วันเริ่มงาน (Hire Date / Onboarding Start Date) <span className="text-rose-600">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={onboardHireDateInput}
+                      onChange={(e) => setOnboardHireDateInput(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 font-bold focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-[11px] text-sky-800 dark:text-sky-200 space-y-1">
+                    <p className="font-bold flex items-center gap-1">
+                      <span>⚡ ระบบจะดำเนินการอัตโนมัติ:</span>
+                    </p>
+                    <ul className="list-disc list-inside space-y-0.5 text-[10.5px]">
+                      <li>บันทึกวันเริ่มงานลงในข้อมูลผู้สมัคร</li>
+                      <li>ย้ายสถานะ Slot <strong>#{onboardModalData.slotId}</strong> เป็น <strong>"Closed"</strong></li>
+                      <li>ปรับสถานะผู้สมัครใน Candidate Pool เป็น <strong>"Hiring / Offer"</strong></li>
+                      <li>หากคำขอนี้ยังมี Slot อื่นเปิดอยู่ คำขอภาพรวมจะยังคงเปิดสรรหาต่อไป</li>
+                    </ul>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setOnboardModalData(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
                       ยกเลิก
                     </button>
                     <button
-                      type="button"
-                      onClick={() => {
-                        const trimmed = scriptUrlInput.trim();
-                        setGoogleScriptUrl(trimmed);
-                        localStorage.setItem("hr_apps_script_url_clean_v1", trimmed);
-                        setShowSheetsModal(false);
-                        triggerToast("บันทึกการตั้งค่า Web App Sync URL สำเร็จ!");
-                      }}
-                      className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md"
+                      type="submit"
+                      className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-md"
                     >
-                      บันทึกการตั้งค่า
+                      ยืนยันวันเริ่มงาน &amp; ปิด Slot นี้
                     </button>
                   </div>
+                </form>
+
+              </div>
+            </div>
+          )}
+
+          {/* Rejection / Decline Modal (Mandatory Reason + Lock) */}
+          {rejectionModalData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-rose-300 dark:border-rose-900 p-6">
+                
+                <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <span className="text-[10px] font-bold text-rose-600 uppercase flex items-center gap-1">
+                      <Icon name="exclamation" className="w-3.5 h-3.5 text-rose-600" />
+                      {rejectionModalData.isArrivalDecline ? "Onboarding Decline Trigger" : "Cancelled / Rejected Trigger"}
+                    </span>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
+                      ระบุเหตุผลในการสละสิทธิ์ / ยกเลิกตำแหน่ง (บังคับกรอก)
+                    </h3>
+                  </div>
+                  <button onClick={() => setRejectionModalData(null)} className="p-1.5 text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleConfirmRejectionAndSave} className="py-4 space-y-4 text-xs">
+                  <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 space-y-1">
+                    <p><span className="text-slate-400">ตำแหน่ง:</span> <strong className="text-slate-900 dark:text-white">{rejectionModalData.slotItem?.jobTitle}</strong></p>
+                    <p><span className="text-slate-400">Slot ID:</span> <strong className="text-brand-600">{rejectionModalData.slotId}</strong></p>
+                    {rejectionModalData.slotItem?.candidateName && (
+                      <p><span className="text-slate-400">ผู้สมัคร:</span> <strong className="text-rose-700 dark:text-rose-300">{rejectionModalData.slotItem.candidateName}</strong></p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      เหตุผลในการสละสิทธิ์หรือไม่มาเริ่มงาน <span className="text-rose-600">* (บังคับกรอก)</span>
+                    </label>
+                    <textarea
+                      required
+                      rows="3"
+                      placeholder="e.g. ผู้สมัครได้งานที่อื่นใกล้บ้าน, สละสิทธิ์เนื่องจากไม่สะดวกเดินทาง, แผนกชะลอการเปิดรับ..."
+                      value={rejectionReasonInput}
+                      onChange={(e) => setRejectionReasonInput(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-rose-300 dark:border-rose-800 font-medium focus:ring-2 focus:ring-rose-500"
+                    ></textarea>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-[11px] text-amber-800 dark:text-amber-200">
+                    ⚠️ เมื่อบันทึกแล้ว ระบบจะล็อกสถานะเป็น <strong>"❌ สละสิทธิ์ / ไม่มาเริ่มงาน"</strong> ทันที และแสดงแถบสีแดงในรายงานเพื่อความถูกต้องของข้อมูล
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRejectionModalData(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md"
+                    >
+                      ยืนยันบันทึกเหตุผล &amp; ล็อกสถานะ
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+          )}
+
+          {/* Department Position Breakdown Modal */}
+          {selectedDepartmentDetail && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] flex flex-col">
+                
+                <div className="px-6 py-4 bg-gradient-to-r from-brand-600 to-sky-600 text-white flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-200">
+                      DEPARTMENT POSITION BREAKDOWN &bull; {currentView === "admin" ? "ADMIN DETAILED AUDIT" : "OPEN REQUISITIONS"}
+                    </span>
+                    <h3 className="text-base sm:text-lg font-extrabold mt-0.5 flex items-center gap-2">
+                      <Icon name="building" className="w-5 h-5 text-white" />
+                      <span>{selectedDepartmentDetail}</span>
+                    </h3>
+                  </div>
+                  <button onClick={() => setSelectedDepartmentDetail(null)} className="p-2 text-white/80 hover:text-white">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  {departmentModalSlots.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 italic bg-slate-50 dark:bg-slate-800/40 rounded-2xl">
+                      ไม่มีตำแหน่งงานในฝ่ายนี้
+                    </div>
+                  ) : (
+                    departmentModalSlots.map(s => {
+                      const sla = getSLAInfo(s.requestDate, s.stage, s.offerSentDate);
+                      return (
+                        <div key={s.slotId} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2 text-[10px] mb-1">
+                              <span className="font-bold text-brand-600">{s.slotId}</span>
+                              <span className="text-slate-400">&bull;</span>
+                              <span className="text-slate-500 font-semibold">{s.positionType}</span>
+                              <span className="text-slate-400">&bull;</span>
+                              <span className={`px-2 py-0.5 rounded font-bold ${s.slotStatus === "Closed" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                                {s.slotStatus}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{s.jobTitle}</h4>
+                            {s.candidateName && (
+                              <p className="text-emerald-700 dark:text-emerald-300 font-semibold text-xs mt-1">
+                                👤 แคนดิเดต: {s.candidateName} {s.candidateNickname ? `(${s.candidateNickname})` : ''}
+                              </p>
+                            )}
+                            {currentView === "admin" && (
+                              <div className="mt-2 text-[10px] text-slate-400 space-y-0.5">
+                                <p>ผู้ขอ: {s.requesterName} &bull; ผู้อนุมัติ: {s.approverName}</p>
+                                {s.hireDate && <p className="text-emerald-600 font-bold">🎉 วันเริ่มงาน: {s.hireDate}</p>}
+                                {s.evaluationsCount > 0 && (
+                                  <p className="text-brand-600 font-semibold">⭐ ผลประเมิน: {s.interviewScore}/5 ({s.interviewScorePercent}%) - {s.evaluationsCount} ท่าน</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex sm:flex-col items-end gap-1.5 shrink-0">
+                            <span className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-700 font-bold text-[11px]">
+                              Stage: {s.stage}
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              ⏱️ {sla.workingDaysElapsed} วันทำการ
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="pt-3 pb-4 px-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setSelectedDepartmentDetail(null)}
+                    className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* Blind Evaluation Modal Form */}
+          {blindEvalModalSlot && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[94vh] flex flex-col">
+                
+                <div className="px-6 py-4 bg-gradient-to-r from-brand-600 to-sky-600 text-white flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-200">
+                      แบบฟอร์มประเมินสัมภาษณ์งาน (INTERVIEW EVALUATION FORM)
+                    </span>
+                    <h3 className="text-base sm:text-lg font-extrabold mt-0.5">
+                      {blindEvalModalSlot.candidateName || "ผู้สมัคร"} &bull; {blindEvalModalSlot.jobTitle}
+                    </h3>
+                  </div>
+                  <button onClick={() => setBlindEvalModalSlot(null)} className="p-2 text-white/80 hover:text-white">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="bg-sky-50 dark:bg-sky-950/70 border-b border-sky-200/80 dark:border-sky-800 px-6 py-2.5 flex items-center gap-2 text-xs text-sky-800 dark:text-sky-200 font-medium">
+                  <Icon name="shieldCheck" className="w-4 h-4 text-sky-600 shrink-0" />
+                  <span>
+                    <strong>การประเมินแบบอิสระ (Blind Assessment):</strong> แบบฟอร์มนี้จะไม่แสดงคะแนนหรือความคิดเห็นของกรรมการท่านอื่น เพื่อความเป็นกลาง
+                  </span>
+                </div>
+
+                <form onSubmit={handleSaveBlindEvaluation} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        ชื่อผู้ประเมิน <span className="text-rose-600">*</span>
+                      </label>
+                      <SearchableSelect
+                        value={blindEvalForm.evaluatorName}
+                        placeholder="-- เลือกหรือพิมพ์ชื่อผู้ประเมิน --"
+                        options={personnelList.map(p => ({ value: p.name, label: p.name }))}
+                        onChange={(name) => setBlindEvalForm({ ...blindEvalForm, evaluatorName: name })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        บทบาท (Role) <span className="text-rose-600">*</span>
+                      </label>
+                      <select
+                        value={blindEvalForm.evaluatorRole}
+                        onChange={(e) => setBlindEvalForm({ ...blindEvalForm, evaluatorRole: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
+                      >
+                        {EVALUATOR_ROLES.map(role => (
+                          <option key={role} value={role}>{role}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        วันที่ประเมิน <span className="text-rose-600">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={blindEvalForm.date}
+                        onChange={(e) => setBlindEvalForm({ ...blindEvalForm, date: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="font-bold text-slate-900 dark:text-white text-xs pb-1 border-b border-slate-200 dark:border-slate-800">
+                      เกณฑ์การประเมิน 5 ด้าน (1 = ต่ำกว่ามาตรฐานมาก, 5 = เหนือกว่ามาตรฐานมาก)
+                    </div>
+
+                    {EVALUATION_CRITERIA.map(crit => {
+                      const score = blindEvalForm.scores[crit.id];
+
+                      return (
+                        <div key={crit.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                            <div>
+                              <h4 className="font-bold text-slate-900 dark:text-white text-xs">{crit.label}</h4>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">{crit.desc}</p>
+                            </div>
+                            <span className="text-brand-600 dark:text-brand-400 font-extrabold text-xs shrink-0">
+                              คะแนน: {score} / 5
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
+                            {[1, 2, 3, 4, 5].map(val => (
+                              <button
+                                key={`score-${crit.id}-${val}`}
+                                type="button"
+                                onClick={() => setBlindEvalForm({
+                                  ...blindEvalForm,
+                                  scores: { ...blindEvalForm.scores, [crit.id]: val }
+                                })}
+                                className={`flex-1 py-1.5 rounded-xl font-bold text-xs transition border ${
+                                  score === val
+                                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                                }`}
+                              >
+                                {val}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {(() => {
+                    const sc = blindEvalForm.scores;
+                    const tot = Number(sc.c1) + Number(sc.c2) + Number(sc.c3) + Number(sc.c4) + Number(sc.c5);
+                    const avg = (tot / 5).toFixed(1);
+                    const pct = Math.round((tot / 25) * 100);
+                    const isPass = pct >= 70;
+
+                    return (
+                      <div className={`p-3.5 rounded-2xl border flex items-center justify-between ${
+                        isPass 
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
+                          : "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200"
+                      }`}>
+                        <div>
+                          <p className="text-[10px] uppercase font-bold opacity-80">สรุปคะแนนประเมินของคุณ</p>
+                          <h4 className="text-base font-extrabold mt-0.5">{tot} / 25 คะแนน (เฉลี่ย {avg}/5 &bull; {pct}%)</h4>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-lg font-bold text-xs ${
+                          isPass ? "bg-emerald-600 text-white" : "bg-amber-600 text-white"
+                        }`}>
+                          {isPass ? "เกณฑ์ผ่าน (≥ 70%)" : "ต่ำกว่า 70%"}
+                        </span>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">จุดเด่นของผู้สมัคร (Strengths)</label>
+                      <textarea
+                        rows="2"
+                        placeholder="ระบุจุดเด่น ทักษะ หรือประสบการณ์สำคัญ..."
+                        value={blindEvalForm.strengths}
+                        onChange={(e) => setBlindEvalForm({ ...blindEvalForm, strengths: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ข้อควรพัฒนา (Areas for Improvement)</label>
+                      <textarea
+                        rows="2"
+                        placeholder="ระบุข้อควรพัฒนาเพิ่มเติม..."
+                        value={blindEvalForm.improvements}
+                        onChange={(e) => setBlindEvalForm({ ...blindEvalForm, improvements: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">ข้อเสนอแนะสรุปผล (Recommendation) *</label>
+                      <select
+                        value={blindEvalForm.recommendation}
+                        onChange={(e) => setBlindEvalForm({ ...blindEvalForm, recommendation: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                      >
+                        <option value="Recommend to Hire">Recommend to Hire (เสนอรับเข้าทำงาน)</option>
+                        <option value="Compare">Compare (เปรียบเทียบกับผู้สมัครรายอื่น)</option>
+                        <option value="Keep in Pool / Reserve">Keep in Pool / Reserve (เก็บเป็นตัวสำรอง)</option>
+                        <option value="Not Recommended">Not Recommended (ไม่ผ่านการคัดเลือก)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBlindEvalModalSlot(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-700 hover:to-sky-600 shadow-md"
+                    >
+                      บันทึกผลการประเมิน
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+          )}
+
+          {/* Admin Audit Modal */}
+          {adminAuditSlot && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92vh] flex flex-col">
+                
+                <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
+                      ADMIN &amp; HR AUDIT REPORT: DETAILED EVALUATION BREAKDOWN
+                    </span>
+                    <h3 className="text-base sm:text-lg font-bold mt-0.5">
+                      {adminAuditSlot.candidateName || "ผู้สมัคร"} &bull; {adminAuditSlot.jobTitle} (Slot #{adminAuditSlot.slotId})
+                    </h3>
+                  </div>
+                  <button onClick={() => setAdminAuditSlot(null)} className="p-2 text-white/80 hover:text-white">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  
+                  {(() => {
+                    const stats = calculateOverallScore(adminAuditSlot.evaluations);
+                    const isPass = stats.result === "Pass";
+
+                    return (
+                      <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isPass 
+                          ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
+                          : "bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200"
+                      }`}>
+                        <div>
+                          <span className="text-[10px] uppercase font-extrabold opacity-80">
+                            คะแนนเฉลี่ยรวมจากกรรมการทั้งหมด ({stats.count} ท่าน)
+                          </span>
+                          <h4 className="text-2xl font-extrabold mt-0.5">
+                            {stats.combinedAvg} / 5 ({stats.combinedPct}%)
+                          </h4>
+                          <p className="text-[11px] opacity-80 mt-0.5">
+                            เกณฑ์การคัดเลือก: ผ่านที่ 70% ขึ้นไป (คะแนนเฉลี่ย 3.5 / 5.0)
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`px-3 py-1.5 rounded-xl font-extrabold text-xs uppercase shadow-xs ${
+                            isPass ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"
+                          }`}>
+                            {isPass ? "✓ ผ่านการประเมิน (Pass)" : "✗ ไม่ผ่านการประเมิน (Fail)"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-3">
+                    <div className="font-bold text-slate-900 dark:text-white text-xs pb-1 border-b border-slate-200 dark:border-slate-800">
+                      รายละเอียดคะแนนแยกรายบุคคล (Individual Submissions)
+                    </div>
+
+                    {(adminAuditSlot.evaluations || []).length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 italic bg-slate-50 dark:bg-slate-800/40 rounded-2xl">
+                        ยังไม่มีกรรมการหรือ HR บันทึกผลประเมินสำหรับตำแหน่งนี้
+                      </div>
+                    ) : (
+                      adminAuditSlot.evaluations.map((ev, idx) => (
+                        <div key={ev.id || idx} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-slate-200/60 dark:border-slate-700/60">
+                            <div>
+                              <div className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+                                <span>#{idx + 1} {ev.evaluatorName}</span>
+                                <span className="px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 text-[10px] font-semibold">
+                                  {ev.evaluatorRole}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">วันที่ประเมิน: {ev.date}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-base font-extrabold text-slate-900 dark:text-white">{ev.avg} / 5</span>
+                              <span className="text-[10px] text-slate-400 ml-1">({ev.pct}%)</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-5 gap-1.5 text-center text-[10px]">
+                            {EVALUATION_CRITERIA.map(crit => (
+                              <div key={crit.id} className="p-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700">
+                                <span className="block text-slate-400 truncate" title={crit.label}>ข้อ {crit.id.replace('c','')}</span>
+                                <strong className="text-xs font-bold text-brand-600">{ev.scores?.[crit.id] || '-'}/5</strong>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="space-y-1 text-[11px] text-slate-600 dark:text-slate-300 pt-1">
+                            {ev.strengths && <p><strong>จุดเด่น:</strong> {ev.strengths}</p>}
+                            {ev.improvements && <p><strong>ข้อควรพัฒนา:</strong> {ev.improvements}</p>}
+                            <p><strong>ข้อเสนอแนะ:</strong> <span className="font-semibold text-brand-600 dark:text-brand-400">{ev.recommendation || '-'}</span></p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                </div>
+
+                <div className="pt-3 pb-4 px-6 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setAdminAuditSlot(null)}
+                    className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    ปิดหน้าต่าง Audit
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* Add Candidate Modal */}
+          {showAddCandidateModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92vh] flex flex-col">
+                
+                <div className="px-6 py-4 bg-gradient-to-r from-brand-600 to-sky-600 text-white flex items-center justify-between">
+                  <h3 className="text-base sm:text-lg font-extrabold flex items-center gap-2">
+                    <Icon name="plus" className="w-5 h-5 text-white" />
+                    เพิ่มผู้สมัครใหม่เข้า Candidate Pool
+                  </h3>
+                  <button onClick={() => setShowAddCandidateModal(false)} className="p-2 text-white/80 hover:text-white">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveNewCandidate} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-semibold mb-1">ชื่อ - นามสกุล *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. นาย สิทธิชัย อัศวเดช"
+                        value={newCandidateForm.fullName}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, fullName: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">ชื่อเล่น</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. ชัย"
+                        value={newCandidateForm.nickname}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, nickname: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">เบอร์โทรศัพท์</label>
+                      <input
+                        type="tel"
+                        placeholder="081-234-5678"
+                        value={newCandidateForm.phone}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, phone: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">ตำแหน่งที่สนใจ (Target Role) *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Senior Full-Stack AI Engineer"
+                        value={newCandidateForm.targetJobTitle}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, targetJobTitle: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">ระดับ (Level)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Senior / Specialist"
+                        value={newCandidateForm.level}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, level: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">สาขา / Branch</label>
+                      <input
+                        type="text"
+                        value={newCandidateForm.branch}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, branch: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">ประเภท (Type)</label>
+                      <select
+                        value={newCandidateForm.type}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, type: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      >
+                        <option value="Full-Time">Full-Time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Internship">Internship</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">MBTI</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. INTJ"
+                        value={newCandidateForm.mbti}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, mbti: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">สถานะเริ่มต้น (Status)</label>
+                      <select
+                        value={newCandidateForm.status}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, status: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
+                      >
+                        {CANDIDATE_STATUS_CONFIG.map(st => (
+                          <option key={st.id} value={st.id}>{st.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">Prescreen Date</label>
+                      <input
+                        type="date"
+                        value={newCandidateForm.prescreenDate}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, prescreenDate: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">Resume Confirm Date</label>
+                      <input
+                        type="date"
+                        value={newCandidateForm.resumeConfirmDate}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, resumeConfirmDate: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">ช่องทางรับสมัคร (Channel)</label>
+                      <select
+                        value={newCandidateForm.source}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, source: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      >
+                        <option value="LinkedIn">LinkedIn</option>
+                        <option value="JobsDB">JobsDB</option>
+                        <option value="JobThai">JobThai</option>
+                        <option value="Facebook Page">Facebook Page</option>
+                        <option value="Employee Referral">Employee Referral</option>
+                        <option value="Direct Email">Direct Email</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1">
+                      ลิงก์ Google Drive (CV / Resume Link)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        placeholder="https://drive.google.com/file/d/.../view"
+                        value={newCandidateForm.resumeUrl}
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, resumeUrl: e.target.value })}
+                        className="w-full p-2.5 pl-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono"
+                      />
+                      <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                        <Icon name="link" className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold mb-1">หมายเหตุ (Remark)</label>
+                    <textarea
+                      rows="2"
+                      placeholder="ข้อมูลประวัติย่อ ทักษะ ประสบการณ์..."
+                      value={newCandidateForm.remark}
+                      onChange={(e) => setNewCandidateForm({ ...newCandidateForm, remark: e.target.value })}
+                      className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                    ></textarea>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCandidateModal(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md"
+                    >
+                      บันทึก &amp; ซิงค์ลง Google Sheet (GID 546067727)
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+          )}
+
+          {/* Sheets Sync Setup Modal */}
+          {showSheetsModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[92vh] flex flex-col">
+                <div className="px-6 py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">⚙️</span>
+                    <div>
+                      <h3 className="text-base font-bold">Google Sheets Real-Time Two-Way Sync Setup</h3>
+                      <p className="text-[11px] text-slate-400">กำหนดค่าการบันทึกข้อมูลแบบเรียลไทม์ลง Google Sheet แผ่นงาน Candidate Pool (GID 546067727)</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowSheetsModal(false)} className="p-1.5 text-slate-400 hover:text-white">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+                  <div className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 space-y-2">
+                    <div className="font-bold text-sky-900 dark:text-sky-200 flex items-center justify-between">
+                      <span>📊 Google Sheet แผ่นงานเป้าหมาย</span>
+                      <a href={CANDIDATES_SHEET_EDIT_URL} target="_blank" rel="noreferrer" className="text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 font-semibold">
+                        <span>เปิดแผ่นงาน GID 546067727</span>
+                        <Icon name="link" className="w-3 h-3" />
+                      </a>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                      ระบบดึงข้อมูลจาก GID <strong>546067727</strong> อัตโนมัติ และจะส่งคำขอ POST ไปเขียนเพิ่มข้อมูลแถวใหม่ทั้ง 18 คอลัมน์ (A-R) เมื่อมีการกดบันทึกผู้สมัครใหม่
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Google Apps Script Web App URL (สำหรับยิง POST):
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+                      value={scriptUrlInput}
+                      onChange={(e) => setScriptUrlInput(e.target.value)}
+                      className="w-full p-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500 font-mono"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      วาง URL ของ Web App ที่ได้จากการ Deploy Google Apps Script (เข้าถึงโดย Anyone) เพื่อให้ระบบส่งข้อมูลไปลง Sheet ทันที
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-800 dark:text-slate-200">📋 โค้ด Google Apps Script (พร้อมใช้):</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const code = `function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheets = ss.getSheets();
+    var sheet = sheets[0];
+    var targetGid = (data.sheetGid || "546067727").toString();
+    for (var i = 0; i < sheets.length; i++) {
+      if (sheets[i].getSheetId().toString() === targetGid) {
+        sheet = sheets[i];
+        break;
+      }
+    }
+    if (data.action === "addCandidate" && data.candidate) {
+      var c = data.candidate;
+      sheet.appendRow([
+        c.no, c.year, c.month, c.fullName, c.nickname, c.phone,
+        c.targetJobTitle, c.level, c.branch, c.type, c.mbti,
+        c.prescreenDate, c.resumeConfirmDate, c.interviewDate,
+        c.hireDate, c.status, c.source, c.remark
+      ]);
+      return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+                          const textArea = document.createElement("textarea");
+                          textArea.value = code;
+                          document.body.appendChild(textArea);
+                          textArea.select();
+                          document.execCommand("copy");
+                          document.body.removeChild(textArea);
+                          triggerToast("คัดลอกโค้ด Google Apps Script เรียบร้อย! 📋");
+                        }}
+                        className="text-[10px] font-bold text-brand-600 hover:text-brand-700 underline"
+                      >
+                        คัดลอกโค้ด
+                      </button>
+                    </div>
+                    <pre className="p-2.5 rounded-xl bg-slate-900 text-slate-200 font-mono text-[10px] overflow-x-auto max-h-36">
+{`function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheets().find(s => s.getSheetId().toString() === (data.sheetGid || "546067727"));
+  if (data.action === "addCandidate") {
+    var c = data.candidate;
+    sheet.appendRow([c.no, c.year, c.month, c.fullName, c.nickname, c.phone, c.targetJobTitle, c.level, c.branch, c.type, c.mbti, c.prescreenDate, c.resumeConfirmDate, c.interviewDate, c.hireDate, c.status, c.source, c.remark]);
+  }
+}`}
+                    </pre>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowSheetsModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = scriptUrlInput.trim();
+                      setGoogleScriptUrl(trimmed);
+                      localStorage.setItem("hr_apps_script_url_v62", trimmed);
+                      setShowSheetsModal(false);
+                      triggerToast("บันทึกการตั้งค่า Web App Sync URL สำเร็จ!");
+                    }}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md"
+                  >
+                    บันทึกการตั้งค่า
+                  </button>
                 </div>
               </div>
             </div>
@@ -5979,40 +7275,82 @@
                             }}
                             className="text-[10px] font-bold text-rose-600 hover:underline"
                           >
-                            ถอดผู้สมัคร
+                            ถอดออกจากตำแหน่ง
                           </button>
                         )}
                       </div>
-                      {selectedDetailSlot.candidateNickname && (
-                        <p className="text-slate-600 dark:text-slate-400 text-xs">ชื่อเล่น: {selectedDetailSlot.candidateNickname}</p>
+                      <p className="text-emerald-700 dark:text-emerald-300">📞 {selectedDetailSlot.candidatePhone || "-"}</p>
+                      {selectedDetailSlot.interviewSchedule && (() => {
+                        const relTime = getInterviewRelativeTimeInfo(selectedDetailSlot.interviewSchedule);
+                        return (
+                          <div className="mt-1 flex flex-wrap items-center justify-between gap-1.5">
+                            <p className="text-amber-800 dark:text-amber-300 font-semibold">📅 วันเวลานัดสัมภาษณ์: {selectedDetailSlot.interviewSchedule}</p>
+                            {relTime && selectedDetailSlot.stage === "interview" && (
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] border ${relTime.badge}`}>
+                                {relTime.ping && (
+                                  <span className="relative flex h-2 w-2">
+                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${relTime.dotBg} opacity-75`}></span>
+                                    <span className={`relative inline-flex rounded-full h-2 w-2 ${relTime.dotBg}`}></span>
+                                  </span>
+                                )}
+                                <span>{relTime.text}</span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {selectedDetailSlot.evaluationsCount > 0 && (
+                        <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-800/80 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-800 dark:text-slate-200">ผลประเมินสัมภาษณ์เฉลี่ยรวม ({selectedDetailSlot.evaluationsCount} ท่าน):</span>
+                            <span className={`px-2 py-0.5 rounded font-extrabold text-[10px] ${
+                              selectedDetailSlot.interviewResult === "Pass" ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"
+                            }`}>
+                              {selectedDetailSlot.interviewResult} ({selectedDetailSlot.interviewScore}/5 - {selectedDetailSlot.interviewScorePercent}%)
+                            </span>
+                          </div>
+                          {isAdminAuthenticated && (
+                            <button
+                              onClick={() => {
+                                const s = selectedDetailSlot;
+                                setSelectedDetailSlot(null);
+                                setAdminAuditSlot(s);
+                              }}
+                              className="text-xs font-bold text-brand-600 hover:underline mt-1"
+                            >
+                              🔍 เปิดดู Audit Breakdown รายชื่อและคะแนนกรรมการทุกคน &rarr;
+                            </button>
+                          )}
+                        </div>
                       )}
-                      {selectedDetailSlot.candidatePhone && (
-                        <p className="text-slate-600 dark:text-slate-400 text-xs">เบอร์โทรศัพท์: {selectedDetailSlot.candidatePhone}</p>
-                      )}
-                      {selectedDetailSlot.resumeUrl && (
-                        <a
-                          href={selectedDetailSlot.resumeUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400 hover:underline font-semibold"
-                        >
-                          <Icon name="link" className="w-3.5 h-3.5" />
-                          <span>ดู Resume / CV</span>
-                        </a>
+
+                      {/* Add Interview Evaluation Button in Slot Detail Modal (Strictly ONLY in Interview Stage) */}
+                      {selectedDetailSlot.stage === "interview" && (
+                        <div className="mt-3 pt-2.5 border-t border-emerald-200/70 dark:border-emerald-800/70 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBlindEvaluationModal(selectedDetailSlot)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                          >
+                            <Icon name="clipboardCheck" className="w-3.5 h-3.5 text-white" />
+                            <span>+ บันทึกผลประเมินสัมภาษณ์</span>
+                          </button>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {selectedDetailSlot.evaluationsCount > 0 ? `ประเมินแล้ว ${selectedDetailSlot.evaluationsCount} ท่าน` : "ยังไม่มีผู้ประเมิน"}
+                          </span>
+                        </div>
                       )}
                     </div>
                   ) : (
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center text-slate-400 italic">
-                      ยังไม่มีผู้สมัครที่แมปกับตำแหน่งนี้
+                    <div className="p-3 text-center bg-slate-50 dark:bg-slate-800 rounded-xl">
+                      <p className="text-slate-400 italic">ยังไม่มีผู้สมัครจับคู่ในตำแหน่งนี้</p>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-                  <button
-                    onClick={() => setSelectedDetailSlot(null)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
-                  >
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button onClick={() => setSelectedDetailSlot(null)} className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     ปิด
                   </button>
                 </div>
@@ -6020,367 +7358,101 @@
             </div>
           )}
 
-          {/* Admin Login / Register / Forgot Password Modal */}
-          {showLoginModal && (
+          {/* Unassign Confirmation Modal */}
+          {unassignConfirmTarget && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-7 text-center">
-                
-                {/* Mode Selector Tabs (Visible only when in initial form) */}
-                {authStep === "form" && (
-                  <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 mb-5">
-                    <button
-                      type="button"
-                      onClick={() => { setAuthMode("login"); setLoginError(""); }}
-                      className={`w-1/2 py-2 text-xs font-bold rounded-xl transition ${
-                        authMode === "login"
-                          ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                          : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                      }`}
-                    >
-                      เข้าสู่ระบบ (Login)
+              <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">ยืนยันการถอดผู้สมัคร</h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  คุณต้องการถอดคุณ <strong>{unassignConfirmTarget.candidateName}</strong> ออกจากตำแหน่ง Slot #{unassignConfirmTarget.slotId} ใช่หรือไม่?
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={() => setUnassignConfirmTarget(null)}
+                    className="px-4 py-2 rounded-xl text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    onClick={() => handleUnassignCandidate(unassignConfirmTarget.slotId, unassignConfirmTarget.candidateName)}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700"
+                  >
+                    ยืนยันถอดออก
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Candidate Confirmation Modal */}
+          {candidateToDelete && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-rose-300 dark:border-rose-900 p-6 text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 flex items-center justify-center mx-auto text-xl">
+                  🗑️
+                </div>
+
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                    ยืนยันการลบข้อมูลผู้สมัคร
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    คุณต้องการลบข้อมูลคุณ <strong>"{candidateToDelete.fullName}"</strong> ({candidateToDelete.candidateId || `#${candidateToDelete.no}`}) ออกจากระบบใช่หรือไม่?
+                  </p>
+                  {candidateToDelete.assignedSlotId && (
+                    <p className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold bg-amber-50 dark:bg-amber-950/40 p-2 rounded-xl mt-2">
+                      ⚠️ ผู้สมัครนี้กำลังผูกอยู่กับ Slot #{candidateToDelete.assignedSlotId} ระบบจะปลดการผูกตำแหน่งออกให้อัตโนมัติ
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCandidateToDelete(null)}
+                    className="w-1/2 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDeleteCandidate}
+                    className="w-1/2 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/30 transition active:scale-95"
+                  >
+                    ยืนยันการลบ
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Login Modal */}
+          {showLoginModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+              <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 text-center">
+                <Icon name="lock" className="w-8 h-8 text-brand-600 mx-auto mb-2" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Admin Authentication</h3>
+                <p className="text-xs text-slate-500 mt-1 mb-4">ระบุรหัสผ่านเพื่อเข้าสู่ Admin Portal (admin123)</p>
+
+                <form onSubmit={handleAdminLoginSubmit} className="space-y-4">
+                  <input
+                    type="password"
+                    autoFocus
+                    placeholder="admin123"
+                    value={adminPasscode}
+                    onChange={(e) => setAdminPasscode(e.target.value)}
+                    className="w-full p-2.5 text-sm text-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                  />
+                  {loginError && <p className="text-xs text-rose-500">{loginError}</p>}
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShowLoginModal(false)} className="w-1/2 py-2 rounded-xl text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      Cancel
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => { setAuthMode("register"); setLoginError(""); }}
-                      className={`w-1/2 py-2 text-xs font-bold rounded-xl transition ${
-                        authMode === "register"
-                          ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
-                          : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                      }`}
-                    >
-                      สมัครสมาชิก (Register)
+                    <button type="submit" className="w-1/2 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700">
+                      Login
                     </button>
                   </div>
-                )}
-
-                {/* STEP 1: INITIAL FORM (LOGIN / REGISTER / FORGOT) */}
-                {authStep === "form" && (
-                  <>
-                    <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
-                      <Icon name="shieldCheck" className="w-6 h-6 text-sky-600" />
-                    </div>
-
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                      {authMode === "login" && "Admin Authentication"}
-                      {authMode === "register" && "สมัครสมาชิก Admin"}
-                      {authMode === "forgot" && "ลืมรหัสผ่าน (Reset Password)"}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
-                      {authMode === "login" && "กรอกอีเมลและรหัสผ่านเพื่อเข้าสู่ระบบ"}
-                      {authMode === "register" && "กรอกข้อมูลเพื่อลงทะเบียนบัญชีผู้ดูแลระบบพร้อมยืนยันทางอีเมล"}
-                      {authMode === "forgot" && "กรอกอีเมลที่ลงทะเบียนไว้เพื่อรับรหัส OTP สำหรับตั้งรหัสใหม่"}
-                    </p>
-
-                    <form onSubmit={handleAuthFormSubmit} className="space-y-3.5 text-left">
-                      {/* Full Name field for Register mode */}
-                      {authMode === "register" && (
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            ชื่อ-นามสกุล (Full Name) <span className="text-rose-600">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="เช่น คุณสมชาย สบายใจ"
-                            value={authForm.fullName}
-                            onChange={(e) => {
-                              setAuthForm({ ...authForm, fullName: e.target.value });
-                              if (loginError) setLoginError("");
-                            }}
-                            className="w-full p-2.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
-                          />
-                        </div>
-                      )}
-
-                      {/* Email field */}
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          อีเมลผู้ดูแลระบบ (Admin Email) <span className="text-rose-600">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          autoFocus
-                          placeholder="เช่น sarunpat.ub@valuesourcing.co"
-                          value={authForm.email}
-                          onChange={(e) => {
-                            setAuthForm({ ...authForm, email: e.target.value });
-                            if (loginError) setLoginError("");
-                          }}
-                          className="w-full p-2.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
-                        />
-                      </div>
-
-                      {/* Password field (for Login & Register) */}
-                      {authMode !== "forgot" && (
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                              รหัสผ่านความปลอดภัย (Password) <span className="text-rose-600">*</span>
-                            </label>
-                            {authMode === "login" && (
-                              <button
-                                type="button"
-                                onClick={() => { setAuthMode("forgot"); setLoginError(""); }}
-                                className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold hover:underline"
-                              >
-                                ลืมรหัสผ่าน?
-                              </button>
-                            )}
-                          </div>
-                          <div className="relative">
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              required
-                              placeholder="กรอกรหัสผ่านของคุณ"
-                              value={authForm.password}
-                              onChange={(e) => {
-                                setAuthForm({ ...authForm, password: e.target.value });
-                                if (loginError) setLoginError("");
-                              }}
-                              className="w-full p-2.5 pr-10 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                              title={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                            >
-                              <Icon name={showPassword ? "eye" : "lock"} className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Confirm Password field (for Register) */}
-                      {authMode === "register" && (
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            ยืนยันรหัสผ่าน (Confirm Password) <span className="text-rose-600">*</span>
-                          </label>
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            required
-                            placeholder="กรอกรหัสผ่านอีกครั้ง"
-                            value={authForm.confirmPassword}
-                            onChange={(e) => {
-                              setAuthForm({ ...authForm, confirmPassword: e.target.value });
-                              if (loginError) setLoginError("");
-                            }}
-                            className="w-full p-2.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
-                          />
-                        </div>
-                      )}
-
-                      {loginError && (
-                        <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs font-semibold text-rose-600 dark:text-rose-300 text-center animate-shake">
-                          ⚠️ {loginError}
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 pt-2">
-                        <button 
-                          type="button" 
-                          onClick={() => {
-                            setShowLoginModal(false);
-                            setLoginError("");
-                            setAuthMode("login");
-                            setAuthStep("form");
-                          }} 
-                          className="w-1/3 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
-                        >
-                          ยกเลิก
-                        </button>
-                        <button 
-                          type="submit" 
-                          disabled={authMode !== "login" && isSendingOtp}
-                          className="w-2/3 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 shadow-md shadow-sky-500/20 transition active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50"
-                        >
-                          <Icon name={authMode === "login" ? "lock" : "send"} className="w-3.5 h-3.5 text-white" />
-                          <span>
-                            {authMode === "login"
-                              ? "เข้าสู่ระบบ (Login)"
-                              : isSendingOtp 
-                              ? "กำลังส่งรหัส..." 
-                              : authMode === "forgot" 
-                              ? "ส่งรหัส OTP กู้รหัสผ่าน" 
-                              : "รับรหัส OTP ทางอีเมล"}
-                          </span>
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      {authMode === "forgot" && (
-                        <div className="pt-2 text-center">
-                          <button
-                            type="button"
-                            onClick={() => { setAuthMode("login"); setLoginError(""); }}
-                            className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-semibold"
-                          >
-                            &larr; กลับไปยังหน้าเข้าสู่ระบบ
-                          </button>
-                        </div>
-                      )}
-                    </form>
-                  </>
-                )}
-
-                {/* STEP 2: EMAIL OTP VERIFICATION */}
-                {authStep === "otp" && (
-                  <>
-                    <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
-                      <span className="text-2xl">📧</span>
-                    </div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">ยืนยันรหัส OTP ทางอีเมล</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">
-                      ระบบได้ส่งรหัสผ่าน 6 หลักไปยังอีเมล
-                    </p>
-                    <div className="inline-block px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs mb-4">
-                      {authForm.email}
-                    </div>
-
-                    <form onSubmit={handleVerifyOtpSubmit} className="space-y-4 text-left">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1 text-center">
-                          กรอกรหัสยืนยัน 6 หลัก (One-Time Password) <span className="text-rose-600">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          autoFocus
-                          maxLength={6}
-                          placeholder="______"
-                          value={otpInput}
-                          onChange={(e) => {
-                            setOtpInput(e.target.value.replace(/\D/g, ''));
-                            if (loginError) setLoginError("");
-                          }}
-                          className="w-full text-center text-2xl font-bold tracking-[8px] py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border-2 border-sky-500/50 focus:outline-none focus:ring-4 focus:ring-sky-500/20 text-slate-900 dark:text-white"
-                        />
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 px-1">
-                          <span>
-                            อายุรหัส OTP: <strong className={otpCountdown < 60 ? "text-rose-600 font-bold" : "text-sky-600 font-bold"}>
-                              {String(Math.floor(otpCountdown / 60)).padStart(2, '0')}:{String(otpCountdown % 60).padStart(2, '0')}
-                            </strong>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleResendOtp}
-                            disabled={isSendingOtp || otpCountdown > 240}
-                            className="text-sky-600 dark:text-sky-400 font-semibold hover:underline disabled:opacity-50 disabled:no-underline"
-                          >
-                            {isSendingOtp ? "กำลังส่ง..." : "ส่งรหัสใหม่อีกครั้ง"}
-                          </button>
-                        </div>
-                      </div>
-
-                      {loginError && (
-                        <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs font-semibold text-rose-600 dark:text-rose-300 text-center animate-shake">
-                          ⚠️ {loginError}
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 pt-1">
-                        <button 
-                          type="button" 
-                          onClick={() => {
-                            setAuthStep("form");
-                            setLoginError("");
-                            setOtpInput("");
-                          }} 
-                          className="w-1/3 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
-                        >
-                          &larr; ย้อนกลับ
-                        </button>
-                        <button 
-                          type="submit" 
-                          className="w-2/3 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition active:scale-95 flex items-center justify-center gap-1.5"
-                        >
-                          <Icon name="shieldCheck" className="w-4 h-4 text-white" />
-                          <span>ยืนยันรหัส OTP</span>
-                        </button>
-                      </div>
-                    </form>
-                  </>
-                )}
-
-                {/* STEP 3: RESET NEW PASSWORD (AFTER OTP VERIFIED FOR FORGOT PASSWORD) */}
-                {authStep === "reset" && (
-                  <>
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
-                      <span className="text-2xl">🔑</span>
-                    </div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">ตั้งรหัสผ่านใหม่</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
-                      กรุณากำหนดรหัสผ่านใหม่สำหรับ {authForm.email}
-                    </p>
-
-                    <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5 text-left">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          รหัสผ่านใหม่ (New Password) <span className="text-rose-600">*</span>
-                        </label>
-                        <input
-                          type="password"
-                          required
-                          placeholder="กรอกรหัสผ่านใหม่ (อย่างน้อย 4 ตัวอักษร)"
-                          value={authForm.newPassword}
-                          onChange={(e) => {
-                            setAuthForm({ ...authForm, newPassword: e.target.value });
-                            if (loginError) setLoginError("");
-                          }}
-                          className="w-full p-2.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          ยืนยันรหัสผ่านใหม่ (Confirm New Password) <span className="text-rose-600">*</span>
-                        </label>
-                        <input
-                          type="password"
-                          required
-                          placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
-                          value={authForm.confirmNewPassword}
-                          onChange={(e) => {
-                            setAuthForm({ ...authForm, confirmNewPassword: e.target.value });
-                            if (loginError) setLoginError("");
-                          }}
-                          className="w-full p-2.5 text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white"
-                        />
-                      </div>
-
-                      {loginError && (
-                        <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs font-semibold text-rose-600 dark:text-rose-300 text-center animate-shake">
-                          ⚠️ {loginError}
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 pt-2">
-                        <button 
-                          type="button" 
-                          onClick={() => {
-                            setAuthStep("form");
-                            setAuthMode("login");
-                            setLoginError("");
-                          }} 
-                          className="w-1/3 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
-                        >
-                          ยกเลิก
-                        </button>
-                        <button 
-                          type="submit" 
-                          className="w-2/3 py-2.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-md shadow-amber-500/20 transition active:scale-95"
-                        >
-                          บันทึกรหัสผ่านใหม่
-                        </button>
-                      </div>
-                    </form>
-                  </>
-                )}
-
+                </form>
               </div>
             </div>
           )}
