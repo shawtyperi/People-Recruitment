@@ -80,13 +80,13 @@
     const CANDIDATES_SHEET_EDIT_URL = "https://docs.google.com/spreadsheets/d/1RwhCPu0sdV2lpzea2-2BbDoc86nfplooShYIzTkMgrw/edit?gid=546067727#gid=546067727";
     const DEFAULT_APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc/exec";
 
-    // Candidate status tags configuration with exact styling
+    // Candidate status tags configuration - Prioritized Pending & Compare first right after ALL
     const CANDIDATE_STATUS_CONFIG = [
-      { id: "not suitable", label: "1. not suitable", bg: "bg-rose-100 dark:bg-rose-950/80", text: "text-rose-800 dark:text-rose-200", border: "border-rose-300 dark:border-rose-800", isInactive: true, hideMapping: true },
-      { id: "cancel by candidate", label: "2. cancel by candidate", bg: "bg-rose-100 dark:bg-rose-950/80", text: "text-rose-800 dark:text-rose-200", border: "border-rose-300 dark:border-rose-800", isInactive: true, hideMapping: true },
-      { id: "Hiring / Offer", label: "3. Hiring / Offer", bg: "bg-[#DCFCE7] dark:bg-emerald-950/80", text: "text-[#166534] dark:text-emerald-200", border: "border-[#BBF7D0] dark:border-emerald-800", isInactive: false, hideMapping: true },
-      { id: "Pending", label: "4. Pending", bg: "bg-[#F3E8FF] dark:bg-purple-950/80", text: "text-[#6B21A8] dark:text-purple-200", border: "border-[#E9D5FF] dark:border-purple-800", isInactive: false, hideMapping: false },
-      { id: "Compare", label: "5. Compare", bg: "bg-[#E0F2FE] dark:bg-sky-950/80", text: "text-[#0369A1] dark:text-sky-200", border: "border-[#BAE6FD] dark:border-sky-800", isInactive: false, hideMapping: false }
+      { id: "Pending", label: "Pending", bg: "bg-[#F3E8FF] dark:bg-purple-950/80", text: "text-[#6B21A8] dark:text-purple-200", border: "border-[#E9D5FF] dark:border-purple-800", isInactive: false, hideMapping: false },
+      { id: "Compare", label: "Compare", bg: "bg-[#E0F2FE] dark:bg-sky-950/80", text: "text-[#0369A1] dark:text-sky-200", border: "border-[#BAE6FD] dark:border-sky-800", isInactive: false, hideMapping: false },
+      { id: "Hiring / Offer", label: "Hiring / Offer", bg: "bg-[#DCFCE7] dark:bg-emerald-950/80", text: "text-[#166534] dark:text-emerald-200", border: "border-[#BBF7D0] dark:border-emerald-800", isInactive: false, hideMapping: true },
+      { id: "not suitable", label: "not suitable", bg: "bg-rose-100 dark:bg-rose-950/80", text: "text-rose-800 dark:text-rose-200", border: "border-rose-300 dark:border-rose-800", isInactive: true, hideMapping: true },
+      { id: "cancel by candidate", label: "cancel by candidate", bg: "bg-rose-100 dark:bg-rose-950/80", text: "text-rose-800 dark:text-rose-200", border: "border-rose-300 dark:border-rose-800", isInactive: true, hideMapping: true }
     ];
 
     const REQUISITION_STATUSES = [
@@ -104,6 +104,42 @@
       { id: "arrived_reported", label: "✅ มาเริ่มงานเรียบร้อยแล้ว", badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-100 border-emerald-400 font-extrabold ring-2 ring-emerald-500/20" },
       { id: "declined_noshow", label: "❌ สละสิทธิ์ / ไม่มาเริ่มงาน", badge: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200 border-rose-300 font-extrabold ring-2 ring-rose-500/30" }
     ];
+
+    // คำนวณ Priority อัตโนมัติตามระยะเวลา SLA / วันที่เป้าหมาย หรือการตั้งค่า
+    const getPositionPriorityInfo = (slot) => {
+      const explicit = slot.priority;
+      const sla = getSLAInfo(slot.requestDate, slot.stage, slot.offerSentDate);
+
+      // ถ้าเกิน SLA หรือเหลือน้อยกว่า 5 วันทำการ ให้ยกระดับเป็น URGENT อัตโนมัติ
+      if (explicit === "URGENT" || sla.isOverdue || (!sla.isCompleted && sla.workingDaysRemaining <= 5)) {
+        return {
+          id: "URGENT",
+          label: "ด่วนมาก",
+          badge: "bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/80 dark:text-rose-300 dark:border-rose-800",
+          dotBg: "bg-rose-500",
+          ping: true,
+          icon: "🔥"
+        };
+      }
+      if (explicit === "HIGH" || (!sla.isCompleted && sla.workingDaysRemaining <= 12)) {
+        return {
+          id: "HIGH",
+          label: "ด่วน",
+          badge: "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800",
+          dotBg: "bg-amber-500",
+          ping: true,
+          icon: "⚡"
+        };
+      }
+      return {
+        id: "NORMAL",
+        label: "ปกติ",
+        badge: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+        dotBg: "bg-emerald-500",
+        ping: false,
+        icon: "🟢"
+      };
+    };
 
     // Pipeline stages (Updated to support Approval Workflow & Automatic Transition)
     const STAGES = [
@@ -697,6 +733,103 @@
         localStorage.setItem("hr_candidates_v62", JSON.stringify(candidatePool));
       }, [candidatePool]);
 
+      // 🔄 Real-time Background Polling & Manual Sync Function
+      const syncWorkflowStatus = async (silent = true) => {
+        if (!googleScriptUrl) {
+          if (!silent) triggerToast("⚠️ กรุณาระบุ Google Apps Script Web App URL ก่อนซิงค์");
+          return;
+        }
+
+        try {
+          const res = await fetch(`${googleScriptUrl}?action=getWorkflowStatuses&_t=${Date.now()}`, {
+            cache: "no-store",
+            headers: { "Pragma": "no-cache", "Cache-Control": "no-cache" }
+          });
+          const resJson = await res.json();
+
+          if (resJson && resJson.status === "success" && resJson.data) {
+            const serverStatuses = resJson.data;
+
+            setRequests(prevRequests => {
+              return prevRequests.map(r => {
+                const mainId = r.id;
+                const cleanId = String(mainId).replace(/-\d+$/, "");
+                const remoteItem = serverStatuses[mainId] || serverStatuses[cleanId];
+
+                if (remoteItem && remoteItem.status) {
+                  const newStatus = remoteItem.status;
+                  const isItConfirmed = newStatus === "READY_FOR_RECRUITMENT" || newStatus === "Recruiting" || newStatus === "Closed";
+                  
+                  const updatedSlots = (r.slots || []).map(s => ({
+                    ...s,
+                    workflowStatus: newStatus,
+                    isItNotified: isItConfirmed ? true : s.isItNotified,
+                    slotStatus: newStatus === "READY_FOR_RECRUITMENT" ? "Recruiting" : s.slotStatus,
+                    stage: newStatus === "READY_FOR_RECRUITMENT" && s.stage === "received" ? "manpower" : s.stage
+                  }));
+
+                  return {
+                    ...r,
+                    requestStatus: newStatus === "READY_FOR_RECRUITMENT" ? "Recruiting" : newStatus,
+                    workflowStatus: newStatus,
+                    isItNotified: isItConfirmed ? true : r.isItNotified,
+                    stage: newStatus === "READY_FOR_RECRUITMENT" && r.stage === "received" ? "manpower" : r.stage,
+                    slots: updatedSlots
+                  };
+                }
+                return r;
+              });
+            });
+
+            setSelectedDetailSlot(prevSlot => {
+              if (!prevSlot) return null;
+              const targetId = prevSlot.parentRequestId || prevSlot.id;
+              const cleanId = String(targetId).replace(/-\d+$/, "");
+              const remoteItem = serverStatuses[targetId] || serverStatuses[cleanId];
+
+              if (remoteItem && remoteItem.status) {
+                const isItConfirmed = remoteItem.status === "READY_FOR_RECRUITMENT" || remoteItem.status === "Recruiting";
+                return {
+                  ...prevSlot,
+                  workflowStatus: remoteItem.status,
+                  isItNotified: isItConfirmed ? true : prevSlot.isItNotified
+                };
+              }
+              return prevSlot;
+            });
+
+            if (!silent) {
+              triggerToast("✅ ซิงค์สถานะจาก Google Sheet ล่าสุดเรียบร้อยแล้ว!");
+            }
+          }
+        } catch (err) {
+          if (!silent) {
+            triggerToast("⚠️ ไม่สามารถซิงค์สถานะได้ (ตรวจสอบ Web App URL)");
+            console.error("Sync Error:", err);
+          }
+        }
+      };
+
+      // Auto-Polling every 6 seconds and sync on window focus
+      useEffect(() => {
+        syncWorkflowStatus(true);
+
+        const pollingInterval = setInterval(() => {
+          syncWorkflowStatus(true);
+        }, 6000);
+
+        const handleWindowFocus = () => {
+          syncWorkflowStatus(true);
+        };
+
+        window.addEventListener("focus", handleWindowFocus);
+
+        return () => {
+          clearInterval(pollingInterval);
+          window.removeEventListener("focus", handleWindowFocus);
+        };
+      }, [googleScriptUrl]);
+
       const [currentView, setCurrentView] = useState("public");
       const [adminSubTab, setAdminSubTab] = useState("kanban");
       const [manpowerTableTab, setManpowerTableTab] = useState("in_process");
@@ -1162,7 +1295,11 @@
               if (!fullName || fullName.includes("ชื่อ")) continue;
 
               const rawStatus = (statusIdx !== -1 && r[statusIdx]) ? r[statusIdx].trim() : "Pending";
-              const matchedStatus = CANDIDATE_STATUS_CONFIG.find(c => c.id.toLowerCase() === rawStatus.toLowerCase())?.id || "Pending";
+              const matchedStatus = CANDIDATE_STATUS_CONFIG.find(c => 
+                c.id.toLowerCase() === rawStatus.toLowerCase() || 
+                c.label.toLowerCase() === rawStatus.toLowerCase() ||
+                rawStatus.toLowerCase().includes(c.id.toLowerCase())
+              )?.id || "Pending";
               const existingCand = candidatePool.find(c => c.fullName === fullName);
 
               loaded.push({
@@ -1287,6 +1424,7 @@
               candidateNickname: slot.candidateNickname || "",
               resumeUrl: slot.resumeUrl || "",
               stage: effectiveStage,
+              priority: slot.priority || r.priority || "NORMAL",
               offerSentDate: slot.offerSentDate || r.offerSentDate || "",
               interviewSchedule: interviewInfo,
               interviewScore: currentEvals.length > 0 ? evalStats.combinedAvg : (slot.interviewScore || 0),
@@ -1297,8 +1435,11 @@
               replacedEmployeeName: r.replacedEmployeeName || "",
               hireDate: matchedCand?.hireDate || slot.hireDate || "",
               onboardingArrivalStatus: arrivalStatus,
+              itEquipmentConfirmed: Boolean(slot.itEquipmentConfirmed),
+              hasAttendedFirstDayTraining: Boolean(slot.hasAttendedFirstDayTraining || arrivalStatus === "arrived_reported"),
               rejectionReason: slot.rejectionReason || r.rejectionReason || "",
-              isArchivedFromKanban: !!slot.isArchivedFromKanban
+              isArchivedFromKanban: !!slot.isArchivedFromKanban,
+              isItNotified: Boolean(slot.isItNotified || r.isItNotified)
             };
           });
         });
@@ -1550,6 +1691,72 @@
         triggerToast(`แมปคุณ ${candidate.fullName} เข้าสู่ Slot #${targetSlot.slotId} สำเร็จ`);
       };
 
+      const handleSendITNotification = async (slotItem) => {
+        if (!slotItem) return;
+        if (!googleScriptUrl) {
+          triggerToast("⚠️ กรุณาตั้งค่า Google Apps Script Web App URL ก่อนส่งอีเมล");
+          return;
+        }
+
+        // ค้นหาข้อมูลผู้สมัครจาก candidatePool เพื่อดึงชื่อและสาขา (branch)
+        const cand = candidatePool.find(c => 
+          c.assignedSlotId === slotItem.slotId || 
+          (slotItem.candidateName && c.fullName === slotItem.candidateName)
+        );
+
+        const candidateName = slotItem.candidateName || cand?.fullName || "พนักงานใหม่";
+        const hireDate = slotItem.hireDate || cand?.hireDate || "ยังไม่ระบุวันเริ่มงาน";
+        const branch = cand?.branch || slotItem.branch || "Central Park Offices";
+
+        try {
+          triggerToast(`⏳ กำลังส่งอีเมลแจ้งทีม IT (ADI) สำหรับ K. ${candidateName}...`);
+
+          await fetch(googleScriptUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              action: "sendITNotificationEmail",
+              reqId: slotItem.parentRequestId || slotItem.id,
+              slotId: slotItem.slotId,
+              jobTitle: slotItem.jobTitle,
+              department: slotItem.department,
+              candidateName: candidateName,
+              branch: branch,
+              workLocation: branch,
+              hireDate: hireDate,
+              itLaptop: slotItem.itLaptop || "ต้องการ",
+              itEmail: slotItem.itEmail || "ต้องการ",
+              itSimCard: slotItem.itSimCard || "ไม่ต้องการ",
+              itNetsuite: slotItem.itNetsuite || "ไม่ต้องการ"
+            })
+          });
+
+          // อัปเดต state บันทึกสถานะว่าส่งแจ้ง IT ให้ Slot นี้แล้ว
+          setRequests(prev => prev.map(r => {
+            if (!r.slots) return r;
+            const targetId = slotItem.parentRequestId || slotItem.id;
+            if (r.id === targetId || r.slots.some(s => s.slotId === slotItem.slotId)) {
+              const updatedSlots = r.slots.map(s => {
+                if (s.slotId === slotItem.slotId) {
+                  return { ...s, isItNotified: true };
+                }
+                return s;
+              });
+              return { ...r, slots: updatedSlots };
+            }
+            return r;
+          }));
+
+          // อัปเดต Modal Detail ทันทีหากกำลังเปิดดูอยู่
+          setSelectedDetailSlot(prev => (prev && prev.slotId === slotItem.slotId ? { ...prev, isItNotified: true } : prev));
+
+          triggerToast(`📧 ส่งข้อมูลแจ้งทีม IT (people@valuesourcing.co) สำเร็จแล้ว! (K. ${candidateName})`);
+        } catch (err) {
+          triggerToast(`❌ ส่งอีเมลไม่สำเร็จ: ${err.message || err}`);
+        }
+      };
+
       const handleUnassignCandidate = (targetSlotId, candidateFullName = "") => {
         setCandidatePool(prev => prev.map(c => {
           if (c.assignedSlotId === targetSlotId || (candidateFullName && c.fullName === candidateFullName)) {
@@ -1682,8 +1889,93 @@
         triggerToast(`บันทึกผลการประเมินของคุณ ${newSubmission.evaluatorName} สำเร็จ!`);
       };
 
-      // Individual Slot Status Update
+      // ฟังก์ชันยืนยันความพร้อมอุปกรณ์ IT ในสเตจ Onboarded
+      const handleToggleITEquipmentConfirmed = (slotId) => {
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          const slots = r.slots.map(s => {
+            if (s.slotId === slotId) {
+              const nextState = !s.itEquipmentConfirmed;
+              return { ...s, itEquipmentConfirmed: nextState };
+            }
+            return s;
+          });
+          return { ...r, slots };
+        }));
+
+        setSelectedDetailSlot(prev => {
+          if (!prev || prev.slotId !== slotId) return prev;
+          return { ...prev, itEquipmentConfirmed: !prev.itEquipmentConfirmed };
+        });
+
+        triggerToast("💻 อัปเดตสถานะความพร้อมอุปกรณ์ IT เรียบร้อยแล้ว");
+      };
+
+      // ฟังก์ชันยืนยันพนักงานมาเริ่มงาน / เข้าอบรมวันแรก พร้อมปรับสถานะเป็น Closed (ปิดการสรรหา) ทันทีอัตโนมัติ
+      const handleConfirmFirstDayTraining = (slotId) => {
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          let hasSlot = false;
+          const slots = r.slots.map(s => {
+            if (s.slotId === slotId) {
+              hasSlot = true;
+              return {
+                ...s,
+                hasAttendedFirstDayTraining: true,
+                onboardingArrivalStatus: "arrived_reported",
+                slotStatus: "Closed" // ปรับสถานะ Slot เป็น Closed ทันที
+              };
+            }
+            return s;
+          });
+          if (!hasSlot) return r;
+
+          // หากทุก Slot ในคำขอนี้ปิดจบครบแล้ว ให้ปรับภาพรวมคำขอเป็น Closed ด้วย
+          const allClosed = slots.every(s => s.slotStatus === "Closed" || s.stage === "onboarded" || s.stage === "cancelled");
+          return {
+            ...r,
+            requestStatus: allClosed ? "Closed" : r.requestStatus,
+            slots,
+            lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
+          };
+        }));
+
+        setSelectedDetailSlot(prev => {
+          if (!prev || prev.slotId !== slotId) return prev;
+          return {
+            ...prev,
+            hasAttendedFirstDayTraining: true,
+            onboardingArrivalStatus: "arrived_reported",
+            slotStatus: "Closed"
+          };
+        });
+
+        triggerToast("🎉 ยืนยันพนักงานมาเริ่มงานเรียบร้อยแล้ว & ย้ายสถานะเป็น Closed (ปิดการสรรหาสำเร็จ)");
+      };
+
+      // อัปเดต Priority ของ Slot แบบระบุเองได้
+      const handleUpdateSlotPriority = (slotId, newPriority) => {
+        setRequests(prev => prev.map(r => {
+          if (!r.slots) return r;
+          const slots = r.slots.map(s => s.slotId === slotId ? { ...s, priority: newPriority } : s);
+          return { ...r, slots };
+        }));
+        setSelectedDetailSlot(prev => prev?.slotId === slotId ? { ...prev, priority: newPriority } : prev);
+        triggerToast(`ปรับระดับความสำคัญเป็น: ${newPriority}`);
+      };
+
+      // Individual Slot Status Update with Strict Training Attendance Gatekeeper
       const handleUpdateSlotStatus = (slotId, newStatus) => {
+        const slotItem = allPositionSlots.find(s => s.slotId === slotId);
+
+        // 🔒 เงื่อนไขสำคัญ: ถ้าจะปรับเป็น Closed แต่ผู้สมัครยังไม่ได้ติ๊กยืนยันว่ามาเริ่มงาน/อบรมวันแรก ให้บล็อกไว้ทันที
+        if (newStatus === "Closed" && slotItem?.stage === "onboarded") {
+          if (!slotItem.hasAttendedFirstDayTraining && slotItem.onboardingArrivalStatus !== "arrived_reported") {
+            triggerToast("⚠️ ไม่สามารถปิดจบได้: ต้องติ๊กยืนยันว่าผู้สมัครมาเริ่มงาน/เข้าอบรมวันแรกเรียบร้อยก่อน");
+            return;
+          }
+        }
+
         setRequests(prev => prev.map(r => {
           if (!r.slots) return r;
           let hasSlot = false;
@@ -2353,15 +2645,32 @@
                           <div className="space-y-3 flex-1 overflow-y-auto max-h-[500px]">
                             {stageItems.map(item => {
                               const sla = getSLAInfo(item.requestDate, item.stage, item.offerSentDate);
+                              const priorityInfo = getPositionPriorityInfo(item);
                               const hasEvaluation = item.evaluationsCount > 0;
                               const isPassingScore = item.interviewScorePercent >= 70;
 
                               return (
                                 <div key={item.slotId} className="p-3.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-xs hover:border-brand-500 transition group">
-                                  <div className="flex items-center justify-between text-[10px] mb-1.5">
+                                  {/* Priority Header with Blinking Dot */}
+                                  <div className="flex items-center justify-between text-[10px] mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-700/60">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="relative flex h-2.5 w-2.5">
+                                        {priorityInfo.ping && (
+                                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${priorityInfo.dotBg} opacity-75`}></span>
+                                        )}
+                                        <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${priorityInfo.dotBg}`}></span>
+                                      </span>
+                                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border ${priorityInfo.badge}`}>
+                                        {priorityInfo.icon} {priorityInfo.label}
+                                      </span>
+                                    </div>
                                     <span className="text-brand-600 dark:text-brand-400 font-bold bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded-md">
                                       Slot #{item.slotIndex}/{item.totalSlots}
                                     </span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between text-[10px] mb-1">
+                                    <span className="font-mono text-slate-400">{item.slotId}</span>
                                     <span className="text-slate-400 text-[10px]">{item.requestDate}</span>
                                   </div>
                                   <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition line-clamp-2">
@@ -2965,6 +3274,7 @@
                               <div className="space-y-3 flex-1 overflow-y-auto max-h-[540px]">
                                 {stageItems.map(item => {
                                   const isBeingDragged = draggedSlotId === item.slotId;
+                                  const priorityInfo = getPositionPriorityInfo(item);
 
                                   return (
                                     <div
@@ -2977,9 +3287,27 @@
                                           ? 'opacity-40 scale-95 border-brand-400 dark:border-brand-600 ring-2 ring-brand-500/30 shadow-md'
                                           : item.stage === 'cancelled'
                                           ? 'border-rose-300 dark:border-rose-900 bg-rose-50/30 dark:bg-rose-950/20'
+                                          : priorityInfo.id === 'URGENT'
+                                          ? 'border-rose-300 dark:border-rose-900/80 ring-1 ring-rose-400/30 hover:border-rose-500'
                                           : 'border-slate-200/80 dark:border-slate-700 hover:border-brand-400 hover:shadow-md'
                                       }`}
                                     >
+                                      {/* Priority Blinking Bar */}
+                                      <div className="flex items-center justify-between text-[10px] mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-700/60">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="relative flex h-2.5 w-2.5">
+                                            {priorityInfo.ping && (
+                                              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${priorityInfo.dotBg} opacity-75`}></span>
+                                            )}
+                                            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${priorityInfo.dotBg}`}></span>
+                                          </span>
+                                          <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded border ${priorityInfo.badge}`}>
+                                            {priorityInfo.icon} {priorityInfo.label}
+                                          </span>
+                                        </div>
+                                        <span className="text-slate-400">{item.requestDate}</span>
+                                      </div>
+
                                       <div className="flex items-center justify-between text-[10px] mb-1.5">
                                         <div className="flex items-center gap-1.5">
                                           <span className="text-slate-400 font-mono text-xs cursor-grab" title="ลากเพื่อย้ายขั้นตอน">⋮⋮</span>
@@ -2987,7 +3315,7 @@
                                             Slot #{item.slotIndex}/{item.totalSlots}
                                           </span>
                                         </div>
-                                        <span className="text-slate-400">{item.requestDate}</span>
+                                        <span className="text-[10px] text-slate-400 font-mono">{item.slotId}</span>
                                       </div>
                                       <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-2">
                                         {item.jobTitle}
@@ -3614,7 +3942,7 @@
                               </tr>
                             ) : (
                               filteredCandidates.map((cand, idx) => {
-                                const statusCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === cand.status) || CANDIDATE_STATUS_CONFIG[3];
+                                const statusCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === cand.status) || CANDIDATE_STATUS_CONFIG[0];
                                 const shouldHideMapping = statusCfg.hideMapping;
 
                                 return (
@@ -4118,7 +4446,7 @@
                           <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">สถานะปัจจุบัน (Status):</span>
                           <div className="mt-1">
                             {(() => {
-                              const stCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === selectedCandidateDetail.status) || CANDIDATE_STATUS_CONFIG[3];
+                              const stCfg = CANDIDATE_STATUS_CONFIG.find(c => c.id === selectedCandidateDetail.status) || CANDIDATE_STATUS_CONFIG[0];
                               return (
                                 <span className={`inline-block text-xs font-bold px-3 py-1 rounded-xl border shadow-2xs ${stCfg.bg} ${stCfg.text} ${stCfg.border}`}>
                                   {stCfg.label}
@@ -6260,103 +6588,170 @@
                   {/* Approval Workflow Progress Tracker */}
                   {(() => {
                     const wf = selectedDetailSlot.workflowStatus || selectedDetailSlot.requestStatus || "PENDING_ADMIN";
+                    const currentReq = requests.find(r => r.id === (selectedDetailSlot.parentRequestId || selectedDetailSlot.id));
+                    const liveWf = currentReq?.workflowStatus || wf;
+                    const priorityInfo = getPositionPriorityInfo(selectedDetailSlot);
+
+                    // สเต็ปที่ 1: ยื่นคำขอเรียบร้อยแล้วเสมอ
                     const isStep1Done = true;
-                    const isStep2Done = wf === "PENDING_APPROVER" || wf === "PENDING_IT" || wf === "READY_FOR_RECRUITMENT" || wf === "Recruiting" || selectedDetailSlot.stage !== "received";
-                    const isStep3Done = wf === "PENDING_IT" || wf === "READY_FOR_RECRUITMENT" || wf === "Recruiting" || selectedDetailSlot.stage !== "received";
-                    const isStep4Done = wf === "READY_FOR_RECRUITMENT" || wf === "Recruiting" || (selectedDetailSlot.stage !== "received" && selectedDetailSlot.stage !== "manpower");
+
+                    // สเต็ปที่ 2: แอดมินอนุมัติแล้ว (ผ่าน PENDING_ADMIN มาแล้ว หรืออยู่ในสเตจถัดไป)
+                    const isStep2Done = liveWf !== "PENDING_ADMIN" && liveWf !== "REJECTED_BY_ADMIN";
+
+                    // สเต็ปที่ 3: ดำเนินการสัมภาษณ์ & ยื่น Offer
+                    const isStep3Done = selectedDetailSlot.stage === "offer" || selectedDetailSlot.stage === "onboarded" || Boolean(selectedDetailSlot.isItNotified);
+
+                    // สเต็ปที่ 4: IT รับทราบและเตรียมอุปกรณ์ (เมื่อแอดมินส่งเมลแจ้ง IT และ IT กดยืนยันแล้ว)
+                    const isStep4Done = Boolean(selectedDetailSlot.isItNotified) && (liveWf === "READY_FOR_RECRUITMENT" || liveWf === "Recruiting" || selectedDetailSlot.stage === "onboarded");
+
+                    // สเต็ปที่ 5: เริ่มงาน & ปิดการสรรหา (ต้องมาเริ่มงานจริงจึงจะติ๊กถูก)
+                    const isStep5Done = selectedDetailSlot.stage === "onboarded" && (selectedDetailSlot.hasAttendedFirstDayTraining || selectedDetailSlot.onboardingArrivalStatus === "arrived_reported");
 
                     return (
                       <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-sky-50/40 dark:from-slate-800/80 dark:to-sky-950/30 border border-slate-200 dark:border-slate-700 space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                            <Icon name="clipboardCheck" className="w-4 h-4 text-brand-600" />
-                            <span>Approval Workflow Progress Tracker</span>
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                              <Icon name="clipboardCheck" className="w-4 h-4 text-brand-600" />
+                              <span>APPROVAL &amp; RECRUITMENT WORKFLOW TRACKER</span>
+                            </span>
+
+                            {/* Priority Tag in Modal */}
+                            <span className="relative flex h-2.5 w-2.5 ml-1">
+                              {priorityInfo.ping && (
+                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${priorityInfo.dotBg} opacity-75`}></span>
+                              )}
+                              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${priorityInfo.dotBg}`}></span>
+                            </span>
+                            <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded border ${priorityInfo.badge}`}>
+                              {priorityInfo.label}
+                            </span>
+                          </div>
+
+                          {/* Dynamic Badge สะท้อนสถานะจริงตามสเตจ */}
                           <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
-                            wf === "PENDING_ADMIN" ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300" :
-                            wf === "PENDING_APPROVER" ? "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-950 dark:text-orange-300" :
-                            wf === "PENDING_IT" ? "bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950 dark:text-sky-300" :
-                            "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300"
+                            liveWf === "PENDING_ADMIN" ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950 dark:text-amber-300" :
+                            selectedDetailSlot.stage === "interview" ? "bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-950 dark:text-blue-300" :
+                            selectedDetailSlot.stage === "offer" && !selectedDetailSlot.isItNotified ? "bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950 dark:text-purple-300 font-bold animate-pulse" :
+                            selectedDetailSlot.stage === "offer" && selectedDetailSlot.isItNotified && !isStep4Done ? "bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950 dark:text-sky-300 font-bold animate-pulse" :
+                            isStep4Done && selectedDetailSlot.stage !== "onboarded" ? "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 font-bold" :
+                            selectedDetailSlot.stage === "onboarded" && (selectedDetailSlot.hasAttendedFirstDayTraining || selectedDetailSlot.onboardingArrivalStatus === "arrived_reported") ? "bg-slate-200 text-slate-900 border-slate-300 font-bold" :
+                            selectedDetailSlot.stage === "onboarded" ? "bg-emerald-100 text-emerald-900 border-emerald-400 font-bold" :
+                            "bg-slate-100 text-slate-700 border-slate-200"
                           }`}>
-                            {wf === "PENDING_ADMIN" ? "⏳ รอ Admin ตรวจสอบ" :
-                             wf === "PENDING_APPROVER" ? "📧 รอผู้อนุมัติยืนยัน" :
-                             wf === "PENDING_IT" ? "💻 รอ IT จัดเตรียมอุปกรณ์" :
-                             "✅ พร้อมสรรหา (READY)"}
+                            {liveWf === "PENDING_ADMIN" ? "⏳ 1. รอ Admin ตรวจสอบ" :
+                             selectedDetailSlot.stage === "manpower" ? "✅ 2. พร้อมสรรหา (รอคัดเลือก)" :
+                             selectedDetailSlot.stage === "interview" ? "👥 3. อยู่ระหว่างสัมภาษณ์" :
+                             selectedDetailSlot.stage === "offer" && !selectedDetailSlot.isItNotified ? "🎯 4. Confirm สรรหา (รอแจ้ง IT)" :
+                             selectedDetailSlot.stage === "offer" && selectedDetailSlot.isItNotified && !isStep4Done ? "💻 5. รอ IT กดรับทราบอุปกรณ์" :
+                             isStep4Done && selectedDetailSlot.stage !== "onboarded" ? "💻 6. IT รับทราบแล้ว (พร้อมเริ่มงาน)" :
+                             selectedDetailSlot.stage === "onboarded" && (selectedDetailSlot.hasAttendedFirstDayTraining || selectedDetailSlot.onboardingArrivalStatus === "arrived_reported") ? "🎉 7. เริ่มงานแล้ว / ปิดการสรรหา" :
+                             selectedDetailSlot.stage === "onboarded" ? "🎉 6. บรรจุงานแล้ว (รอวันอบรมวันแรก)" :
+                             "Recruiting"}
                           </span>
                         </div>
 
-                        {/* Visual Progress Steps */}
-                        <div className="grid grid-cols-4 gap-2 pt-1 text-center">
+                        {/* Stepper 5 ขั้นตอนสอดคล้องกับ Process จริง */}
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 text-center">
+                          {/* Step 1: ยื่นคำขอ */}
                           <div className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800">
                             <div className="w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center mx-auto mb-1">✓</div>
-                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">1. ยื่นคำขอ</span>
+                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">1. ขอกำลังคน</span>
                             <span className="text-[9px] text-emerald-600 font-semibold block">{selectedDetailSlot.requestDate}</span>
                           </div>
 
+                          {/* Step 2: Admin อนุมัติ */}
                           <div className={`p-2 rounded-xl border ${
                             isStep2Done ? "bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800" :
-                            wf === "PENDING_ADMIN" ? "bg-amber-50 dark:bg-amber-950/60 border-amber-300 ring-2 ring-amber-500/20" :
+                            liveWf === "PENDING_ADMIN" ? "bg-amber-50 dark:bg-amber-950/60 border-amber-300 ring-2 ring-amber-500/20" :
                             "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60"
                           }`}>
                             <div className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center mx-auto mb-1 ${
                               isStep2Done ? "bg-emerald-500 text-white" :
-                              wf === "PENDING_ADMIN" ? "bg-amber-500 text-white animate-pulse" : "bg-slate-300 text-slate-600"
+                              liveWf === "PENDING_ADMIN" ? "bg-amber-500 text-white animate-pulse" : "bg-slate-300 text-slate-600"
                             }`}>{isStep2Done ? "✓" : "2"}</div>
-                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">2. Admin ตรวจ</span>
+                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">2. Admin อนุมัติ</span>
                             <span className={`text-[9px] font-semibold block ${isStep2Done ? "text-emerald-600" : "text-amber-600"}`}>
-                              {isStep2Done ? "อนุมัติแล้ว" : "กำลังรอตรวจ"}
+                              {isStep2Done ? "อนุมัติแล้ว" : "รอแอดมินตรวจ"}
                             </span>
                           </div>
 
+                          {/* Step 3: สัมภาษณ์ & Offer */}
                           <div className={`p-2 rounded-xl border ${
                             isStep3Done ? "bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800" :
-                            wf === "PENDING_APPROVER" ? "bg-orange-50 dark:bg-orange-950/60 border-orange-300 ring-2 ring-orange-500/20" :
+                            selectedDetailSlot.stage === "interview" ? "bg-blue-50 dark:bg-blue-950/60 border-blue-300 ring-2 ring-blue-500/20" :
+                            selectedDetailSlot.stage === "manpower" ? "bg-slate-50 border-slate-200 dark:border-slate-700" :
                             "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60"
                           }`}>
                             <div className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center mx-auto mb-1 ${
                               isStep3Done ? "bg-emerald-500 text-white" :
-                              wf === "PENDING_APPROVER" ? "bg-orange-500 text-white animate-pulse" : "bg-slate-300 text-slate-600"
+                              selectedDetailSlot.stage === "interview" ? "bg-blue-500 text-white animate-pulse" : "bg-slate-300 text-slate-600"
                             }`}>{isStep3Done ? "✓" : "3"}</div>
-                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">3. ผู้อนุมัติ</span>
-                            <span className={`text-[9px] font-semibold block ${isStep3Done ? "text-emerald-600" : wf === "PENDING_APPROVER" ? "text-orange-600" : "text-slate-400"}`}>
-                              {isStep3Done ? "ยืนยันแล้ว" : wf === "PENDING_APPROVER" ? "รออีเมลยืนยัน" : "รอคิว"}
+                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">3. สัมภาษณ์ &amp; Offer</span>
+                            <span className={`text-[9px] font-semibold block ${
+                              isStep3Done ? "text-emerald-600 font-bold" :
+                              selectedDetailSlot.stage === "interview" ? "text-blue-600 font-bold" : "text-slate-400"
+                            }`}>
+                              {isStep3Done ? "Offer Sent แล้ว" : selectedDetailSlot.stage === "interview" ? "กำลังสัมภาษณ์" : "รอคัดเลือก"}
                             </span>
                           </div>
 
+                          {/* Step 4: IT ยืนยันอุปกรณ์ */}
                           <div className={`p-2 rounded-xl border ${
                             isStep4Done ? "bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800" :
-                            wf === "PENDING_IT" ? "bg-sky-50 dark:bg-sky-950/60 border-sky-300 ring-2 ring-sky-500/20" :
+                            selectedDetailSlot.isItNotified ? "bg-sky-50 dark:bg-sky-950/60 border-sky-300 ring-2 ring-sky-500/20" :
+                            selectedDetailSlot.stage === "offer" ? "bg-purple-50 dark:bg-purple-950/60 border-purple-300" :
                             "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60"
                           }`}>
                             <div className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center mx-auto mb-1 ${
                               isStep4Done ? "bg-emerald-500 text-white" :
-                              wf === "PENDING_IT" ? "bg-sky-500 text-white animate-pulse" : "bg-slate-300 text-slate-600"
+                              selectedDetailSlot.isItNotified ? "bg-sky-500 text-white animate-pulse" :
+                              selectedDetailSlot.stage === "offer" ? "bg-purple-500 text-white" : "bg-slate-300 text-slate-600"
                             }`}>{isStep4Done ? "✓" : "4"}</div>
-                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">4. IT ยืนยัน</span>
-                            <span className={`text-[9px] font-semibold block ${isStep4Done ? "text-emerald-600" : wf === "PENDING_IT" ? "text-sky-600" : "text-slate-400"}`}>
-                              {isStep4Done ? "อุปกรณ์พร้อม" : wf === "PENDING_IT" ? "รอ IT ยืนยัน" : "รอคิว"}
+                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">4. IT รับทราบ</span>
+                            <span className={`text-[9px] font-semibold block ${
+                              isStep4Done ? "text-emerald-600 font-bold" :
+                              selectedDetailSlot.isItNotified ? "text-sky-600 font-bold" :
+                              selectedDetailSlot.stage === "offer" ? "text-purple-600" : "text-slate-400"
+                            }`}>
+                              {isStep4Done ? "IT รับทราบแล้ว" : selectedDetailSlot.isItNotified ? "รอ IT กดรับทราบ" : "รอแจ้ง IT"}
+                            </span>
+                          </div>
+
+                          {/* Step 5: เริ่มงาน & ปิดสรรหา */}
+                          <div className={`p-2 rounded-xl border col-span-2 sm:col-span-1 ${
+                            isStep5Done ? "bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800" :
+                            selectedDetailSlot.stage === "onboarded" ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 ring-2 ring-emerald-500/20" :
+                            "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60"
+                          }`}>
+                            <div className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center mx-auto mb-1 ${
+                              isStep5Done ? "bg-emerald-500 text-white" :
+                              selectedDetailSlot.stage === "onboarded" ? "bg-emerald-600 text-white animate-pulse" : "bg-slate-300 text-slate-600"
+                            }`}>{isStep5Done ? "✓" : "5"}</div>
+                            <span className="font-bold text-[10px] text-slate-900 dark:text-white block">5. เริ่มงาน &amp; ปิด</span>
+                            <span className={`text-[9px] font-semibold block ${
+                              isStep5Done ? "text-emerald-600 font-bold" :
+                              selectedDetailSlot.stage === "onboarded" ? "text-emerald-700 font-bold" : "text-slate-400"
+                            }`}>
+                              {isStep5Done ? "ปิดการสรรหาแล้ว" : selectedDetailSlot.stage === "onboarded" ? "รอเริ่มงาน" : "รอสเตจ Offer"}
                             </span>
                           </div>
                         </div>
 
-                        {wf === "PENDING_ADMIN" && isAdminAuthenticated && (
-                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                            <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold">
-                              💡 คุณสามารถตรวจสอบและอนุมัติคำขอนี้เพื่อเริ่มการสรรหาทันที:
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const current = selectedDetailSlot;
-                                setSelectedDetailSlot(null);
-                                setSelectedRequisitionDetail(requests.find(r => r.id === (current.parentRequestId || current.id)) || current);
-                              }}
-                              className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 shadow-sm transition active:scale-95 flex items-center gap-1"
-                            >
-                              <span>ตรวจ & ดำเนินการอนุมัติ &rarr;</span>
-                            </button>
-                          </div>
-                        )}
+                        {/* ข้อความและปุ่มซิงค์สถานะ */}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                          <span className="text-[10px] text-slate-400">
+                            {selectedDetailSlot.isItNotified ? "📧 ส่งข้อมูลแจ้ง IT เรียบร้อยแล้ว (รอ IT กดรับทราบในอีเมล)" : "💡 ในสเตจ Onboarded สามารถกดปุ่มส่งแจ้งข้อมูลให้ทีม IT เพื่อเตรียมอุปกรณ์และเปิดสิทธิ์"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => syncWorkflowStatus(false)}
+                            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 text-[10px] font-bold flex items-center gap-1 transition shadow-2xs"
+                          >
+                            <Icon name="refresh" className="w-3 h-3 text-brand-600" />
+                            <span>🔄 ซิงค์สถานะ</span>
+                          </button>
+                        </div>
                       </div>
                     );
                   })()}
@@ -6430,6 +6825,180 @@
                       </div>
                     </div>
                   </div>
+
+                  {/* 🎯 ลำดับกระบวนการ Onboarded / Filled แบบ Step-by-Step สะอาด เรียบร้อย */}
+                  {selectedDetailSlot.stage === "onboarded" && (
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-50/80 via-white to-sky-50/80 dark:from-purple-950/40 dark:via-slate-900 dark:to-sky-950/40 border-2 border-purple-200 dark:border-purple-800 space-y-3.5">
+                      <div className="flex items-center justify-between border-b border-purple-100 dark:border-purple-800/60 pb-2.5">
+                        <div>
+                          <span className="text-[10px] font-extrabold uppercase text-purple-600 dark:text-purple-300 tracking-wider block">
+                            ONBOARDING WORKFLOW &bull; สเตจรับเข้าทำงาน
+                          </span>
+                          <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                            กระบวนการเริ่มงาน &amp; ส่งมอบอุปกรณ์ IT
+                          </h4>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200">
+                          Step-by-Step Flow
+                        </span>
+                      </div>
+
+                      {/* ขั้นที่ 1: ระบุวันเริ่มงาน (Hire Date) */}
+                      <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1.5 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-bold flex items-center justify-center">1</span>
+                            <span>วันเริ่มงาน (Hire Date):</span>
+                          </span>
+                          <span className="text-xs font-extrabold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2.5 py-0.5 rounded-lg border border-rose-200 dark:border-rose-900">
+                            📅 {selectedDetailSlot.hireDate || "ยังไม่ได้ระบุวัน"}
+                          </span>
+                        </div>
+                        <p className="text-[10.5px] text-slate-500 dark:text-slate-400 pl-6">
+                          ข้อมูลวันเริ่มงานนี้จะถูกนำไปส่งต่อให้ทีม IT จัดเตรียมอุปกรณ์ให้ทันตามกำหนด
+                        </p>
+                      </div>
+
+                      {/* ขั้นที่ 2: ส่งข้อมูลให้ทีม IT (Send Email to people@valuesourcing.co) */}
+                      <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-purple-200 dark:border-purple-800/70 space-y-2.5 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-bold flex items-center justify-center">2</span>
+                            <span>ส่งข้อมูลแจ้งทีม IT (people@valuesourcing.co):</span>
+                          </span>
+                          {selectedDetailSlot.isItNotified ? (
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 font-bold text-[10px] flex items-center gap-1">
+                              <span>✓ ส่งอีเมลแล้ว</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                              ⏳ ยังไม่ได้ส่งแจ้ง
+                            </span>
+                          )}
+                        </div>
+
+                        {/* ตารางสรุป 5 ข้อมูลที่จะส่งไปในอีเมล */}
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-[11px] space-y-1 text-slate-700 dark:text-slate-300">
+                          <p><strong>Name:</strong> K. {selectedDetailSlot.candidateName || "-"}</p>
+                          <p><strong>Position:</strong> {selectedDetailSlot.jobTitle || "-"}</p>
+                          <p><strong>Department:</strong> {selectedDetailSlot.department || "-"}</p>
+                          <p><strong>Division (SSC):</strong> {selectedDetailSlot.department || "-"}</p>
+                          <p><strong>Hire date:</strong> <span className="text-rose-600 dark:text-rose-400 font-bold">{selectedDetailSlot.hireDate || "ยังไม่ระบุวันเริ่มงาน"}</span></p>
+                          <p><strong>Work Location:</strong> {candidatePool.find(c => c.assignedSlotId === selectedDetailSlot.slotId || (selectedDetailSlot.candidateName && c.fullName === selectedDetailSlot.candidateName))?.branch || selectedDetailSlot.branch || "Central Park Offices"}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSendITNotification(selectedDetailSlot)}
+                          className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Icon name="send" className="w-3.5 h-3.5 text-white" />
+                          <span>{selectedDetailSlot.isItNotified ? "ส่งอีเมลแจ้งทีม IT ซ้ำอีกครั้ง" : "ส่ง Email ข้อมูลไปให้ทางทีม IT (people@valuesourcing.co)"}</span>
+                        </button>
+                      </div>
+
+                      {/* ขั้นที่ 3: เมื่อ IT กดรับทราบ -> ให้ขึ้นเป็นสีเขียวเด่นชัด */}
+                      <div className={`p-3 rounded-xl border transition-all ${
+                        selectedDetailSlot.itEquipmentConfirmed
+                          ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 shadow-sm"
+                          : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs"
+                      }`}>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <span className={`font-bold text-xs flex items-center gap-1.5 ${
+                              selectedDetailSlot.itEquipmentConfirmed
+                                ? "text-emerald-900 dark:text-emerald-200"
+                                : "text-slate-800 dark:text-slate-200"
+                            }`}>
+                              <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                                selectedDetailSlot.itEquipmentConfirmed
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                              }`}>3</span>
+                              <span>สถานะการตอบรับของทีม IT:</span>
+                            </span>
+                            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 pl-6">
+                              {selectedDetailSlot.itEquipmentConfirmed
+                                ? "ทีม IT ได้ยืนยันรับทราบและอุปกรณ์คอมพิวเตอร์/สิทธิ์ระบบพร้อมแล้ว"
+                                : "รอทีม IT กดปุ่มยืนยันรับทราบในอีเมล (หรือแอดมินคลิกยืนยันแทนได้)"}
+                            </p>
+                          </div>
+
+                          <div className="shrink-0 pl-6 sm:pl-0">
+                            {selectedDetailSlot.itEquipmentConfirmed ? (
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-xs">
+                                  <span>✅ IT รับทราบ &amp; อุปกรณ์พร้อมแล้ว</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleITEquipmentConfirmed(selectedDetailSlot.slotId)}
+                                  className="text-[10px] text-slate-400 hover:text-slate-600 underline"
+                                  title="คลิกหากต้องการยกเลิก"
+                                >
+                                  แก้ไข
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleITEquipmentConfirmed(selectedDetailSlot.slotId)}
+                                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 dark:bg-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 text-xs font-bold transition active:scale-95"
+                              >
+                                ⏳ คลิกยืนยันแทน IT: อุปกรณ์พร้อมแล้ว
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ขั้นที่ 4: รอมาเริ่มงาน -> กดปุ่มเริ่มงานเรียบร้อยแล้ว ค่อยเปลี่ยนสถานะเป็น Closed */}
+                      <div className={`p-3 rounded-xl border transition-all ${
+                        selectedDetailSlot.hasAttendedFirstDayTraining || selectedDetailSlot.onboardingArrivalStatus === "arrived_reported"
+                          ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 shadow-sm"
+                          : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 shadow-2xs"
+                      }`}>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                          <div className="space-y-0.5">
+                            <span className={`font-bold text-xs flex items-center gap-1.5 ${
+                              selectedDetailSlot.hasAttendedFirstDayTraining || selectedDetailSlot.onboardingArrivalStatus === "arrived_reported"
+                                ? "text-emerald-900 dark:text-emerald-200"
+                                : "text-slate-800 dark:text-slate-200"
+                            }`}>
+                              <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                                selectedDetailSlot.hasAttendedFirstDayTraining || selectedDetailSlot.onboardingArrivalStatus === "arrived_reported"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                              }`}>4</span>
+                              <span>การมารายงานตัว / เข้าอบรมวันแรก:</span>
+                            </span>
+                            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 pl-6">
+                              เป้าหมายเริ่มงาน: <strong className="text-rose-600 dark:text-rose-400">{selectedDetailSlot.hireDate || "ยังไม่ระบุ"}</strong>
+                              {" "}&bull; เมื่อกดยืนยันว่าพนักงานมาเริ่มงานแล้ว ระบบจะปรับสถานะเป็น Closed (ปิดการสรรหา) ให้ทันที
+                            </p>
+                          </div>
+
+                          <div className="shrink-0 pl-6 sm:pl-0">
+                            {!(selectedDetailSlot.hasAttendedFirstDayTraining || selectedDetailSlot.onboardingArrivalStatus === "arrived_reported") ? (
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmFirstDayTraining(selectedDetailSlot.slotId)}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md active:scale-95 flex items-center gap-1.5 transition cursor-pointer"
+                              >
+                                <span>✓ ยืนยันมาเริ่มงาน &amp; ปิดจบตำแหน่ง (Closed)</span>
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-xs">
+                                  <span>✅ มาเริ่มงานแล้ว &amp; ปิดการสรรหา (Closed)</span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Arrival Status & Inspection in Closed state */}
                   {(selectedDetailSlot.slotStatus === "Closed" || selectedDetailSlot.stage === "cancelled") && (
@@ -6675,3 +7244,4 @@
   </script>
 </body>
 </html>
+  
