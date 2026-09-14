@@ -496,17 +496,18 @@
     };
 
     const INITIAL_PERSONNEL_LIST = [
-      { name: "นางสาว พัฒนรา ทัศจันทร์", email: "pattara2228@gmail.com", position: "Director", department: "Executive Assistance & Admin Department" },
-      { name: "นางสาว อริชภัสร์ จิระปราสิทธิ์", email: "arichapat.ji@valuesourcing.co", position: "Chief Financial Officer (CFO)", department: "Product Strategy & Creative Architect Department" },
-      { name: "ชณา วสุวัต", email: "chana.va@valuesourcing.co", position: "Executive Assistant", department: "Executive Assistance & Admin Department" },
-      { name: "สายชล วสุวัต", email: "saichon.va@valuesourcing.co", position: "Culture & HR-AI Director", department: "Culture & HR-AI Department" },
-      { name: "สลิสา วสุวัต", email: "salisa.va@valuesourcing.co", position: "Wealth Creation Specialist", department: "Wealth Creation Department" },
-      { name: "ปกเกศ ตั้นซ้าย", email: "pokkate.tu@valuesourcing.co", position: "Internal Control Officer", department: "Internal Control & Risk Management Department" },
-      { name: "สุมน คูสุวรรณ", email: "sumon.kh@valuesourcing.co", position: "Quality Assurance Manager", department: "Quality Assurance Department" },
-      { name: "ธนรักษ์ พึ่งธรรมะสกุล", email: "thanaruk.ph@valuesourcing.co", position: "Supply Chain Lead", department: "Supply Chain Management Department" },
-      { name: "ณพสิทธิ์ โชติวนิช", email: "nopparsit.ch@gmail.com", position: "AI & Digital Specialist", department: "AI & Digital Integration Department" },
-      { name: "นางสาววรีรัตน์ รุจอุฬาร", email: "wareerat.ru@valuesourcing.co", position: "Executive Assistance Lead", department: "Executive Assistance & Admin Department" },
-      { name: "นางสาว พรธิดา วนเวียน", email: "porntida.wo@valuesourcing.co", position: "People Team Lead", department: "Human Resource Business Partner Department" }
+      { name: "นางสาว พัฒนรา ทัศจันทร์", nameEn: "Pattanara Thasjan", email: "pattara2228@gmail.com", position: "Director", department: "Executive Assistance & Admin Department", division: "Executive Management" },
+      { name: "นางสาว อริชภัสร์ จิระปราสิทธิ์", nameEn: "Arichapat Jiraprasit", email: "arichapat.ji@valuesourcing.co", position: "Chief Financial Officer (CFO)", department: "Product Strategy & Creative Architect Department", division: "Finance & Accounting" },
+      { name: "ชณา วสุวัต", nameEn: "Chana Vasuvat", email: "chana.va@valuesourcing.co", position: "Executive Assistant", department: "Executive Assistance & Admin Department", division: "Executive Management" },
+      { name: "สายชล วสุวัต", nameEn: "Saichon Vasuvat", email: "saichon.va@valuesourcing.co", position: "Culture & HR-AI Director", department: "Culture & HR-AI Department", division: "People & Culture" },
+      { name: "สลิสา วสุวัต", nameEn: "Salisa Vasuvat", email: "salisa.va@valuesourcing.co", position: "Wealth Creation Specialist", department: "Wealth Creation Department", division: "Business Development" },
+      { name: "ปกเกศ ตั้นซ้าย", nameEn: "Pokkate Tuansai", email: "pokkate.tu@valuesourcing.co", position: "Internal Control Officer", department: "Internal Control & Risk Management Department", division: "Internal Audit & Risk" },
+      { name: "สุมน คูสุวรรณ", nameEn: "Sumon Khusuwan", email: "sumon.kh@valuesourcing.co", position: "Quality Assurance Manager", department: "Quality Assurance Department", division: "Quality & Standards" },
+      { name: "ธนรักษ์ พึ่งธรรมะสกุล", nameEn: "Thanaruk Phuengthammasakul", email: "thanaruk.ph@valuesourcing.co", position: "Supply Chain Lead", department: "Supply Chain Management Department", division: "Supply Chain & Operations" },
+      { name: "ณพสิทธิ์ โชติวนิช", nameEn: "Nopparsit Chotiwanich", email: "nopparsit.ch@gmail.com", position: "AI & Digital Specialist", department: "AI & Digital Integration Department", division: "Technology & Digital" },
+      { name: "นางสาววรีรัตน์ รุจอุฬาร", nameEn: "Wareerat Ruj-ularn", email: "wareerat.ru@valuesourcing.co", position: "Executive Assistance Lead", department: "Executive Assistance & Admin Department", division: "Executive Management" },
+      { name: "นางสาว พรธิดา วนเวียน", nameEn: "Porntida Wonwian", email: "porntida.wo@valuesourcing.co", position: "People Team Lead", department: "Human Resource Business Partner Department", division: "People & Culture" },
+      { name: "นางสาว ปราณี มาสะอาด", nameEn: "Pranee Mas-ard", email: "Spetojubjib@gmail.com", position: "Quality Control In-Coming Officer", department: "Quality Control Department", division: "Quality & Standards" }
     ];
 
     const DEPARTMENTS = [
@@ -1462,6 +1463,8 @@
         requesterPosition: "",
         requesterEmail: "",
         department: "-",
+        division: "-",
+        candidateSupervisor: "",
         approverName: "ศรัณย์ภัทธ อุบล",
         approverEmail: "sarunpat.ub@valuesourcing.co",
         forwardTo: "",
@@ -1472,6 +1475,7 @@
         replacedEmployeeName: "",
         targetDate: "",
         buddy: "",
+        workLocation: "Dusit Central Park",
         jobDescription: "",
         gender: "ไม่ระบุ",
         age: "ไม่จำกัด",
@@ -1554,8 +1558,10 @@
 
           if (rows.length > 1) {
             const header = rows[0].map(h => (h || '').toLowerCase().trim().replace(/\uFEFF/g, ''));
-            let nameIdx = header.findIndex(h => (h.includes('ชื่อ') || h.includes('name')) && !h.includes('เล่น'));
+            let nameIdx = header.findIndex(h => (h.includes('ชื่อ') || h.includes('name')) && !h.includes('เล่น') && !h.includes('en') && !h.includes('eng') && !h.includes('อังกฤษ'));
+            let nameEnIdx = header.findIndex(h => h.includes('en') || h.includes('eng') || h.includes('อังกฤษ') || (h.includes('name') && !h.includes('ไทย')));
             let deptIdx = header.findIndex(h => h.includes('ฝ่ายงาน') || h.includes('ฝ่าย') || h.includes('แผนก') || h.includes('department'));
+            let divIdx = header.findIndex(h => h.includes('สายงาน') || h.includes('division'));
             let posIdx = header.findIndex(h => h.includes('ตำแหน่ง') || h.includes('position'));
             let emailIdx = header.findIndex(h => h.includes('email') || h.includes('อีเมล'));
 
@@ -1565,14 +1571,20 @@
             for (let i = 1; i < rows.length; i++) {
               const r = rows[i];
               if (!r || r.length <= 1) continue;
-              const nameVal = (r[nameIdx] || r[0])?.trim();
+              const nameVal = (nameIdx !== -1 && r[nameIdx]) ? r[nameIdx].trim() : (r[0] || '').trim();
               if (!nameVal || nameVal.includes("ชื่อ")) continue;
+
+              const nameEnVal = (nameEnIdx !== -1 && r[nameEnIdx]) ? r[nameEnIdx].trim() : "";
+              const deptVal = (deptIdx !== -1 && r[deptIdx]) ? r[deptIdx].trim() : "-";
+              const divVal = (divIdx !== -1 && r[divIdx]) ? r[divIdx].trim() : "-";
 
               loaded.push({
                 name: nameVal,
+                nameEn: nameEnVal || nameVal,
                 email: (emailIdx !== -1 ? r[emailIdx] : r.find(c => c && c.includes("@")))?.trim() || "",
                 position: (posIdx !== -1 ? r[posIdx] : r[1])?.trim() || "Staff",
-                department: (deptIdx !== -1 && r[deptIdx]) ? r[deptIdx].trim() : "-"
+                department: deptVal,
+                division: divVal
               });
             }
 
@@ -1680,6 +1692,20 @@
         });
         return Array.from(set);
       }, [personnelList]);
+
+      const requesterOptions = useMemo(() => {
+        return personnelList.map(p => ({
+          value: p.nameEn || p.name,
+          label: p.nameEn ? `${p.nameEn} (${p.name})` : p.name
+        }));
+      }, [personnelList]);
+
+      const supervisorOptions = useMemo(() => {
+        return personnelList.map(p => ({
+          value: p.nameEn || p.name,
+          label: p.nameEn ? `${p.nameEn} (${p.name})` : p.name
+        }));
+      }, [personnelList]);
       // All position slots with individual slotStatus (Recruiting vs Closed)
       const allPositionSlots = useMemo(() => {
         return requests.flatMap(r => {
@@ -1761,6 +1787,8 @@
               interviewResult: currentEvals.length > 0 ? evalStats.result : (slot.interviewResult || ""),
               evaluations: currentEvals,
               evaluationsCount: currentEvals.length,
+              division: slot.division || r.division || "-",
+              workLocation: slot.workLocation || r.workLocation || matchedCand?.branch || r.branch || "Dusit Central Park",
               replacedEmployeeName: r.replacedEmployeeName || "",
               hireDate: matchedCand?.hireDate || slot.hireDate || "",
               onboardingArrivalStatus: arrivalStatus,
@@ -2034,9 +2062,9 @@
         );
 
         const candidateName = slotItem.candidateName || cand?.fullName || "พนักงานใหม่";
-        const hireDate = slotItem.hireDate || cand?.hireDate || new Date().toISOString().split('T')[0];
-        const branch = cand?.branch || slotItem.branch || "Central Park Offices";
-        const appBaseUrl = window.location.href.split('?')[0];
+        const hireDate = slotItem.hireDate || cand?.hireDate || "ยังไม่ระบุวันเริ่มงาน";
+        const branch = slotItem.workLocation || cand?.branch || slotItem.branch || "Dusit Central Park";
+        const division = slotItem.division || slotItem.department || "-";
 
         try {
           triggerToast(`⏳ กำลังส่งอีเมลแจ้งทีม IT (people@valuesourcing.co) สำหรับ K. ${candidateName}...`);
@@ -2051,11 +2079,11 @@
               slotId: slotItem.slotId,
               jobTitle: slotItem.jobTitle,
               department: slotItem.department,
+              division: division,
               candidateName: candidateName,
               branch: branch,
               workLocation: branch,
               hireDate: hireDate,
-              appUrl: appBaseUrl,
               itLaptop: slotItem.itLaptop || "ต้องการ",
               itEmail: slotItem.itEmail || "ต้องการ",
               itSimCard: slotItem.itSimCard || "ไม่ต้องการ",
@@ -2082,7 +2110,7 @@
           // อัปเดต Modal Detail ทันทีหากกำลังเปิดดูอยู่
           setSelectedDetailSlot(prev => (prev && prev.slotId === slotItem.slotId ? { ...prev, isItNotified: true } : prev));
 
-          triggerToast(`📧 ส่งข้อมูลแจ้งทีม IT สำเร็จแล้ว! พร้อมแนบปุ่มให้ IT กดยืนยันรับทราบ`);
+          triggerToast(`📧 ส่งข้อมูลแจ้งทีม IT (people@valuesourcing.co) สำเร็จแล้ว! (K. ${candidateName})`);
         } catch (err) {
           triggerToast(`❌ ส่งอีเมลไม่สำเร็จ: ${err.message || err}`);
         }
@@ -6123,18 +6151,20 @@
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[11px] font-semibold mb-1">ผู้ขอ (Requester Name) *</label>
+                        <label className="block text-[11px] font-semibold mb-1">ผู้ขอ (Requester Name - EN) *</label>
                         <SearchableSelect
                           value={formInput.requesterName}
-                          options={personnelList.map(p => ({ value: p.name, label: p.name }))}
-                          onChange={(name) => {
-                            const person = personnelList.find(p => p.name === name);
+                          placeholder="-- Select Requester (English Name) --"
+                          options={requesterOptions}
+                          onChange={(nameEnVal) => {
+                            const person = personnelList.find(p => p.nameEn === nameEnVal || p.name === nameEnVal);
                             setFormInput(prev => ({
                               ...prev,
-                              requesterName: name,
+                              requesterName: person?.nameEn || nameEnVal,
                               requesterEmail: person?.email || prev.requesterEmail,
                               requesterPosition: person?.position || prev.requesterPosition,
-                              department: person?.department || prev.department
+                              department: person?.department || prev.department,
+                              division: person?.division || prev.division || "-"
                             }));
                           }}
                         />
@@ -6168,6 +6198,29 @@
                           value={formInput.department}
                           options={departmentOptions.map(d => ({ value: d, label: d }))}
                           onChange={(dept) => setFormInput({ ...formInput, department: dept })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                      <div>
+                        <label className="block text-[11px] font-semibold mb-1">สายงาน (Division) *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="ระบุสายงาน หรือดึงอัตโนมัติ"
+                          value={formInput.division || ""}
+                          onChange={(e) => setFormInput({ ...formInput, division: e.target.value })}
+                          className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold mb-1">หัวหน้างานของ Candidate (Direct Supervisor - EN) *</label>
+                        <SearchableSelect
+                          value={formInput.candidateSupervisor}
+                          placeholder="-- เลือกหรือพิมพ์ชื่อหัวหน้างาน (EN) --"
+                          options={supervisorOptions}
+                          onChange={(supVal) => setFormInput({ ...formInput, candidateSupervisor: supVal })}
                         />
                       </div>
                     </div>
@@ -6266,6 +6319,20 @@
                           onChange={(buddyName) => setFormInput({ ...formInput, buddy: buddyName })}
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">สถานที่ปฏิบัติงาน (Work Location) *</label>
+                      <select
+                        required
+                        value={formInput.workLocation || "Dusit Central Park"}
+                        onChange={(e) => setFormInput({ ...formInput, workLocation: e.target.value })}
+                        className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
+                      >
+                        <option value="Headquarter">Headquarter</option>
+                        <option value="Factory">Factory</option>
+                        <option value="Dusit Central Park">Dusit Central Park</option>
+                      </select>
                     </div>
 
                     {formInput.positionType === "Replacement" && (
@@ -6550,9 +6617,9 @@
                     <h4 className="font-bold text-slate-900 dark:text-white text-xs border-b border-slate-200 dark:border-slate-700 pb-1.5 flex items-center gap-1.5">
                       <span>👤 1. ข้อมูลผู้ยื่นคำขอ (Requester Details)</span>
                     </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px]">
                       <div>
-                        <span className="text-slate-400 block text-[10px]">ผู้ขอ:</span>
+                        <span className="text-slate-400 block text-[10px]">ผู้ขอ (Requester - EN):</span>
                         <strong className="text-slate-900 dark:text-white">{selectedRequisitionDetail.requesterName}</strong>
                       </div>
                       <div>
@@ -6566,6 +6633,14 @@
                       <div>
                         <span className="text-slate-400 block text-[10px]">ฝ่ายงาน:</span>
                         <strong className="text-slate-800 dark:text-slate-200">{selectedRequisitionDetail.department}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">สายงาน (Division):</span>
+                        <strong className="text-emerald-700 dark:text-emerald-300">{selectedRequisitionDetail.division || "-"}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">หัวหน้างาน Candidate (EN):</span>
+                        <strong className="text-indigo-600 dark:text-indigo-400">{selectedRequisitionDetail.candidateSupervisor || "-"}</strong>
                       </div>
                     </div>
                   </div>
@@ -6809,11 +6884,12 @@
                     <h4 className="font-bold text-slate-900 dark:text-white text-xs border-b border-slate-200 dark:border-slate-700 pb-1.5">
                       1. ข้อมูลผู้ยื่นคำขอ (Requester Details)
                     </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                       <div><span className="text-slate-400 block text-[10px]">ผู้ขอ:</span><strong className="text-slate-900 dark:text-white">{pendingConfirmationForm.requesterName || "-"}</strong></div>
                       <div><span className="text-slate-400 block text-[10px]">ตำแหน่ง:</span><strong className="text-slate-900 dark:text-white">{pendingConfirmationForm.requesterPosition || "-"}</strong></div>
                       <div><span className="text-slate-400 block text-[10px]">Email:</span><strong className="text-slate-900 dark:text-white">{pendingConfirmationForm.requesterEmail || "-"}</strong></div>
                       <div><span className="text-slate-400 block text-[10px]">ฝ่ายงาน:</span><strong className="text-brand-600 dark:text-brand-400">{pendingConfirmationForm.department || "-"}</strong></div>
+                      <div><span className="text-slate-400 block text-[10px]">สายงาน:</span><strong className="text-sky-600 dark:text-sky-400">{pendingConfirmationForm.division || "-"}</strong></div>
                     </div>
                   </div>
 
@@ -6836,7 +6912,9 @@
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                       <div className="sm:col-span-2"><span className="text-slate-400 block text-[10px]">ตำแหน่ง:</span><strong className="text-sm font-extrabold text-slate-900 dark:text-white">{pendingConfirmationForm.jobTitle}</strong></div>
                       <div><span className="text-slate-400 block text-[10px]">จำนวนที่ขอ:</span><strong className="text-brand-600 text-sm font-bold">{pendingConfirmationForm.headcountRequired} อัตรา</strong></div>
+                      <div><span className="text-slate-400 block text-[10px]">หัวหน้างาน Candidate (EN):</span><strong className="text-indigo-600 dark:text-indigo-400 font-bold">{pendingConfirmationForm.candidateSupervisor || "-"}</strong></div>
                       <div><span className="text-slate-400 block text-[10px]">ประเภท:</span><strong className="text-slate-800 dark:text-slate-200">{pendingConfirmationForm.positionType}</strong></div>
+                      <div><span className="text-slate-400 block text-[10px]">สถานที่ปฏิบัติงาน:</span><strong className="text-slate-800 dark:text-slate-200">{pendingConfirmationForm.workLocation || "Dusit Central Park"}</strong></div>
                       <div><span className="text-slate-400 block text-[10px]">เป้าหมายเริ่มงาน:</span><strong className="text-slate-800 dark:text-slate-200">{pendingConfirmationForm.targetDate || "-"}</strong></div>
                       <div><span className="text-slate-400 block text-[10px]">Buddy:</span><strong className="text-slate-800 dark:text-slate-200">{pendingConfirmationForm.buddy || "-"}</strong></div>
                     </div>
@@ -7325,14 +7403,14 @@
                           )}
                         </div>
 
-                        {/* ตารางสรุป 5 ข้อมูลที่จะส่งไปในอีเมล */}
+                        {/* ตารางสรุป 6 ข้อมูลที่จะส่งไปในอีเมลตามฟอร์มขอกำลังคน */}
                         <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-[11px] space-y-1 text-slate-700 dark:text-slate-300">
-                          <p><strong>Name:</strong> K. {selectedDetailSlot.candidateName || "-"}</p>
-                          <p><strong>Position:</strong> {selectedDetailSlot.jobTitle || "-"}</p>
+                          <p><strong>Name :</strong> K. {selectedDetailSlot.candidateName || "-"}</p>
+                          <p><strong>Position :</strong> {selectedDetailSlot.jobTitle || "-"}</p>
                           <p><strong>Department:</strong> {selectedDetailSlot.department || "-"}</p>
-                          <p><strong>Division (SSC):</strong> {selectedDetailSlot.department || "-"}</p>
+                          <p><strong>Division (SSC):</strong> {selectedDetailSlot.division || selectedDetailSlot.department || "-"}</p>
                           <p><strong>Hire date:</strong> <span className="text-rose-600 dark:text-rose-400 font-bold">{selectedDetailSlot.hireDate || "ยังไม่ระบุวันเริ่มงาน"}</span></p>
-                          <p><strong>Work Location:</strong> {candidatePool.find(c => c.assignedSlotId === selectedDetailSlot.slotId || (selectedDetailSlot.candidateName && c.fullName === selectedDetailSlot.candidateName))?.branch || selectedDetailSlot.branch || "Central Park Offices"}</p>
+                          <p><strong>Work Location:</strong> {selectedDetailSlot.workLocation || candidatePool.find(c => c.assignedSlotId === selectedDetailSlot.slotId || (selectedDetailSlot.candidateName && c.fullName === selectedDetailSlot.candidateName))?.branch || selectedDetailSlot.branch || "Dusit Central Park"}</p>
                         </div>
 
                         <button
