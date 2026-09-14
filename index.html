@@ -819,8 +819,9 @@
           });
           const resJson = await res.json();
 
-          if (resJson && resJson.status === "success" && resJson.data) {
-            const serverStatuses = resJson.data;
+          if (resJson && resJson.status === "success") {
+            const serverStatuses = resJson.data || {};
+            const itConfirmedSlots = resJson.itConfirmedSlots || {};
 
             setRequests(prevRequests => {
               return prevRequests.map(r => {
@@ -828,44 +829,36 @@
                 const cleanId = String(mainId).replace(/-\d+$/, "");
                 const remoteItem = serverStatuses[mainId] || serverStatuses[cleanId];
 
-                if (remoteItem && remoteItem.status) {
-                  const newStatus = remoteItem.status;
-                  const isItConfirmed = newStatus === "READY_FOR_RECRUITMENT" || newStatus === "Recruiting" || newStatus === "Closed";
-                  
-                  const updatedSlots = (r.slots || []).map(s => ({
-                    ...s,
-                    workflowStatus: newStatus,
-                    isItNotified: isItConfirmed ? true : s.isItNotified,
-                    slotStatus: newStatus === "READY_FOR_RECRUITMENT" ? "Recruiting" : s.slotStatus,
-                    stage: newStatus === "READY_FOR_RECRUITMENT" && s.stage === "received" ? "manpower" : s.stage
-                  }));
+                const updatedSlots = (r.slots || []).map(s => {
+                  const itAckFromRemote = Boolean(itConfirmedSlots[s.slotId] || itConfirmedSlots[mainId]);
+                  const newWfStatus = remoteItem?.status || s.workflowStatus;
+                  const isItConfirmed = itAckFromRemote || s.itEquipmentConfirmed || newWfStatus === "READY_FOR_RECRUITMENT" || newWfStatus === "Recruiting" || newWfStatus === "Closed";
 
                   return {
-                    ...r,
-                    requestStatus: newStatus === "READY_FOR_RECRUITMENT" ? "Recruiting" : newStatus,
-                    workflowStatus: newStatus,
-                    isItNotified: isItConfirmed ? true : r.isItNotified,
-                    stage: newStatus === "READY_FOR_RECRUITMENT" && r.stage === "received" ? "manpower" : r.stage,
-                    slots: updatedSlots
+                    ...s,
+                    workflowStatus: newWfStatus || s.workflowStatus,
+                    itEquipmentConfirmed: isItConfirmed,
+                    isItNotified: isItConfirmed ? true : s.isItNotified,
+                    slotStatus: newWfStatus === "READY_FOR_RECRUITMENT" ? "Recruiting" : s.slotStatus,
+                    stage: newWfStatus === "READY_FOR_RECRUITMENT" && s.stage === "received" ? "manpower" : s.stage
                   };
-                }
-                return r;
+                });
+
+                const newStatus = remoteItem?.status;
+                return {
+                  ...r,
+                  requestStatus: newStatus === "READY_FOR_RECRUITMENT" ? "Recruiting" : (newStatus || r.requestStatus),
+                  workflowStatus: newStatus || r.workflowStatus,
+                  slots: updatedSlots
+                };
               });
             });
 
             setSelectedDetailSlot(prevSlot => {
               if (!prevSlot) return null;
-              const targetId = prevSlot.parentRequestId || prevSlot.id;
-              const cleanId = String(targetId).replace(/-\d+$/, "");
-              const remoteItem = serverStatuses[targetId] || serverStatuses[cleanId];
-
-              if (remoteItem && remoteItem.status) {
-                const isItConfirmed = remoteItem.status === "READY_FOR_RECRUITMENT" || remoteItem.status === "Recruiting";
-                return {
-                  ...prevSlot,
-                  workflowStatus: remoteItem.status,
-                  isItNotified: isItConfirmed ? true : prevSlot.isItNotified
-                };
+              const itAck = Boolean(itConfirmedSlots[prevSlot.slotId] || itConfirmedSlots[prevSlot.parentRequestId]);
+              if (itAck && !prevSlot.itEquipmentConfirmed) {
+                return { ...prevSlot, itEquipmentConfirmed: true, isItNotified: true };
               }
               return prevSlot;
             });
@@ -1429,27 +1422,36 @@
             }));
             triggerToast(`✅ ผู้อนุมัติยืนยันการสรรหา (${reqId}) เรียบร้อยแล้ว! ปรับสถานะเป็น PENDING_IT (รอ IT จัดเตรียมอุปกรณ์)`);
             window.history.replaceState({}, document.title, window.location.pathname);
-          } else if (action === "it_confirm" || action === "it_ready") {
+          } else if (action === "it_confirm" || action === "it_ready" || action === "it_ack") {
             setRequests(prev => prev.map(r => {
               if (r.id === reqId || r.slots?.some(s => s.slotId === reqId || s.slotId === slotId)) {
-                const updatedSlots = (r.slots || []).map(s => ({
-                  ...s,
-                  slotStatus: "READY_FOR_RECRUITMENT",
-                  workflowStatus: "READY_FOR_RECRUITMENT",
-                  stage: "manpower" // Automatically moves to 1. Manpower Request!
-                }));
+                const updatedSlots = (r.slots || []).map(s => {
+                  if (s.slotId === slotId || !slotId) {
+                    return {
+                      ...s,
+                      itEquipmentConfirmed: true,
+                      isItNotified: true
+                    };
+                  }
+                  return s;
+                });
                 return {
                   ...r,
-                  requestStatus: "READY_FOR_RECRUITMENT",
-                  workflowStatus: "READY_FOR_RECRUITMENT",
-                  stage: "manpower",
                   slots: updatedSlots,
                   lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
                 };
               }
               return r;
             }));
-            triggerToast(`💻 ทีม IT ยืนยันรับทราบอุปกรณ์เรียบร้อย! ปรับเป็น READY_FOR_RECRUITMENT และย้ายไปยังคอลัมน์ "1. Manpower Request" อัตโนมัติ`);
+
+            setSelectedDetailSlot(prev => {
+              if (prev && (prev.slotId === slotId || prev.parentRequestId === reqId)) {
+                return { ...prev, itEquipmentConfirmed: true, isItNotified: true };
+              }
+              return prev;
+            });
+
+            triggerToast(`💻 ทีม IT กดยืนยันรับทราบอุปกรณ์เรียบร้อยแล้ว! อัปเดตสถานะเป็นสีเขียวทันที`);
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         }
@@ -2032,11 +2034,12 @@
         );
 
         const candidateName = slotItem.candidateName || cand?.fullName || "พนักงานใหม่";
-        const hireDate = slotItem.hireDate || cand?.hireDate || "ยังไม่ระบุวันเริ่มงาน";
+        const hireDate = slotItem.hireDate || cand?.hireDate || new Date().toISOString().split('T')[0];
         const branch = cand?.branch || slotItem.branch || "Central Park Offices";
+        const appBaseUrl = window.location.href.split('?')[0];
 
         try {
-          triggerToast(`⏳ กำลังส่งอีเมลแจ้งทีม IT (ADI) สำหรับ K. ${candidateName}...`);
+          triggerToast(`⏳ กำลังส่งอีเมลแจ้งทีม IT (people@valuesourcing.co) สำหรับ K. ${candidateName}...`);
 
           await fetch(googleScriptUrl, {
             method: "POST",
@@ -2052,6 +2055,7 @@
               branch: branch,
               workLocation: branch,
               hireDate: hireDate,
+              appUrl: appBaseUrl,
               itLaptop: slotItem.itLaptop || "ต้องการ",
               itEmail: slotItem.itEmail || "ต้องการ",
               itSimCard: slotItem.itSimCard || "ไม่ต้องการ",
@@ -2078,7 +2082,7 @@
           // อัปเดต Modal Detail ทันทีหากกำลังเปิดดูอยู่
           setSelectedDetailSlot(prev => (prev && prev.slotId === slotItem.slotId ? { ...prev, isItNotified: true } : prev));
 
-          triggerToast(`📧 ส่งข้อมูลแจ้งทีม IT (people@valuesourcing.co) สำเร็จแล้ว! (K. ${candidateName})`);
+          triggerToast(`📧 ส่งข้อมูลแจ้งทีม IT สำเร็จแล้ว! พร้อมแนบปุ่มให้ IT กดยืนยันรับทราบ`);
         } catch (err) {
           triggerToast(`❌ ส่งอีเมลไม่สำเร็จ: ${err.message || err}`);
         }
