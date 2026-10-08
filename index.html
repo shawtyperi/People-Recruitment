@@ -593,258 +593,31 @@
       "Wealth Creation Department"
     ];
 
-    const INITIAL_CANDIDATE_POOL = [
-      {
-        no: 1,
-        year: "2026",
-        month: "08",
-        candidateId: "CAND-2026-001",
-        fullName: "นางสาว ศวิตา กาญจนเวทางค์",
-        nickname: "สร",
-        phone: "089-486-5918",
-        targetJobTitle: "Corporate Finance & Accounting Senior Specialist",
-        level: "Senior Specialist",
-        branch: "Headquarter Site L3",
-        type: "Full-Time",
-        mbti: "INTJ",
-        prescreenDate: "2026-08-02",
-        resumeConfirmDate: "2026-08-03",
-        interviewDate: "2026-08-08T14:00",
-        hireDate: "2026-09-01",
-        status: "Compare",
-        source: "LinkedIn",
-        remark: "ผ่านสัมภาษณ์รอบแรก มีประสบการณ์ด้านภาษีองค์กร",
-        resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view",
-        assignedSlotId: "REQ-2026-001-1"
-      },
-      {
-        no: 2,
-        year: "2026",
-        month: "08",
-        candidateId: "CAND-2026-002",
-        fullName: "นาย วรวิทย์ พัฒนาพร",
-        nickname: "วิทย์",
-        phone: "089-876-5432",
-        targetJobTitle: "Senior Full-Stack AI Engineer",
-        level: "Senior",
-        branch: "AI & Digital Hub",
-        type: "Full-Time",
-        mbti: "ENTP",
-        prescreenDate: "2026-08-11",
-        resumeConfirmDate: "2026-08-12",
-        interviewDate: "2026-08-16T10:30",
-        hireDate: "2026-09-15",
-        status: "Compare",
-        source: "JobsDB",
-        remark: "ผ่านแบบทดสอบทางเทคนิค กำลังเทียบข้อเสนอกับอีก 1 ท่าน",
-        resumeUrl: "",
-        assignedSlotId: "REQ-2026-002-1"
-      },
-      {
-        no: 3,
-        year: "2026",
-        month: "08",
-        candidateId: "CAND-2026-003",
-        fullName: "นางสาว กานดา อรุณรัตน์",
-        nickname: "กานต์",
-        phone: "086-555-4321",
-        targetJobTitle: "Senior Full-Stack AI Engineer",
-        level: "Senior",
-        branch: "Headquarter Office",
-        type: "Full-Time",
-        mbti: "INFJ",
-        prescreenDate: "2026-08-12",
-        resumeConfirmDate: "2026-08-13",
-        interviewDate: "2026-08-18T15:00",
-        hireDate: "",
-        status: "Pending",
-        source: "JobThai",
-        remark: "รอผลตรวจสุขภาพและประเมินรอบสอง",
-        resumeUrl: "",
-        assignedSlotId: ""
-      },
-      {
-        no: 4,
-        year: "2026",
-        month: "08",
-        candidateId: "CAND-2026-004",
-        fullName: "นาย ธีรเดช เจริญผล",
-        nickname: "ธีร์",
-        phone: "092-333-8899",
-        targetJobTitle: "Logistics & Inventory Officer",
-        level: "Officer",
-        branch: "Warehouse Bangna",
-        type: "Contract",
-        mbti: "ISTJ",
-        prescreenDate: "2026-08-14",
-        resumeConfirmDate: "2026-08-15",
-        interviewDate: "2026-08-20T13:30",
-        hireDate: "",
-        status: "not suitable",
-        source: "Facebook Page",
-        remark: "ประสบการณ์ไม่ตรงกับระบบคลังสินค้าอัตโนมัติ",
-        resumeUrl: "",
-        assignedSlotId: ""
-      },
-      {
-        no: 5,
-        year: "2026",
-        month: "08",
-        candidateId: "CAND-2026-005",
-        fullName: "นาย พงษ์ศิริ มงคลกุล",
-        nickname: "กอล์ฟ",
-        phone: "081-999-1234",
-        targetJobTitle: "Maintenance Technician",
-        level: "Technician",
-        branch: "Factory Site",
-        type: "Full-Time",
-        mbti: "ESTP",
-        prescreenDate: "2026-08-15",
-        resumeConfirmDate: "2026-08-16",
-        interviewDate: "2026-08-22T09:30",
-        hireDate: "",
-        status: "cancel by candidate",
-        source: "Direct Email",
-        remark: "ผู้สมัครขอสละสิทธิ์เนื่องจากได้งานใกล้ที่พัก",
-        resumeUrl: "",
-        assignedSlotId: ""
-      }
-    ];
-    const INITIAL_RECRUITMENT_DATA = [
-      {
-        id: "REQ-2026-001",
-        requestDate: "2026-08-01",
-        requestStatus: "Recruiting",
-        requesterName: "นางสาว พรธิดา วนเวียน",
-        requesterPosition: "People Business Partner Team Lead",
-        requesterEmail: "porntida.wo@valuesourcing.co",
-        approverName: "นางสาววรีรัตน์ รุจอุฬาร",
-        approverEmail: "wareerat.ru@valuesourcing.co",
-        forwardTo: "นางสาววรีรัตน์ รุจอุฬาร",
-        forwardEmail: "wareerat.ru@valuesourcing.co",
-        lastUpdated: "2026-08-01 09:21:20",
-        headcountRequired: 1,
-        positionType: "Replacement",
-        replacedEmployeeName: "นาย สมเจตน์ ประเสริฐสุข",
-        targetDate: "2026-08-30",
-        buddy: "ชณา วสุวัต",
-        jobTitle: "Corporate Finance & Accounting Senior Specialist",
-        department: "Production Department",
-        jobDescription: "ดูแลงานตรวจสอบบัญชีและต้นทุนการผลิต",
-        stage: "interview",
-        offerSentDate: "",
-        onboardingArrivalStatus: "pending_arrival",
-        rejectionReason: "",
-        slots: [
-          {
-            slotId: "REQ-2026-001-1",
-            slotIndex: 1,
-            slotStatus: "Recruiting",
-            candidateName: "นางสาว ศวิตา กาญจนเวทางค์",
-            candidatePhone: "089-486-5918",
-            candidateNickname: "สร",
-            resumeUrl: "https://drive.google.com/file/d/1ExampleResumeDriveLink001/view",
-            stage: "interview",
-            offerSentDate: "",
-            hireDate: "",
-            interviewSchedule: "2026-08-08 14:00 น. (On-site)",
-            interviewScore: 0,
-            interviewScorePercent: 0,
-            interviewResult: "",
-            onboardingArrivalStatus: "pending_arrival",
-            rejectionReason: "",
-            evaluations: []
-          }
-        ]
-      },
-      {
-        id: "REQ-2026-002",
-        requestDate: "2026-08-10",
-        requestStatus: "Recruiting",
-        requesterName: "ณพสิทธิ์ โชติวนิช",
-        requesterPosition: "AI & Digital Specialist",
-        requesterEmail: "nopparsit.ch@gmail.com",
-        approverName: "สายชล วสุวัต",
-        approverEmail: "saichon.va@valuesourcing.co",
-        forwardTo: "สายชล วสุวัต",
-        forwardEmail: "saichon.va@valuesourcing.co",
-        lastUpdated: "2026-08-10 14:10:00",
-        headcountRequired: 2,
-        positionType: "New Headcount",
-        replacedEmployeeName: "",
-        targetDate: "2026-09-09",
-        buddy: "ณพสิทธิ์ โชติวนิช",
-        jobTitle: "Senior Full-Stack AI Engineer",
-        department: "AI & Digital Integration Department",
-        jobDescription: "พัฒนาและเชื่อมต่อ AI Models กับระบบสารสนเทศองค์กร",
-        stage: "interview",
-        offerSentDate: "",
-        onboardingArrivalStatus: "pending_arrival",
-        rejectionReason: "",
-        slots: [
-          {
-            slotId: "REQ-2026-002-1",
-            slotIndex: 1,
-            slotStatus: "Recruiting",
-            candidateName: "นาย วรวิทย์ พัฒนาพร",
-            candidatePhone: "089-876-5432",
-            candidateNickname: "วิทย์",
-            resumeUrl: "",
-            stage: "interview",
-            offerSentDate: "",
-            hireDate: "",
-            interviewSchedule: "2026-08-16 10:30 น. (Online Meet)",
-            interviewScore: 0,
-            interviewScorePercent: 0,
-            interviewResult: "",
-            onboardingArrivalStatus: "pending_arrival",
-            rejectionReason: "",
-            evaluations: []
-          },
-          {
-            slotId: "REQ-2026-002-2",
-            slotIndex: 2,
-            slotStatus: "Recruiting",
-            candidateName: "",
-            candidatePhone: "",
-            candidateNickname: "",
-            resumeUrl: "",
-            stage: "received",
-            offerSentDate: "",
-            hireDate: "",
-            interviewSchedule: "",
-            interviewScore: 0,
-            interviewScorePercent: 0,
-            interviewResult: "",
-            onboardingArrivalStatus: "pending_arrival",
-            rejectionReason: "",
-            evaluations: []
-          }
-        ]
-      }
-    ];
+    // เริ่มต้นคลังข้อมูลเป็นค่าว่าง พร้อมดึงข้อมูลจริงจาก Google Sheet อัตโนมัติ
+    const INITIAL_CANDIDATE_POOL = [];
+    const INITIAL_RECRUITMENT_DATA = [];
 
     function App() {
       const [requests, setRequests] = useState(() => {
-        const saved = localStorage.getItem("hr_requests_v62");
+        const saved = localStorage.getItem("hr_requests_v64");
         return saved ? JSON.parse(saved) : INITIAL_RECRUITMENT_DATA;
       });
 
       const [personnelList, setPersonnelList] = useState(() => {
-        const saved = localStorage.getItem("hr_personnel_v62");
+        const saved = localStorage.getItem("hr_personnel_v64");
         return saved ? JSON.parse(saved) : INITIAL_PERSONNEL_LIST;
       });
 
       const [candidatePool, setCandidatePool] = useState(() => {
-        const saved = localStorage.getItem("hr_candidates_v62");
+        const saved = localStorage.getItem("hr_candidates_v64");
         return saved ? JSON.parse(saved) : INITIAL_CANDIDATE_POOL;
       });
 
       const [googleScriptUrl, setGoogleScriptUrl] = useState(() => {
         const targetUrl = "https://script.google.com/macros/s/AKfycbwfVec2cbvcPNC2KbckL17lNy6x1KOnfQSUd1LpLK2TJMb9Udq18F_YdPcpNxoCQ4RP2w/exec";
-        const saved = localStorage.getItem("hr_apps_script_url_v62");
+        const saved = localStorage.getItem("hr_apps_script_url_v64");
         if (!saved || saved.includes("AKfycbwfdg3PLNPbtKDaWEZ7aeU9MRur3jr7AeJ8wc")) {
-          localStorage.setItem("hr_apps_script_url_v62", targetUrl);
+          localStorage.setItem("hr_apps_script_url_v64", targetUrl);
           return targetUrl;
         }
         return saved;
@@ -866,11 +639,11 @@
       }, [darkMode]);
 
       useEffect(() => {
-        localStorage.setItem("hr_requests_v62", JSON.stringify(requests));
+        localStorage.setItem("hr_requests_v64", JSON.stringify(requests));
       }, [requests]);
 
       useEffect(() => {
-        localStorage.setItem("hr_candidates_v62", JSON.stringify(candidatePool));
+        localStorage.setItem("hr_candidates_v64", JSON.stringify(candidatePool));
       }, [candidatePool]);
 
       // 🔄 Real-time Background Polling & Manual Sync Function
@@ -5029,17 +4802,23 @@
                             <option value="Internship">Internship</option>
                           </select>
                         </div>
+                        {}
                         <div>
-                          <label className="block text-[11px] font-semibold mb-1">MBTI</label>
-                          <select
-                            value={candidateEditForm.mbti || "INTJ"}
-                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, mbti: e.target.value })}
-                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold font-mono"
-                          >
+                          <label className="block text-[11px] font-semibold mb-1">MBTI *</label>
+                          <input
+                            type="text"
+                            required
+                            list="mbti-options-edit"
+                            placeholder="พิมพ์หรือเลือก MBTI"
+                            value={candidateEditForm.mbti || ""}
+                            onChange={(e) => setCandidateEditForm({ ...candidateEditForm, mbti: e.target.value.toUpperCase() })}
+                            className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold font-mono text-xs uppercase"
+                          />
+                          <datalist id="mbti-options-edit">
                             {CANDIDATE_MBTI_OPTIONS.map(m => (
-                              <option key={m} value={m}>{m}</option>
+                              <option key={m} value={m} />
                             ))}
-                          </select>
+                          </datalist>
                         </div>
                         <div>
                           <label className="block text-[11px] font-semibold mb-1">สถานะ (Status)</label>
@@ -6035,20 +5814,25 @@
                       </select>
                     </div>
 
+                    {}
                     <div>
                       <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
                         MBTI (บุคลิกภาพ) <span className="text-rose-600 font-bold">*</span>
                       </label>
-                      <select
+                      <input
+                        type="text"
                         required
+                        list="mbti-options-add"
+                        placeholder="พิมพ์หรือเลือก MBTI (e.g. INTJ)"
                         value={newCandidateForm.mbti}
-                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, mbti: e.target.value })}
-                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold font-mono text-xs"
-                      >
+                        onChange={(e) => setNewCandidateForm({ ...newCandidateForm, mbti: e.target.value.toUpperCase() })}
+                        className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold font-mono text-xs uppercase"
+                      />
+                      <datalist id="mbti-options-add">
                         {CANDIDATE_MBTI_OPTIONS.map(m => (
-                          <option key={m} value={m}>{m}</option>
+                          <option key={m} value={m} />
                         ))}
-                      </select>
+                      </datalist>
                     </div>
                   </div>
 
