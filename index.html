@@ -2786,7 +2786,7 @@
                   {/* User Profile & Role Info */}
                   {currentUser ? (
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                         {currentUser.picture ? (
                           <img src={currentUser.picture} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
                         ) : (
@@ -2794,12 +2794,9 @@
                             {(currentUser.email || "U")[0].toUpperCase()}
                           </div>
                         )}
-                        <div className="hidden md:block text-left text-[11px] leading-tight">
-                          <div className="font-bold text-slate-900 dark:text-white truncate max-w-[175px]" title={currentUser.email}>
+                        <div className="hidden md:block text-left">
+                          <span className="font-bold text-xs text-slate-900 dark:text-white truncate max-w-[200px] block" title={currentUser.email}>
                             {currentUser.email}
-                          </div>
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[9.5px] mt-0.5 font-bold ${currentUser.badge}`}>
-                            {currentUser.shortLabel}
                           </span>
                         </div>
                       </div>
