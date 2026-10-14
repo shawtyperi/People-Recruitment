@@ -6739,7 +6739,7 @@
                 {/* Policy Notice: Strict Required */}
                 <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 text-[11.5px] text-amber-900 dark:text-amber-200 font-semibold flex items-center gap-2">
                   <span className="text-base">🔒</span>
-                  <span><strong>Mandatory Completion Policy (นโยบายการกรอกข้อมูล):</strong> จำเป็นต้องตอบข้อมูลให้ครบทุกช่องที่มีเครื่องหมาย <span className="text-rose-600 font-bold">*</span> หากตอบไม่ครบ ระบบจะไม่สามารถดำเนินการส่งคำขอได้</span>
+                  <span><strong>Mandatory Completion Policy (นโยบายการกรอกข้อมูล):</strong> จำเป็นต้องตอบข้อมูลให้ครบทุกช่องที่มีเครื่องหมาย <span className="text-rose-600 font-bold">*</span> (สำหรับ Department และ Division สามารถระบุเป็น "-" ได้)</span>
                 </div>
 
                 <form onSubmit={handleFormSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
@@ -6751,38 +6751,49 @@
                       <span>Requester Information (1. ข้อมูลผู้ยื่นคำขอ)</span>
                     </h4>
                     
+                    {/* Row 1: Requester Name & Requester Position */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Department (ฝ่ายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(เลือกหรือระบุ "-" ได้)</span>
+                          Requester Name - EN (ชื่อผู้ขอภาษาอังกฤษ) <span className="text-rose-600 font-bold">*</span>
                         </label>
                         <SearchableSelect
-                          value={formInput.department || "-"}
-                          placeholder="-- เลือกฝ่ายงาน หรือ - --"
-                          options={departmentOptions.map(d => ({ 
-                            value: d, 
-                            label: d === "-" ? "- (ไม่ระบุ / ไม่มีสังกัดฝ่ายงาน)" : d 
-                          }))}
-                          onChange={(dept) => setFormInput({ ...formInput, department: dept || "-" })}
+                          value={formInput.requesterName}
+                          placeholder="-- Select Requester (เลือกชื่อผู้ขอ) --"
+                          options={requesterOptions}
+                          onChange={(name) => {
+                            const p = personnelList.find(x => (x.nameEn || x.name) === name);
+                            if (p) {
+                              setFormInput({
+                                ...formInput,
+                                requesterName: name,
+                                requesterPosition: p.position || "",
+                                requesterEmail: p.email || "",
+                                department: p.department || "-",
+                                division: p.division || "-"
+                              });
+                            } else {
+                              setFormInput({ ...formInput, requesterName: name });
+                            }
+                          }}
                         />
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Division (สายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(เลือกหรือระบุ "-" ได้)</span>
+                          Requester Position (ตำแหน่งผู้ขอ) <span className="text-rose-600 font-bold">*</span>
                         </label>
                         <input
                           type="text"
-                          placeholder="e.g. People & Culture / Technology หรือ -"
-                          value={formInput.division || "-"}
-                          onChange={(e) => setFormInput({ ...formInput, division: e.target.value || "-" })}
+                          required
+                          placeholder="e.g. People Team Lead"
+                          value={formInput.requesterPosition}
+                          onChange={(e) => setFormInput({ ...formInput, requesterPosition: e.target.value })}
                           className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
                         />
                       </div>
                     </div>
 
+                    {/* Row 2: Requester Email & Department */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
@@ -6799,27 +6810,31 @@
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Department (ฝ่ายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(สามารถเลือกหรือระบุ "-" ได้)</span>
+                          Department (ฝ่ายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-medium text-[10.5px]">(ระบุ "-" ได้)</span>
                         </label>
                         <SearchableSelect
-                          value={formInput.department}
+                          value={formInput.department || "-"}
                           placeholder="-- เลือกฝ่ายงาน หรือ - --"
-                          options={departmentOptions.map(d => ({ value: d, label: d }))}
+                          options={departmentOptions.map(d => ({ 
+                            value: d, 
+                            label: d === "-" ? "- (ไม่ระบุ / ไม่มีสังกัดฝ่ายงาน)" : d 
+                          }))}
                           onChange={(dept) => setFormInput({ ...formInput, department: dept || "-" })}
                         />
                       </div>
                     </div>
 
+                    {/* Row 3: Division & Candidate Supervisor */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Division (สายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(สามารถเลือกหรือระบุ "-" ได้)</span>
+                          Division (สายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-medium text-[10.5px]">(ระบุ "-" ได้)</span>
                         </label>
                         <input
                           type="text"
                           placeholder="e.g. People & Culture / Technology หรือ -"
-                          value={formInput.division || ""}
-                          onChange={(e) => setFormInput({ ...formInput, division: e.target.value })}
+                          value={formInput.division || "-"}
+                          onChange={(e) => setFormInput({ ...formInput, division: e.target.value || "-" })}
                           className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
                         />
                       </div>
