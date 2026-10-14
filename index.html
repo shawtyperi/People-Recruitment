@@ -2894,13 +2894,11 @@
       const handleFormSubmit = (e) => {
         e.preventDefault();
 
-        // 🔒 ระบบตรวจสอบความถูกต้อง (อนุญาตให้ Department / Division เป็น "-" ได้)
+        // 🔒 ระบบตรวจสอบความถูกต้อง (Department และ Division ไม่จำเป็นต้องมี ระบุเป็น "-" ได้)
         const requiredValidationRules = [
           { val: formInput.requesterName, name: "Requester Name - EN (ชื่อผู้ขอภาษาอังกฤษ)" },
           { val: formInput.requesterPosition, name: "Requester Position (ตำแหน่งผู้ขอ)" },
           { val: formInput.requesterEmail, name: "Requester Email (อีเมลผู้ขอ)" },
-          { val: formInput.department, name: "Department (ฝ่ายงาน)", allowDash: true },
-          { val: formInput.division, name: "Division (สายงาน)", allowDash: true },
           { val: formInput.candidateSupervisor, name: "Candidate Supervisor - EN (หัวหน้างานของ Candidate)" },
           { val: formInput.approverName, name: "Approver Name (ชื่อผู้อนุมัติ)" },
           { val: formInput.approverEmail, name: "Approver Email (อีเมลผู้อนุมัติ)" },
@@ -2934,7 +2932,6 @@
         const missingFields = requiredValidationRules.filter(item => {
           if (!item.val) return true;
           const s = String(item.val).trim();
-          if (item.allowDash && s === "-") return false;
           return s === "" || s === "-";
         });
 
@@ -2943,8 +2940,15 @@
           return;
         }
 
+        // กำหนดค่าอัตโนมัติให้เป็น "-" หากไม่ได้ระบุ Department หรือ Division
+        const sanitizedForm = {
+          ...formInput,
+          department: (formInput.department && String(formInput.department).trim()) ? String(formInput.department).trim() : "-",
+          division: (formInput.division && String(formInput.division).trim()) ? String(formInput.division).trim() : "-"
+        };
+
         // Open Confirmation Preview Modal when all fields are 100% valid
-        setPendingConfirmationForm({ ...formInput });
+        setPendingConfirmationForm(sanitizedForm);
         setShowConfirmModal(true);
       };
 
@@ -6643,13 +6647,13 @@
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Department (ฝ่ายงาน) <span className="text-rose-600 font-bold">*</span>
+                          Department (ฝ่ายงาน) <span className="text-slate-400 font-normal text-[10px]">(ระบุ - ได้)</span>
                         </label>
                         <SearchableSelect
                           value={formInput.department}
-                          placeholder="-- Select Department (เลือกฝ่ายงาน) --"
+                          placeholder="-- เลือกฝ่ายงาน หรือ - --"
                           options={departmentOptions.map(d => ({ value: d, label: d }))}
-                          onChange={(dept) => setFormInput({ ...formInput, department: dept })}
+                          onChange={(dept) => setFormInput({ ...formInput, department: dept || "-" })}
                         />
                       </div>
                     </div>
@@ -6657,11 +6661,10 @@
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Division (สายงาน) <span className="text-rose-600 font-bold">*</span>
+                          Division (สายงาน) <span className="text-slate-400 font-normal text-[10px]">(ระบุ - ได้)</span>
                         </label>
                         <input
                           type="text"
-                          required
                           placeholder="e.g. People & Culture / Technology หรือ -"
                           value={formInput.division || ""}
                           onChange={(e) => setFormInput({ ...formInput, division: e.target.value })}
