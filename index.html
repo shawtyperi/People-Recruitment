@@ -1050,6 +1050,10 @@
       const [isModalEditingTitle, setIsModalEditingTitle] = useState(false);
       const [modalEditTitleValue, setModalEditTitleValue] = useState("");
 
+      // Admin Slot Deletion Modal State
+      const [slotToDelete, setSlotToDelete] = useState(null);
+      const [deletionReasonInput, setDeletionReasonInput] = useState("");
+
       const handleOpenCandidateDetail = (cand) => {
         setSelectedCandidateDetail(cand);
         setCandidateEditForm({ ...cand });
@@ -1614,8 +1618,8 @@
       // All position slots with individual slotStatus (Recruiting vs Closed)
       const allPositionSlots = useMemo(() => {
         return requests.flatMap(r => {
-          const headcount = Math.max(1, Number(r.headcountRequired) || 1);
-          const slots = (r.slots && r.slots.length === headcount) 
+          const headcount = Math.max(1, Number(r.headcountRequired) || (r.slots?.length || 1));
+          const slots = (r.slots && r.slots.length > 0) 
             ? r.slots 
             : Array.from({ length: headcount }, (_, i) => ({
                 slotId: `${r.id}-${i + 1}`,
@@ -2199,6 +2203,126 @@
         setEditingCardTitleSlotId(null);
         setIsModalEditingTitle(false);
         triggerToast(`✏️ อัปเดตชื่อตำแหน่ง Slot #${slotId} เป็น "${trimmedTitle}" เรียบร้อยแล้ว`);
+      };
+
+      // Handler to duplicate a position slot (for evaluating multiple candidates on the same job role)
+      const handleDuplicateSlot = (sourceSlot) => {
+        if (!sourceSlot) return;
+        const parentReqId = sourceSlot.parentRequestId || sourceSlot.id;
+
+        setRequests(prev => prev.map(r => {
+          if (r.id === parentReqId) {
+            const currentSlots = (r.slots && r.slots.length > 0)
+              ? [...r.slots]
+              : [{
+                  slotId: `${r.id}-1`,
+                  slotIndex: 1,
+                  slotStatus: r.requestStatus || "READY_FOR_RECRUITMENT",
+                  candidateName: r.candidateName || "",
+                  candidatePhone: r.candidatePhone || "",
+                  candidateNickname: r.candidateNickname || "",
+                  resumeUrl: r.resumeUrl || "",
+                  stage: r.stage || "manpower"
+                }];
+
+            const nextIndex = currentSlots.length + 1;
+            const newSlotId = `${r.id}-${nextIndex}`;
+            
+            // Keep in relevant recruitment stage, or default to manpower
+            const defaultStage = (sourceSlot.stage === "onboarded" || sourceSlot.stage === "cancelled" || sourceSlot.stage === "received")
+              ? "manpower"
+              : (sourceSlot.stage || "manpower");
+
+            const newClonedSlot = {
+              slotId: newSlotId,
+              slotIndex: nextIndex,
+              slotStatus: "READY_FOR_RECRUITMENT",
+              workflowStatus: "READY_FOR_RECRUITMENT",
+              stage: defaultStage,
+              candidateName: "",
+              candidatePhone: "",
+              candidateNickname: "",
+              resumeUrl: "",
+              interviewSchedule: "",
+              interviewScore: 0,
+              interviewScorePercent: 0,
+              interviewResult: "",
+              evaluations: [],
+              offerSentDate: "",
+              hireDate: "",
+              onboardingArrivalStatus: "pending_arrival",
+              rejectionReason: "",
+              itEquipmentConfirmed: false,
+              isItNotified: false,
+              hasAttendedFirstDayTraining: false,
+              isArchivedFromKanban: false,
+              jobTitle: sourceSlot.jobTitle || r.jobTitle,
+              priority: sourceSlot.priority || r.priority || "NORMAL"
+            };
+
+            const updatedSlots = [...currentSlots, newClonedSlot];
+            return {
+              ...r,
+              headcountRequired: updatedSlots.length,
+              slots: updatedSlots,
+              lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
+            };
+          }
+          return r;
+        }));
+
+        triggerToast(`📋 คัดลอกตำแหน่ง "${sourceSlot.jobTitle}" สำเร็จ! เพิ่ม Slot สำหรับ Candidate อีกท่านเรียบร้อย`);
+      };
+
+      // Handler for confirming slot deletion with mandatory reason
+      const handleConfirmDeleteSlot = () => {
+        if (!slotToDelete) return;
+        const reason = deletionReasonInput.trim();
+        if (!reason) {
+          triggerToast("⚠️ กรุณาระบุเหตุผลในการลบ");
+          return;
+        }
+
+        const targetSlotId = slotToDelete.slotId;
+        const parentReqId = slotToDelete.parentRequestId || slotToDelete.id;
+        const candName = slotToDelete.candidateName;
+
+        // 1. Detach candidate from pool if assigned
+        if (candName || slotToDelete.assignedSlotId) {
+          setCandidatePool(prev => prev.map(c => {
+            if (c.assignedSlotId === targetSlotId || (candName && isSameCandidate(c.fullName, candName))) {
+              return { ...c, assignedSlotId: "" };
+            }
+            return c;
+          }));
+        }
+
+        // 2. Remove slot from requests
+        setRequests(prev => {
+          return prev.map(r => {
+            if (r.id === parentReqId || (r.slots && r.slots.some(s => s.slotId === targetSlotId))) {
+              const remainingSlots = (r.slots || []).filter(s => s.slotId !== targetSlotId);
+              if (remainingSlots.length === 0) {
+                return null;
+              }
+              return {
+                ...r,
+                headcountRequired: remainingSlots.length,
+                slots: remainingSlots,
+                lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 19)
+              };
+            }
+            return r;
+          }).filter(Boolean);
+        });
+
+        if (selectedDetailSlot && selectedDetailSlot.slotId === targetSlotId) {
+          setSelectedDetailSlot(null);
+        }
+
+        triggerToast(`🗑️ ลบตำแหน่ง Slot #${targetSlotId} ออกจากระบบเรียบร้อย (เหตุผล: ${reason})`);
+        setSlotToDelete(null);
+        setDeletionReasonInput("");
       };
 
       // Handler for slot-by-slot approval in Requisition Inspection
@@ -3890,15 +4014,40 @@
 
                                           {/* Stage selector dropdown (แอดมินเท่านั้น / ถ้าเป็น User แสดงเป็นป้ายสเตจธรรมดา) */}
                                           {isAdminAuthenticated ? (
-                                            <select
-                                              value={item.stage}
-                                              onChange={(e) => handleInitiateStageChange(item.slotId, e.target.value)}
-                                              className="text-[10px] font-medium py-0.5 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:outline-none cursor-pointer"
-                                            >
-                                              {STAGES.map(st => (
-                                                <option key={st.id} value={st.id}>{st.id}</option>
-                                              ))}
-                                            </select>
+                                            <div className="flex items-center gap-1">
+                                              <select
+                                                value={item.stage}
+                                                onChange={(e) => handleInitiateStageChange(item.slotId, e.target.value)}
+                                                className="text-[10px] font-medium py-0.5 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:outline-none cursor-pointer"
+                                              >
+                                                {STAGES.map(st => (
+                                                  <option key={st.id} value={st.id}>{st.id}</option>
+                                                ))}
+                                              </select>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDuplicateSlot(item);
+                                                }}
+                                                className="p-1 rounded-md text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/50 transition cursor-pointer"
+                                                title="คัดลอกตำแหน่งนี้ (เพิ่มอัตราสำหรับ Candidate อีกคน)"
+                                              >
+                                                <span className="text-xs">📋</span>
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setSlotToDelete(item);
+                                                  setDeletionReasonInput("");
+                                                }}
+                                                className="p-1 rounded-md text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition cursor-pointer"
+                                                title="ลบตำแหน่งนี้ออกจากกระดาน"
+                                              >
+                                                <span className="text-xs">🗑️</span>
+                                              </button>
+                                            </div>
                                           ) : (
                                             item.stage !== "interview" && (
                                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -8430,9 +8579,110 @@
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                  {isAdminAuthenticated ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const slot = selectedDetailSlot;
+                          handleDuplicateSlot(slot);
+                        }}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200 dark:border-sky-800 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                        title="คัดลอกตำแหน่งนี้เพื่อเพิ่ม Candidate อีกคน"
+                      >
+                        <span>📋 คัดลอกตำแหน่งนี้</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const slot = selectedDetailSlot;
+                          setSelectedDetailSlot(null);
+                          setSlotToDelete(slot);
+                          setDeletionReasonInput("");
+                        }}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>🗑️ ลบตำแหน่งนี้</span>
+                      </button>
+                    </div>
+                  ) : <div />}
                   <button onClick={() => setSelectedDetailSlot(null)} className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                     ปิด
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Slot Deletion Modal with Mandatory Reason */}
+          {slotToDelete && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn">
+              <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-rose-300 dark:border-rose-900 p-6 space-y-4">
+                
+                <div className="flex items-start justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 flex items-center justify-center text-xl shrink-0">
+                      🗑️
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-600 block">
+                        ADMIN DELETION CONFIRMATION
+                      </span>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">
+                        ยืนยันการลบตำแหน่งออกจากกระดาน
+                      </h3>
+                    </div>
+                  </div>
+                  <button onClick={() => setSlotToDelete(null)} className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs space-y-1">
+                  <p><span className="text-slate-500 dark:text-slate-400">ตำแหน่งงาน:</span> <strong className="text-slate-900 dark:text-white">{slotToDelete.jobTitle}</strong></p>
+                  <p><span className="text-slate-500 dark:text-slate-400">Slot ID:</span> <strong className="text-rose-600 font-mono">#{slotToDelete.slotId}</strong></p>
+                  <p><span className="text-slate-500 dark:text-slate-400">ฝ่ายงาน:</span> <strong className="text-slate-700 dark:text-slate-300">{slotToDelete.department}</strong></p>
+                  {slotToDelete.candidateName && (
+                    <p className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold pt-1">
+                      ⚠️ มีผู้สมัครผูกอยู่: <strong>{slotToDelete.candidateName}</strong> (ระบบจะปลดการผูกกลับเข้าคลังอัตโนมัติ)
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    เหตุผลในการลบข้อมูล <span className="text-rose-600">* (บังคับระบุ)</span>
+                  </label>
+                  <textarea
+                    required
+                    rows="3"
+                    autoFocus
+                    placeholder="เช่น กรอกข้อมูลผิดพลาด, ยื่นคำขอซ้ำซ้อน, ยกเลิกโครงการก่อนเริ่มงาน..."
+                    value={deletionReasonInput}
+                    onChange={(e) => setDeletionReasonInput(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-rose-300 dark:border-rose-800 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                  ></textarea>
+                  <p className="text-[10px] text-slate-400">
+                    💡 ระบบจะบันทึกเหตุผลนี้ไว้ในประวัติการดำเนินงานเพื่อการตรวจสอบ (Audit Trail)
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setSlotToDelete(null); setDeletionReasonInput(""); }}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!deletionReasonInput.trim()}
+                    onClick={handleConfirmDeleteSlot}
+                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-rose-600/20 transition flex items-center gap-1.5"
+                  >
+                    <span>ยืนยันลบออกจากกระดาน</span>
                   </button>
                 </div>
               </div>
