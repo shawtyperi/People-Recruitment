@@ -548,13 +548,19 @@
               onFocus={() => {
                 if (!disabled) {
                   setIsOpen(true);
-                  setSearchTerm("");
+                  // คงค่าเดิมไว้เพื่อให้ค่า "-" หรือค่าปัจจุบันแสดงผลต่อเนื่อง ไม่ถูกลบว่าง
+                  setSearchTerm(value || "");
                 }
               }}
               onChange={(e) => {
                 if (!disabled) {
-                  setSearchTerm(e.target.value);
+                  const val = e.target.value;
+                  setSearchTerm(val);
                   if (!isOpen) setIsOpen(true);
+                  // หากพิมพ์เป็น "-" หรือค่าใดๆ ให้อัปเดตค่าไปยัง state ทันที
+                  if (val === "-" || val.trim() === "-") {
+                    onChange("-");
+                  }
                 }
               }}
               className="w-full px-3.5 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-2xs font-semibold pr-8 cursor-pointer text-slate-800 dark:text-slate-100 placeholder-slate-400"
@@ -3018,7 +3024,7 @@
       const handleFormSubmit = (e) => {
         e.preventDefault();
 
-        // 🔒 ระบบตรวจสอบความถูกต้อง (Department และ Division ไม่จำเป็นต้องมี ระบุเป็น "-" ได้)
+        // 🔒 ตรวจสอบความถูกต้องของข้อมูล (Department และ Division สามารถระบุเป็น "-" หรือเว้นว่างได้ 100%)
         const requiredValidationRules = [
           { val: formInput.requesterName, name: "Requester Name - EN (ชื่อผู้ขอภาษาอังกฤษ)" },
           { val: formInput.requesterPosition, name: "Requester Position (ตำแหน่งผู้ขอ)" },
@@ -3064,14 +3070,21 @@
           return;
         }
 
-        // กำหนดค่าอัตโนมัติให้เป็น "-" หากไม่ได้ระบุ Department หรือ Division
+        // จัดการค่า Department และ Division: หากระบุ "-" หรือเว้นว่าง ให้ส่งค่าเป็น "-" อย่างถูกต้อง 100%
+        const sanitizedDepartment = (formInput.department && String(formInput.department).trim() && String(formInput.department).trim() !== "") 
+          ? String(formInput.department).trim() 
+          : "-";
+        const sanitizedDivision = (formInput.division && String(formInput.division).trim() && String(formInput.division).trim() !== "") 
+          ? String(formInput.division).trim() 
+          : "-";
+
         const sanitizedForm = {
           ...formInput,
-          department: (formInput.department && String(formInput.department).trim()) ? String(formInput.department).trim() : "-",
-          division: (formInput.division && String(formInput.division).trim()) ? String(formInput.division).trim() : "-"
+          department: sanitizedDepartment,
+          division: sanitizedDivision
         };
 
-        // Open Confirmation Preview Modal when all fields are 100% valid
+        // แสดงหน้าต่างตรวจสอบสรุปข้อมูลก่อนส่งคำขอจริง
         setPendingConfirmationForm(sanitizedForm);
         setShowConfirmModal(true);
       };
@@ -6796,7 +6809,7 @@
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Department (ฝ่ายงาน) <span className="text-slate-400 font-normal text-[10px]">(ระบุ - ได้)</span>
+                          Department (ฝ่ายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(สามารถเลือกหรือระบุ "-" ได้)</span>
                         </label>
                         <SearchableSelect
                           value={formInput.department}
@@ -6810,7 +6823,7 @@
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Division (สายงาน) <span className="text-slate-400 font-normal text-[10px]">(ระบุ - ได้)</span>
+                          Division (สายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(สามารถเลือกหรือระบุ "-" ได้)</span>
                         </label>
                         <input
                           type="text"
