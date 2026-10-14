@@ -523,7 +523,7 @@
       }, []);
 
       const filteredOptions = useMemo(() => {
-        if (!searchTerm.trim()) return normalizedOptions;
+        if (!searchTerm.trim() || searchTerm.trim() === "-") return normalizedOptions;
         const term = searchTerm.toLowerCase();
         return normalizedOptions.filter(o => 
           String(o.label).toLowerCase().includes(term) || String(o.value).toLowerCase().includes(term)
@@ -545,11 +545,11 @@
               required={required && !value}
               placeholder={placeholder}
               value={isOpen ? searchTerm : (selectedOption ? selectedOption.label : value || "")}
-              onFocus={() => {
+              onFocus={(e) => {
                 if (!disabled) {
                   setIsOpen(true);
-                  // คงค่าเดิมไว้เพื่อให้ค่า "-" หรือค่าปัจจุบันแสดงผลต่อเนื่อง ไม่ถูกลบว่าง
                   setSearchTerm(value || "");
+                  try { e.target.select(); } catch (err) {}
                 }
               }}
               onChange={(e) => {
@@ -557,8 +557,7 @@
                   const val = e.target.value;
                   setSearchTerm(val);
                   if (!isOpen) setIsOpen(true);
-                  // หากพิมพ์เป็น "-" หรือค่าใดๆ ให้อัปเดตค่าไปยัง state ทันที
-                  if (val === "-" || val.trim() === "-") {
+                  if (val === "" || val === "-" || val.trim() === "-") {
                     onChange("-");
                   }
                 }
@@ -6755,39 +6754,30 @@
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Requester Name - EN (ชื่อผู้ขอภาษาอังกฤษ) <span className="text-rose-600 font-bold">*</span>
+                          Department (ฝ่ายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(เลือกหรือระบุ "-" ได้)</span>
                         </label>
                         <SearchableSelect
-                          value={formInput.requesterName}
-                          placeholder="-- Select Requester (เลือกชื่อผู้ขอ) --"
-                          options={requesterOptions}
-                          onChange={(nameVal) => {
-                            const p = personnelList.find(item => (item.nameEn || item.name) === nameVal || item.name === nameVal);
-                            if (p) {
-                              setFormInput(prev => ({
-                                ...prev,
-                                requesterName: nameVal,
-                                requesterPosition: p.position || prev.requesterPosition,
-                                requesterEmail: p.email || prev.requesterEmail,
-                                department: p.department || prev.department || "-",
-                                division: p.division || prev.division || "-"
-                              }));
-                            } else {
-                              setFormInput(prev => ({ ...prev, requesterName: nameVal }));
-                            }
-                          }}
+                          value={formInput.department || "-"}
+                          placeholder="-- เลือกฝ่ายงาน หรือ - --"
+                          options={departmentOptions.map(d => ({ 
+                            value: d, 
+                            label: d === "-" ? "- (ไม่ระบุ / ไม่มีสังกัดฝ่ายงาน)" : d 
+                          }))}
+                          onChange={(dept) => setFormInput({ ...formInput, department: dept || "-" })}
                         />
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
                       <div>
                         <label className="block text-[11px] font-bold mb-1 text-slate-700 dark:text-slate-300">
-                          Requester Position (ตำแหน่งผู้ขอ) <span className="text-rose-600 font-bold">*</span>
+                          Division (สายงาน) <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[10.5px]">(เลือกหรือระบุ "-" ได้)</span>
                         </label>
                         <input
                           type="text"
-                          required
-                          placeholder="e.g. People Team Lead"
-                          value={formInput.requesterPosition}
-                          onChange={(e) => setFormInput({ ...formInput, requesterPosition: e.target.value })}
+                          placeholder="e.g. People & Culture / Technology หรือ -"
+                          value={formInput.division || "-"}
+                          onChange={(e) => setFormInput({ ...formInput, division: e.target.value || "-" })}
                           className="w-full p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
                         />
                       </div>
