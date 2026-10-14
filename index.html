@@ -861,6 +861,14 @@
 
       const isAdminAuthenticated = Boolean(currentUser && (currentUser.isAdmin || currentUser.isSuperAdmin));
 
+      // 🔒 สิทธิ์การมองเห็น: หากไม่ใช่แอดมิน ให้ล็อกหน้าจอให้อยู่ที่กระดาน Kanban Pipeline เท่านั้น
+      useEffect(() => {
+        if (!isAdminAuthenticated) {
+          setAdminSubTab("kanban");
+          setCurrentView("admin");
+        }
+      }, [isAdminAuthenticated]);
+
       // Handle Google Sign-in Callback from GIS SDK
       const handleGoogleCredentialResponse = (response) => {
         try {
@@ -897,13 +905,13 @@
           localStorage.setItem("vs_corporate_auth_token_v2", JSON.stringify(userProfile));
           setCurrentUser(userProfile);
           setShowLoginModal(false);
+          setCurrentView("admin");
 
           if (roleInfo.isAdmin) {
-            setCurrentView("admin");
             triggerToast(`👋 เข้าสู่ระบบสำเร็จ: ${userProfile.name} [${roleInfo.shortLabel}]`);
           } else {
-            setCurrentView("public");
-            triggerToast(`👋 เข้าสู่ระบบสำเร็จ: ${userProfile.name} (Staff View)`);
+            setAdminSubTab("kanban");
+            triggerToast(`👋 เข้าสู่ระบบสำเร็จ: ${userProfile.name} (โหมดกระดานสรรหาและร่วมประเมิน)`);
           }
         } catch (err) {
           console.error("Google Sign-In Error:", err);
@@ -3237,27 +3245,6 @@
                         </div>
                       </div>
 
-                      {/* View Switcher based on Admin permissions */}
-                      {isAdminAuthenticated ? (
-                        currentView === "public" ? (
-                          <button
-                            onClick={() => setCurrentView("admin")}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900 border border-sky-200 dark:border-sky-800 transition"
-                          >
-                            <Icon name="shieldCheck" className="w-3.5 h-3.5 text-sky-600" />
-                            <span className="hidden sm:inline">Admin Portal</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setCurrentView("public")}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 transition"
-                          >
-                            <Icon name="grid" className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Public View</span>
-                          </button>
-                        )
-                      ) : null}
-
                       <button
                         onClick={handleUserLogout}
                         className="p-2 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 transition"
@@ -3376,204 +3363,31 @@
               </div>
             </div>
 
-            {currentView === "public" && (
-              <div className="space-y-8">
-                
-                {/* 1. Stage Tracker */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
-                    <div>
-                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Icon name="grid" className="w-5 h-5 text-amber-600" />
-                        Recruitment Stage Tracker
-                      </h2>
-                    </div>
+            <div className="space-y-6">
+              {/* Navigation Tabs - แสดงตามสิทธิ์ (Admin เห็น 1, 2, 3 / User เห็นเฉพาะ 2) */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* หน้า 1: Requisition Queue (แอดมินเท่านั้น) */}
+                  {isAdminAuthenticated && (
+                    <button
+                      onClick={() => setAdminSubTab("requisitions")}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                        adminSubTab === "requisitions"
+                          ? "bg-brand-600 text-white shadow-md shadow-brand-500/20"
+                          : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Icon name="clipboardCheck" className="w-4 h-4" />
+                      <span>1. Requisition Queue (1. คิวตรวจสอบคำขอ)</span>
+                      {pendingAdminCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">
+                          {pendingAdminCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
 
-                    <div className="relative w-full sm:w-72">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                        <Icon name="search" className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="ค้นหาตำแหน่ง, รหัส, ฝ่ายงาน, ผู้สมัคร..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 overflow-x-auto pb-4 snap-x min-w-full">
-                    {STAGES.map(stage => {
-                      const stageItems = allPositionSlots.filter(s => {
-                        const matchesQuery = !searchQuery.trim() || 
-                          s.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          s.department?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          s.candidateName?.toLowerCase().includes(searchQuery.toLowerCase());
-                        return s.stage === stage.id && !s.isArchivedFromKanban && matchesQuery;
-                      });
-
-                      return (
-                        <div key={stage.id} className="w-64 shrink-0 snap-start flex flex-col rounded-2xl bg-slate-50 dark:bg-slate-800/40 p-3 border border-slate-200/60 dark:border-slate-800">
-                          <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 dark:border-slate-700">
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{stage.label}</span>
-                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                              {stageItems.length}
-                            </span>
-                          </div>
-
-                          <div className="space-y-3 flex-1 overflow-y-auto max-h-[500px]">
-                            {stageItems.map(item => {
-                              const sla = getSLAInfo(item.requestDate, item.stage, item.offerSentDate);
-                              const priorityInfo = getPositionPriorityInfo(item);
-                              const isArrived = item.stage === "onboarded" && (item.hasAttendedFirstDayTraining || item.onboardingArrivalStatus === "arrived_reported");
-
-                              return (
-                                <div 
-                                  key={item.slotId} 
-                                  onClick={() => setSelectedDetailSlot(item)}
-                                  className={`p-3.5 rounded-2xl border transition-all duration-150 cursor-pointer group hover:shadow-md hover:scale-[1.01] ${
-                                    isArrived
-                                      ? "bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700/80"
-                                      : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                                  }`}
-                                  title="คลิกเพื่อดูข้อมูลและรายละเอียดทั้งหมด"
-                                >
-                                  {/* Minimal Header */}
-                                  <div className="flex items-center justify-between text-[11px] mb-2">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="relative flex h-2 w-2">
-                                        {priorityInfo.ping && (
-                                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${priorityInfo.dotBg} opacity-75`}></span>
-                                        )}
-                                        <span className={`relative inline-flex rounded-full h-2 w-2 ${priorityInfo.dotBg}`}></span>
-                                      </span>
-                                      <span className="font-semibold text-slate-500 dark:text-slate-400 text-[10.5px]">
-                                        {priorityInfo.label.split(' ')[0]}
-                                      </span>
-                                    </div>
-                                    <span className="font-mono text-slate-400 text-[10.5px]">{item.slotId}</span>
-                                  </div>
-
-                                  {/* Title & Department */}
-                                  <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-2 leading-snug">
-                                    {item.jobTitle}
-                                  </h4>
-                                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">
-                                    {item.department}
-                                  </p>
-
-                                  {/* Candidate Badge if assigned */}
-                                  {item.candidateName && (
-                                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px]">
-                                      <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
-                                        👤 {item.candidateName}
-                                      </span>
-                                      {item.candidateNickname && (
-                                        <span className="text-[10px] text-slate-400 shrink-0 ml-1">({item.candidateNickname})</span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. Headcount Demand by Department (Public View) */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
-                    <div>
-                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Icon name="building" className="w-5 h-5 text-brand-600" />
-                        Headcount Demand by Department
-                      </h2>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs">
-                      <select
-                        value={selectedMonthFilter}
-                        onChange={(e) => setSelectedMonthFilter(e.target.value)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                      >
-                        <option value="ALL">All Months</option>
-                        <option value="08">August</option>
-                        <option value="09">September</option>
-                        <option value="10">October</option>
-                      </select>
-                      <select
-                        value={selectedYearFilter}
-                        onChange={(e) => setSelectedYearFilter(e.target.value)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
-                      >
-                        <option value="ALL">All Years</option>
-                        <option value="2026">2026</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[440px] overflow-y-auto pr-1">
-                    {departmentStats.map((item, idx) => {
-                      const maxTotal = departmentStats[0]?.total || 1;
-                      const percent = Math.min(100, Math.round((item.total / maxTotal) * 100));
-
-                      return (
-                        <div 
-                          key={item.department} 
-                          onClick={() => setSelectedDepartmentDetail(item.department)}
-                          className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-500 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-brand-600 transition">
-                              <span className="text-brand-500 font-semibold mr-1.5">#{idx + 1}</span>
-                              {item.department}
-                            </span>
-                            <div className="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
-                              <span className="text-slate-700 dark:text-slate-300">Total: {item.total}</span>
-                              <span className="text-amber-600">Open: {item.open}</span>
-                              <span className="text-emerald-600">Filled: {item.filled}</span>
-                            </div>
-                          </div>
-
-                          <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-brand-500 to-sky-400 rounded-full transition-all duration-500"
-                              style={{ width: `${item.total > 0 ? percent : 0}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-              </div>
-            )}
-            {currentView === "admin" && (
-              <div className="space-y-6">
-                {/* Admin Sub-Tabs - Bilingual English (Thai) */}
-                <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
-                  <button
-                    onClick={() => setAdminSubTab("requisitions")}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                      adminSubTab === "requisitions"
-                        ? "bg-brand-600 text-white shadow-md shadow-brand-500/20"
-                        : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-100"
-                    }`}
-                  >
-                    <Icon name="clipboardCheck" className="w-4 h-4" />
-                    <span>1. Requisition Queue (1. คิวตรวจสอบคำขอ)</span>
-                    {pendingAdminCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white animate-pulse">
-                        {pendingAdminCount}
-                      </span>
-                    )}
-                  </button>
-
+                  {/* หน้า 2: Kanban Pipeline (ทุกคนเข้าถึงได้เพื่อร่วมติดตามและประเมินผล) */}
                   <button
                     onClick={() => setAdminSubTab("kanban")}
                     className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
@@ -3583,25 +3397,39 @@
                     }`}
                   >
                     <Icon name="grid" className="w-3.5 h-3.5" />
-                    <span>2. Kanban Pipeline &amp; Demand (2. กระดานและอัตรากำลังคน)</span>
+                    <span>
+                      {isAdminAuthenticated
+                        ? "2. Kanban Pipeline & Demand (2. กระดานและอัตรากำลังคน)"
+                        : "📋 Kanban Pipeline & Evaluation (กระดานสรรหาและร่วมประเมินคะแนน)"}
+                    </span>
                   </button>
 
-                  <button
-                    onClick={() => setAdminSubTab("candidates")}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                      adminSubTab === "candidates"
-                        ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md"
-                        : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-100"
-                    }`}
-                  >
-                    <Icon name="userSearch" className="w-3.5 h-3.5" />
-                    <span>3. Candidate Pool &amp; Requisitions (3. คลังผู้สมัครและแบบขอกำลังคน)</span>
-                  </button>
+                  {/* หน้า 3: Candidate Pool & Requisitions (แอดมินเท่านั้น) */}
+                  {isAdminAuthenticated && (
+                    <button
+                      onClick={() => setAdminSubTab("candidates")}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                        adminSubTab === "candidates"
+                          ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md"
+                          : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Icon name="userSearch" className="w-3.5 h-3.5" />
+                      <span>3. Candidate Pool &amp; Requisitions (3. คลังผู้สมัครและแบบขอกำลังคน)</span>
+                    </button>
+                  )}
                 </div>
 
-                {/* SUB-TAB 1: REQUISITION QUEUE (PRIORITY SORTED: PENDING_ADMIN FIRST) */}
-                {adminSubTab === "requisitions" && (
-                  <div className="space-y-6">
+                {!isAdminAuthenticated && (
+                  <div className="flex items-center gap-1.5 text-xs text-sky-800 dark:text-sky-200 bg-sky-50 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800 px-3 py-1.5 rounded-xl font-medium">
+                    <span>👥 <strong>โหมดพนักงาน (User View):</strong> สามารถร่วมติดตามความคืบหน้า และกดปุ่ม <span className="font-bold text-brand-600">⭐ ร่วมประเมิน</span> ในด่านสัมภาษณ์ได้</span>
+                  </div>
+                )}
+              </div>
+
+              {/* SUB-TAB 1: REQUISITION QUEUE (แอดมินเท่านั้นที่เห็นได้) */}
+              {isAdminAuthenticated && adminSubTab === "requisitions" && (
+                <div className="space-y-6">
                     {/* KPI Quick Status Cards - Modern Enterprise Style */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                       <div 
@@ -3804,23 +3632,28 @@
                       </div>
                     </div>
                   </div>
-                )}
+              )}
 
-                {/* SUB-TAB 2: KANBAN PIPELINE & DEMAND */}
-                {adminSubTab === "kanban" && (
-                  <div className="space-y-8">
+              {/* SUB-TAB 2: KANBAN PIPELINE & DEMAND (ทุกคนเห็นได้ & User ร่วมประเมินได้ที่นี่) */}
+              {adminSubTab === "kanban" && (
+                <div className="space-y-8">
                     {/* Interactive Kanban Pipeline */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
                         <div>
                           <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <Icon name="grid" className="w-5 h-5 text-brand-600" />
-                            Kanban Pipeline
+                            <span>{isAdminAuthenticated ? "Kanban Pipeline (กระดานสรรหา)" : "Kanban Pipeline & Evaluation (กระดานติดตามและร่วมประเมิน)"}</span>
                           </h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {isAdminAuthenticated
+                              ? "ลากย้ายขั้นตอน จัดการสถานะ และควบคุมกระบวนการสรรหาทั้งหมด"
+                              : "ติดตามขั้นตอนการสรรหาทุกตำแหน่ง และคลิกปุ่ม '⭐ ร่วมประเมินคะแนน' ในด่านสัมภาษณ์ได้ทันที"}
+                          </p>
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {allPositionSlots.some(s => s.isArchivedFromKanban) && (
+                          {isAdminAuthenticated && allPositionSlots.some(s => s.isArchivedFromKanban) && (
                             <button
                               onClick={handleRestoreAllArchivedCards}
                               className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1 transition"
@@ -3859,9 +3692,9 @@
                           return (
                             <div
                               key={stage.id}
-                              onDragOver={(e) => handleDragOver(e, stage.id)}
-                              onDragLeave={(e) => handleDragLeave(e, stage.id)}
-                              onDrop={(e) => handleDrop(e, stage.id)}
+                              onDragOver={(e) => isAdminAuthenticated && handleDragOver(e, stage.id)}
+                              onDragLeave={(e) => isAdminAuthenticated && handleDragLeave(e, stage.id)}
+                              onDrop={(e) => isAdminAuthenticated && handleDrop(e, stage.id)}
                               className={`w-72 shrink-0 snap-start flex flex-col rounded-2xl p-3 border-2 transition-all duration-150 ${
                                 dragOverStage === stage.id
                                   ? 'border-brand-500 bg-brand-50/70 dark:bg-brand-950/50 ring-2 ring-brand-500/20'
@@ -3878,7 +3711,7 @@
                                   </span>
                                 </div>
 
-                                {(stage.id === "onboarded" || stage.id === "cancelled") && stageItems.length > 0 && (
+                                {isAdminAuthenticated && (stage.id === "onboarded" || stage.id === "cancelled") && stageItems.length > 0 && (
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -3902,8 +3735,8 @@
                                   return (
                                     <div
                                       key={item.slotId}
-                                      draggable={true}
-                                      onDragStart={(e) => handleDragStart(e, item.slotId)}
+                                      draggable={isAdminAuthenticated}
+                                      onDragStart={(e) => isAdminAuthenticated && handleDragStart(e, item.slotId)}
                                       onDragEnd={() => { setDraggedSlotId(null); setDragOverStage(null); }}
                                       onClick={() => setSelectedDetailSlot(item)}
                                       className={`p-3.5 rounded-2xl border transition-all duration-150 cursor-pointer select-none group hover:shadow-md hover:scale-[1.01] ${
@@ -3915,12 +3748,14 @@
                                           ? 'border-emerald-300 dark:border-emerald-700/80 bg-emerald-50/60 dark:bg-emerald-950/40'
                                           : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
                                       }`}
-                                      title="คลิกการ์ดเพื่อดูรายละเอียดทั้งหมด"
+                                      title={isAdminAuthenticated ? "คลิกการ์ดเพื่อดูรายละเอียด (แอดมินลากย้ายขั้นตอนได้)" : "คลิกการ์ดเพื่อดูรายละเอียดตำแหน่ง"}
                                     >
                                       {/* Minimal Card Header: Priority dot & Slot ID */}
                                       <div className="flex items-center justify-between text-[11px] mb-2">
                                         <div className="flex items-center gap-1.5">
-                                          <span className="text-slate-300 dark:text-slate-600 font-mono text-xs cursor-grab" title="ลากเพื่อย้ายขั้นตอน">⋮⋮</span>
+                                          {isAdminAuthenticated && (
+                                            <span className="text-slate-300 dark:text-slate-600 font-mono text-xs cursor-grab" title="ลากเพื่อย้ายขั้นตอน">⋮⋮</span>
+                                          )}
                                           <span className="relative flex h-2 w-2">
                                             {priorityInfo.ping && (
                                               <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${priorityInfo.dotBg} opacity-75`}></span>
@@ -3941,8 +3776,8 @@
                                         </div>
                                       </div>
 
-                                      {/* Title & Department with Inline Editing Support */}
-                                      {editingCardTitleSlotId === item.slotId ? (
+                                      {/* Title & Department with Inline Editing Support (Only Admin) */}
+                                      {isAdminAuthenticated && editingCardTitleSlotId === item.slotId ? (
                                         <div onClick={(e) => e.stopPropagation()} className="my-1.5 flex items-center gap-1">
                                           <input
                                             type="text"
@@ -3998,7 +3833,7 @@
                                       </p>
 
                                       {/* Candidate info or Unassigned status */}
-                                      <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                                      <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1">
                                         {item.candidateName ? (
                                           <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 truncate">
                                             👤 {item.candidateName}
@@ -4009,9 +3844,27 @@
                                           </span>
                                         )}
 
-                                        {/* Action buttons & minimal stage selector dropdown */}
-                                        <div onClick={(e) => e.stopPropagation()} className="shrink-0 ml-2 flex items-center gap-1.5">
-                                          {item.stage === "onboarded" && (
+                                        {/* Action buttons & Stage Evaluation / Controls */}
+                                        <div onClick={(e) => e.stopPropagation()} className="shrink-0 flex items-center gap-1.5">
+                                          
+                                          {/* ⭐ ปุ่มร่วมประเมินคะแนนสัมภาษณ์ (ทุกคน ทั้ง User และ Admin สามารถกดได้ที่นี่) */}
+                                          {item.stage === "interview" && (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenBlindEvaluationModal(item);
+                                              }}
+                                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-700 hover:to-sky-600 active:scale-95 text-white text-[10.5px] font-bold shadow-xs transition cursor-pointer"
+                                              title="คลิกเพื่อร่วมประเมินคะแนนสัมภาษณ์ผู้สมัคร"
+                                            >
+                                              <Icon name="clipboardCheck" className="w-3.5 h-3.5 text-white" />
+                                              <span>⭐ ร่วมประเมิน</span>
+                                            </button>
+                                          )}
+
+                                          {/* Admin Onboarded Actions */}
+                                          {isAdminAuthenticated && item.stage === "onboarded" && (
                                             isArrived ? (
                                               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9.5px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700">
                                                 ✓ เริ่มงานแล้ว
@@ -4031,15 +3884,24 @@
                                             )
                                           )}
 
-                                          <select
-                                            value={item.stage}
-                                            onChange={(e) => handleInitiateStageChange(item.slotId, e.target.value)}
-                                            className="text-[10px] font-medium py-0.5 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:outline-none cursor-pointer"
-                                          >
-                                            {STAGES.map(st => (
-                                              <option key={st.id} value={st.id}>{st.id}</option>
-                                            ))}
-                                          </select>
+                                          {/* Stage selector dropdown (แอดมินเท่านั้น / ถ้าเป็น User แสดงเป็นป้ายสเตจธรรมดา) */}
+                                          {isAdminAuthenticated ? (
+                                            <select
+                                              value={item.stage}
+                                              onChange={(e) => handleInitiateStageChange(item.slotId, e.target.value)}
+                                              className="text-[10px] font-medium py-0.5 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 focus:outline-none cursor-pointer"
+                                            >
+                                              {STAGES.map(st => (
+                                                <option key={st.id} value={st.id}>{st.id}</option>
+                                              ))}
+                                            </select>
+                                          ) : (
+                                            item.stage !== "interview" && (
+                                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                                {item.stage}
+                                              </span>
+                                            )
+                                          )}
                                         </div>
                                       </div>
                                     </div>
@@ -4052,13 +3914,13 @@
                       </div>
                     </div>
 
-                    {/* Headcount Demand by Department (Admin View) */}
+                    {/* Headcount Demand by Department */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
                         <div>
                           <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <Icon name="building" className="w-5 h-5 text-brand-600" />
-                            Demand by Department
+                            <span>Headcount Demand by Department (อัตรากำลังพลแยกตามฝ่ายงาน)</span>
                           </h2>
                         </div>
                       </div>
@@ -4092,11 +3954,11 @@
                       </div>
                     </div>
                   </div>
-                )}
+              )}
 
-                {/* SUB-TAB 3: CANDIDATE POOL & MANPOWER REQUEST */}
-                {adminSubTab === "candidates" && (
-                  <div className="flex flex-col w-full space-y-8">
+              {/* SUB-TAB 3: CANDIDATE POOL & MANPOWER REQUEST (แอดมินเท่านั้นที่เห็นได้) */}
+              {isAdminAuthenticated && adminSubTab === "candidates" && (
+                <div className="flex flex-col w-full space-y-8">
                     {/* SECTION 1: Manpower Request (Top - Full Width) */}
                     <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -4764,9 +4626,8 @@
                     </div>
 
                   </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
               </>
             )}
 
@@ -8529,7 +8390,7 @@
                         </div>
                       )}
 
-                      {/* Add Interview Evaluation Button in Slot Detail Modal (Strictly ONLY in Interview Stage) */}
+                      {/* Add Interview Evaluation Button in Slot Detail Modal (Strictly ONLY in Interview Stage - สำหรับทุกคนทั้ง User และ Admin) */}
                       {selectedDetailSlot.stage === "interview" && (
                         <div className="mt-3 pt-2.5 border-t border-emerald-200/70 dark:border-emerald-800/70 flex items-center justify-between">
                           <button
@@ -8538,7 +8399,7 @@
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold text-xs shadow-xs transition cursor-pointer"
                           >
                             <Icon name="clipboardCheck" className="w-3.5 h-3.5 text-white" />
-                            <span>+ บันทึกผลประเมินสัมภาษณ์</span>
+                            <span>⭐ + บันทึกผลประเมินสัมภาษณ์</span>
                           </button>
                           <span className="text-[11px] text-slate-500 dark:text-slate-400">
                             {selectedDetailSlot.evaluationsCount > 0 ? `ประเมินแล้ว ${selectedDetailSlot.evaluationsCount} ท่าน` : "ยังไม่มีผู้ประเมิน"}
@@ -8549,17 +8410,19 @@
                   ) : (
                     <div className="p-4 text-center bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
                       <p className="text-slate-400 italic text-xs">ยังไม่มีผู้สมัครจับคู่ในตำแหน่งนี้</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const slot = selectedDetailSlot;
-                          setSelectedDetailSlot(null);
-                          setUnassignedInterviewSlotModal(slot);
-                        }}
-                        className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5"
-                      >
-                        <span>👤 + เลือก Candidate สำหรับตำแหน่งนี้</span>
-                      </button>
+                      {isAdminAuthenticated && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const slot = selectedDetailSlot;
+                            setSelectedDetailSlot(null);
+                            setUnassignedInterviewSlotModal(slot);
+                          }}
+                          className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition inline-flex items-center gap-1.5"
+                        >
+                          <span>👤 + เลือก Candidate สำหรับตำแหน่งนี้</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
